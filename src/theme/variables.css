@@ -1,0 +1,18 @@
+/* For information on how to create your own theme, please refer to:
+http://ionicframework.com/docs/theming/ */
+
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #137fec;
+    --color-primary-dark: #0b63be;
+    --color-background-light: #f6f7f8;
+    --color-background-dark: #101922;
+    --color-surface-light: #ffffff;
+    --color-surface-dark: #1c2632;
+    --font-display: "Inter", sans-serif;
+    --radius-DEFAULT: 0.25rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-full: 9999px;
+}
