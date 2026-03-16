@@ -33,3 +33,18 @@ yarn-error.log*
 # Directorios ignorados a petición del usuario
 /Documentacion
 /backend-repo
+/.tmp-backend
+
+# Scripts y archivos temporales
+*.py
+*.sql
+*.json
+!package.json
+!package-lock.json
+!ionic.config.json
+!tsconfig.json
+!tsconfig.node.json
+*.log
+*.txt
+*.mjs
+*.cjs
