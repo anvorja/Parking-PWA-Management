@@ -1,8 +1,4 @@
 // src/contexts/IngresoContext.ts
-//
-// Solo define la estructura del contexto (interfaz + createContext).
-// Sin lógica, sin JSX, sin efectos secundarios.
-// Actúa como contrato entre IngresoProvider y useIngresos.
 
 import { createContext } from 'react'
 import { IngresoVehiculoResponse } from '../services/ingresoService'
