@@ -9,7 +9,7 @@ const BottomNav: React.FC = () => {
     const tabs = [
         { path: '/entrada',  label: 'ENTRADA',        icon: 'login' },
         { path: '/ingresos', label: 'INGRESOS',        icon: 'format_list_bulleted' },
-        { path: '/usuarios', label: 'UBICACIONES',     icon: 'grid_view' },
+        { path: '/ubicaciones', label: 'UBICACIONES',     icon: 'grid_view' },
         { path: '/users',    label: 'ADMINISTRACIÓN',  icon: 'settings' },
     ]
 
