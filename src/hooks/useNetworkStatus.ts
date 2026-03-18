@@ -55,8 +55,7 @@ export function useNetworkStatus() {
             window.removeEventListener('offline', handleOffline)
             if (intervalRef.current) clearInterval(intervalRef.current)
         }
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
-    // runHealthCheck es estable (no depende de estado), el eslint-disable es intencional
+    }, [])
 
     return { isOnline }
 }
