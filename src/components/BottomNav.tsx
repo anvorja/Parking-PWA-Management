@@ -9,22 +9,16 @@ const BottomNav: React.FC = () => {
     const { user }    = useAuth()
     const esAdmin     = user?.rol === 'ADMINISTRADOR'
 
-    // Tab de Configuración (tarifas) solo visible para ADMINISTRADOR
     const tabs = [
-        { path: '/entrada',  label: 'ENTRADA',       icon: 'login' },
-        { path: '/ingresos', label: 'INGRESOS',       icon: 'format_list_bulleted' },
-        { path: '/users',    label: 'USUARIOS',       icon: 'group', soloAdmin: true },
-        { path: '/tarifas',  label: 'TARIFAS',        icon: 'payments', soloAdmin: true },
+        { path: '/entrada',  label: 'ENTRADA',  icon: 'login' },
+        { path: '/salida',   label: 'SALIDA',   icon: 'logout' },
+        { path: '/ingresos', label: 'INGRESOS', icon: 'format_list_bulleted' },
+        { path: '/users',    label: 'USUARIOS', icon: 'group',    soloAdmin: true },
+        { path: '/tarifas',  label: 'TARIFAS',  icon: 'payments', soloAdmin: true },
     ].filter(tab => !tab.soloAdmin || esAdmin)
 
     return (
-        <nav
-            style={{
-                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
-                background: '#fff', borderTop: '1px solid #e2e8f0',
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-            }}
-        >
+        <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30, background: '#fff', borderTop: '1px solid #e2e8f0', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', paddingTop: '8px', paddingBottom: '10px' }}>
                 {tabs.map(tab => {
                     const isActive = currentPath === tab.path || (tab.path === '/entrada' && currentPath === '/home')
