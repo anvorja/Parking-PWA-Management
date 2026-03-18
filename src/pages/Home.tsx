@@ -1,8 +1,10 @@
+// src/pages/Home.tsx
 import { IonContent, IonPage, useIonRouter } from '@ionic/react';
 import ExploreContainer from '../components/ExploreContainer';
 import BottomNav from '../components/BottomNav';
 import './Home.css';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import {useAuth} from "../hooks/useAuth";
 
 const Home: React.FC = () => {
   const { logout, user } = useAuth();

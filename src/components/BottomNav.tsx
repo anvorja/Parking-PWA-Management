@@ -1,24 +1,23 @@
-import React from 'react';
-import { useIonRouter } from '@ionic/react';
+// src/components/BottomNav.tsx
+import React from 'react'
+import { useIonRouter } from '@ionic/react'
 
 const BottomNav: React.FC = () => {
-    const router = useIonRouter();
-    const currentPath = router.routeInfo.pathname;
+    const router      = useIonRouter()
+    const currentPath = router.routeInfo.pathname
 
     const tabs = [
-        { path: '/entrada', label: 'ENTRADA', icon: 'login' },
-        { path: '/salida', label: 'SALIDA', icon: 'logout' },
-        { path: '/ubicaciones', label: 'UBICACIONES', icon: 'grid_view' },
-        { path: '/users', label: 'ADMINISTRACIÓN', icon: 'settings' },
-    ];
+        { path: '/entrada',  label: 'ENTRADA',        icon: 'login' },
+        { path: '/ingresos', label: 'INGRESOS',        icon: 'format_list_bulleted' },
+        { path: '/usuarios', label: 'UBICACIONES',     icon: 'grid_view' },
+        { path: '/users',    label: 'ADMINISTRACIÓN',  icon: 'settings' },
+    ]
 
     return (
         <nav
             style={{
                 position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
+                bottom: 0, left: 0, right: 0,
                 zIndex: 30,
                 background: '#fff',
                 borderTop: '1px solid #e2e8f0',
@@ -34,8 +33,11 @@ const BottomNav: React.FC = () => {
                     paddingBottom: '10px',
                 }}
             >
-                {tabs.map((tab) => {
-                    const isActive = currentPath === tab.path || (tab.path === '/entrada' && currentPath === '/home');
+                {tabs.map(tab => {
+                    const isActive =
+                        currentPath === tab.path ||
+                        (tab.path === '/entrada' && currentPath === '/home')
+
                     return (
                         <button
                             key={tab.path}
@@ -57,15 +59,15 @@ const BottomNav: React.FC = () => {
                                 flex: 1,
                             }}
                         >
-                            <span
-                                className="material-symbols-outlined"
-                                style={{
-                                    fontSize: '24px',
-                                    ...(isActive ? { fontVariationSettings: "'FILL' 1" } : {}),
-                                }}
-                            >
-                                {tab.icon}
-                            </span>
+              <span
+                  className="material-symbols-outlined"
+                  style={{
+                      fontSize: '24px',
+                      ...(isActive ? { fontVariationSettings: "'FILL' 1" } : {}),
+                  }}
+              >
+                {tab.icon}
+              </span>
                             <span
                                 style={{
                                     fontSize: '9px',
@@ -74,14 +76,14 @@ const BottomNav: React.FC = () => {
                                     lineHeight: 1.2,
                                 }}
                             >
-                                {tab.label}
-                            </span>
+                {tab.label}
+              </span>
                         </button>
-                    );
+                    )
                 })}
             </div>
         </nav>
-    );
-};
+    )
+}
 
-export default BottomNav;
+export default BottomNav

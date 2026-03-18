@@ -1,3 +1,4 @@
+// src/services/usuarioService.ts
 import { get, set } from 'idb-keyval';
 import { authService } from './authService';
 

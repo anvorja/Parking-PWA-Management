@@ -1,3 +1,4 @@
+// src/pages/Users.tsx
 import React, { useState, useEffect } from 'react';
 import { IonPage, IonContent, useIonRouter } from '@ionic/react';
 import { usuarioService, UsuarioListItemResponse, CrearUsuarioRequest } from '../services/usuarioService';
@@ -163,9 +164,10 @@ const Users: React.FC = () => {
             }
             await loadUsuarios();
             handleCloseModal();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error al guardar usuario:', error);
-            setErrorMsg(error.message || 'Error al guardar el usuario. Por favor intenta de nuevo.');
+            const msg = error instanceof Error ? error.message : 'Error al guardar el usuario. Por favor intenta de nuevo.';
+            setErrorMsg(msg);
         } finally {
             setIsSubmitting(false);
         }
@@ -182,9 +184,10 @@ const Users: React.FC = () => {
             await usuarioService.eliminarUsuario(deleteTarget.id);
             await loadUsuarios();
             setToast({ message: 'Usuario eliminado exitosamente', type: 'success' });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error al eliminar usuario:', error);
-            alert(error.message || 'Error al eliminar el usuario.');
+            const msg = error instanceof Error ? error.message : 'Error al eliminar el usuario.';
+            alert(msg);
         } finally {
             setIsDeleting(false);
             setDeleteTarget(null);
@@ -346,7 +349,7 @@ const Users: React.FC = () => {
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
                             </div>
-                            
+
                             <form onSubmit={handleSubmit} className="px-5 py-4 overflow-y-auto max-h-[70vh]">
                                 {errorMsg && (
                                     <div className="mb-4 bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg border border-red-100">
@@ -435,7 +438,7 @@ const Users: React.FC = () => {
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <div className="mt-6 flex gap-3 pb-2 pt-2">
                                     <button
                                         type="button"

@@ -1,3 +1,4 @@
+// src/services/authService.ts
 import { get, set, del } from 'idb-keyval';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
