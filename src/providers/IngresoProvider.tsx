@@ -1,15 +1,11 @@
 // src/providers/IngresoProvider.tsx
 //
-// HU-018 — Proveedor de estado para el módulo de ingresos.
-// Scroll infinito: acumula registros en lugar de reemplazar por página.
-// SUB-1: persiste 50 más recientes con estado INGRESADO en IndexedDB.
-// SUB-2: sirve desde IndexedDB cuando no hay conexión.
-// SUB-3: expone isOnline para el banner y deshabilitar botones.
-// SUB-4: refresca automáticamente al recuperar conexión.
+// HU-018: scroll infinito, caché IndexedDB, offline SUB-1/2/3/4
+// HU-019: eliminarIngreso solo ADMINISTRADOR, con toast de feedback
 
 import React, { useState, useEffect, useCallback, useRef, ReactNode } from 'react'
 import { get, set } from 'idb-keyval'
-import { IngresoContext } from '../contexts/IngresoContext'
+import { IngresoContext, ToastState } from '../contexts/IngresoContext'
 import { ingresoService, IngresoVehiculoResponse } from '../services/ingresoService'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 
@@ -20,26 +16,37 @@ const PAGE_SIZE         = 20
 export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { isOnline } = useNetworkStatus()
 
-    const [ingresos, setIngresos]           = useState<IngresoVehiculoResponse[]>([])
-    const [isLoading, setIsLoading]         = useState(true)    // carga inicial
-    const [isLoadingMore, setIsLoadingMore] = useState(false)   // carga página siguiente
-    const [hasMore, setHasMore]             = useState(false)
-    const [totalElements, setTotalElements] = useState(0)
-    const [currentPage, setCurrentPage]     = useState(0)
-    const [filtroPlaca, setFiltroPlacaState] = useState('')
+    const [ingresos, setIngresos]             = useState<IngresoVehiculoResponse[]>([])
+    const [isLoading, setIsLoading]           = useState(true)
+    const [isLoadingMore, setIsLoadingMore]   = useState(false)
+    const [hasMore, setHasMore]               = useState(false)
+    const [totalElements, setTotalElements]   = useState(0)
+    const [currentPage, setCurrentPage]       = useState(0)
+    const [filtroPlaca, setFiltroPlacaState]  = useState('')
+    const [isDeleting, setIsDeleting]         = useState(false)
+    const [toast, setToast]                   = useState<ToastState | null>(null)
 
-    // Refs para leer valores actuales en callbacks sin deps reactivas
     const filtroPlacaRef = useRef(filtroPlaca)
     const currentPageRef = useRef(currentPage)
     const isOnlineRef    = useRef(isOnline)
     const wasOfflineRef  = useRef(!isOnline)
-    const isLoadingRef   = useRef(false) // evita llamadas dobles simultáneas
+    const isLoadingRef   = useRef(false)
 
-    useEffect(() => { filtroPlacaRef.current = filtroPlaca  }, [filtroPlaca])
-    useEffect(() => { currentPageRef.current = currentPage  }, [currentPage])
-    useEffect(() => { isOnlineRef.current    = isOnline     }, [isOnline])
+    useEffect(() => { filtroPlacaRef.current = filtroPlaca }, [filtroPlaca])
+    useEffect(() => { currentPageRef.current = currentPage }, [currentPage])
+    useEffect(() => { isOnlineRef.current    = isOnline    }, [isOnline])
 
-    // ─── Carga desde IndexedDB (modo offline) ───────────────────────────────────
+    // ─── Toast auto-dismiss ────────────────────────────────────────────────────
+
+    useEffect(() => {
+        if (!toast) return
+        const t = setTimeout(() => setToast(null), 3500)
+        return () => clearTimeout(t)
+    }, [toast])
+
+    const clearToast = useCallback(() => setToast(null), [])
+
+    // ─── Carga desde IndexedDB ─────────────────────────────────────────────────
 
     const cargarDesdeCache = useCallback(async () => {
         setIsLoading(true)
@@ -48,7 +55,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             if (cached && cached.length > 0) {
                 setIngresos(cached)
                 setTotalElements(cached.length)
-                setHasMore(false) // offline no tiene paginación
+                setHasMore(false)
                 setCurrentPage(0)
             } else {
                 setIngresos([])
@@ -56,16 +63,14 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
                 setHasMore(false)
             }
         } catch (err) {
-            console.error('[IngresoProvider] Error leyendo caché IndexedDB:', err)
+            console.error('[IngresoProvider] Error leyendo caché:', err)
             setIngresos([])
         } finally {
             setIsLoading(false)
         }
     }, [])
 
-    // ─── Carga una página del backend ───────────────────────────────────────────
-    // append=true → acumula (scroll infinito)
-    // append=false → reemplaza (filtro nuevo o refresh)
+    // ─── Carga desde backend ───────────────────────────────────────────────────
 
     const cargarPaginaBackend = useCallback(async (
         page: number,
@@ -89,7 +94,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             setCurrentPage(data.page)
             setHasMore(data.page < data.totalPages - 1)
 
-            // SUB-1: cachear los 50 más recientes con estado INGRESADO (solo p0 sin filtro)
+            // SUB-1: cachear los 50 más recientes con estado INGRESADO
             if (page === 0 && !placa) {
                 const activos = data.content
                     .filter(i => i.estadoIngreso === 'INGRESADO')
@@ -98,10 +103,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             }
         } catch (err) {
             console.error('[IngresoProvider] Error cargando desde backend:', err)
-            if (!append) {
-                // Solo cae a caché en la carga inicial, no en cargarMas
-                await cargarDesdeCache()
-            }
+            if (!append) await cargarDesdeCache()
         } finally {
             setIsLoading(false)
             setIsLoadingMore(false)
@@ -109,12 +111,11 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [cargarDesdeCache])
 
-    // ─── Efecto principal: reacciona a cambios de conectividad ─────────────────
+    // ─── Efecto principal ──────────────────────────────────────────────────────
 
     useEffect(() => {
         if (isOnline) {
             if (wasOfflineRef.current) {
-                // SUB-4: volvió la conexión → refresh completo desde p0
                 wasOfflineRef.current = false
                 void cargarPaginaBackend(0, filtroPlacaRef.current, false)
             } else {
@@ -126,15 +127,13 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [isOnline, cargarPaginaBackend, cargarDesdeCache])
 
-    // ─── API pública ────────────────────────────────────────────────────────────
+    // ─── API pública ───────────────────────────────────────────────────────────
 
     const setFiltroPlaca = useCallback((placa: string) => {
         setFiltroPlacaState(placa)
         if (isOnlineRef.current) {
-            // Nuevo filtro → resetear lista y cargar desde p0
             void cargarPaginaBackend(0, placa, false)
         } else {
-            // Filtro offline: sobre el caché en memoria
             void get<IngresoVehiculoResponse[]>(IDB_KEY_INGRESOS).then(cached => {
                 if (!cached) return
                 const filtrados = placa.trim()
@@ -148,19 +147,34 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [cargarPaginaBackend])
 
-    /** Carga la siguiente página y la acumula (llamado por el IntersectionObserver) */
     const cargarMas = useCallback(() => {
         if (!isOnlineRef.current || !hasMore || isLoadingRef.current) return
-        const nextPage = currentPageRef.current + 1
-        void cargarPaginaBackend(nextPage, filtroPlacaRef.current, true)
+        void cargarPaginaBackend(currentPageRef.current + 1, filtroPlacaRef.current, true)
     }, [hasMore, cargarPaginaBackend])
 
-    /** Recarga desde p0 reemplazando la lista — usado en pull-to-refresh o SUB-4 */
     const refrescar = useCallback(() => {
         if (isOnlineRef.current) {
             void cargarPaginaBackend(0, filtroPlacaRef.current, false)
         }
     }, [cargarPaginaBackend])
+
+    // ─── HU-019: Eliminar ingreso ──────────────────────────────────────────────
+
+    const eliminarIngreso = useCallback(async (id: number) => {
+        setIsDeleting(true)
+        try {
+            await ingresoService.eliminarIngreso(id)
+            setToast({ message: 'Registro eliminado correctamente', type: 'success' })
+            // Quitar el registro de la lista local inmediatamente (optimistic)
+            setIngresos(prev => prev.filter(i => i.idIngreso !== id))
+            setTotalElements(prev => prev - 1)
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Error al eliminar el registro'
+            setToast({ message: msg, type: 'error' })
+        } finally {
+            setIsDeleting(false)
+        }
+    }, [])
 
     return (
         <IngresoContext.Provider value={{
@@ -174,6 +188,10 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             setFiltroPlaca,
             cargarMas,
             refrescar,
+            eliminarIngreso,
+            isDeleting,
+            toast,
+            clearToast,
         }}>
             {children}
         </IngresoContext.Provider>
