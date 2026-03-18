@@ -1,7 +1,7 @@
 // src/contexts/IngresoContext.ts
 
 import { createContext } from 'react'
-import { IngresoVehiculoResponse } from '../services/ingresoService'
+import {EditarIngresoRequest, IngresoVehiculoResponse} from '../services/ingresoService'
 
 export interface ToastState {
     message: string
@@ -32,6 +32,9 @@ export interface IngresoContextType {
     eliminarIngreso: (id: number) => Promise<void>
     /** true mientras se ejecuta la eliminación */
     isDeleting: boolean
+
+    editarIngreso: (id: number, data: EditarIngresoRequest) => Promise<void>
+    isEditing: boolean
     /** Toast de feedback para mostrar en la vista */
     toast: ToastState | null
     clearToast: () => void

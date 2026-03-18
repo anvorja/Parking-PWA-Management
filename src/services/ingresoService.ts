@@ -12,6 +12,15 @@ export interface RegistrarIngresoRequest {
     fechaHoraIngreso?: string
 }
 
+export interface EditarIngresoRequest {
+    placa?: string
+    idTipoVehiculo?: number
+    idUbicacion?: number
+    idEstadoIngreso?: number
+    fechaHoraIngreso?: string
+    fechaHoraSalida?: string
+}
+
 export interface IngresoVehiculoResponse {
     idIngreso: number
     placa: string
@@ -86,8 +95,8 @@ export const ingresoService = {
             }),
         })
         if (!response.ok) {
-            const errorData = await response.json().catch(() => null)
-            throw new Error(errorData?.message || `Error al registrar ingreso (${response.status})`)
+            const err = await response.json().catch(() => null)
+            throw new Error(err?.message || `Error al registrar ingreso (${response.status})`)
         }
         return response.json()
     },
@@ -104,8 +113,8 @@ export const ingresoService = {
 
         const response = await fetchConAuth(`/api/ingresos?${query.toString()}`)
         if (!response.ok) {
-            const errorData = await response.json().catch(() => null)
-            throw new Error(errorData?.message || `Error al listar ingresos (${response.status})`)
+            const err = await response.json().catch(() => null)
+            throw new Error(err?.message || `Error al listar ingresos (${response.status})`)
         }
         return response.json()
     },
@@ -115,12 +124,26 @@ export const ingresoService = {
     async eliminarIngreso(id: number): Promise<void> {
         const response = await fetchConAuth(`/api/ingresos/${id}`, { method: 'DELETE' })
         if (!response.ok) {
-            const errorData = await response.json().catch(() => null)
-            throw new Error(errorData?.message || `Error al eliminar el registro (${response.status})`)
+            const err = await response.json().catch(() => null)
+            throw new Error(err?.message || `Error al eliminar el registro (${response.status})`)
         }
     },
 
-    // ── Datos de referencia ───────────────────────────────────────────────────
+    // ── Editar ingreso — HU-020 ────────────────────────────────────────────────
+
+    async editarIngreso(id: number, data: EditarIngresoRequest): Promise<IngresoVehiculoResponse> {
+        const response = await fetchConAuth(`/api/ingresos/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        })
+        if (!response.ok) {
+            const err = await response.json().catch(() => null)
+            throw new Error(err?.message || `Error al editar el registro (${response.status})`)
+        }
+        return response.json()
+    },
+
+    // ── Datos de referencia ────────────────────────────────────────────────────
 
     async getUbicaciones(): Promise<Ubicacion[]> {
         const response = await fetchConAuth('/api/v1/ubicaciones')

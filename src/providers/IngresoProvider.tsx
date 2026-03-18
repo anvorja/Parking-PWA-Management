@@ -1,12 +1,12 @@
 // src/providers/IngresoProvider.tsx
-//
-// HU-018: scroll infinito, caché IndexedDB, offline SUB-1/2/3/4
-// HU-019: eliminarIngreso solo ADMINISTRADOR, con toast de feedback
+// HU-018: scroll infinito + caché IndexedDB + offline SUB-1/2/3/4
+// HU-019: eliminarIngreso con optimistic update
+// HU-020: editarIngreso con actualización local de la lista
 
 import React, { useState, useEffect, useCallback, useRef, ReactNode } from 'react'
 import { get, set } from 'idb-keyval'
 import { IngresoContext, ToastState } from '../contexts/IngresoContext'
-import { ingresoService, IngresoVehiculoResponse } from '../services/ingresoService'
+import { EditarIngresoRequest, ingresoService, IngresoVehiculoResponse } from '../services/ingresoService'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 
 const IDB_KEY_INGRESOS = 'ingresos_activos_cache'
@@ -16,15 +16,16 @@ const PAGE_SIZE         = 20
 export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { isOnline } = useNetworkStatus()
 
-    const [ingresos, setIngresos]             = useState<IngresoVehiculoResponse[]>([])
-    const [isLoading, setIsLoading]           = useState(true)
-    const [isLoadingMore, setIsLoadingMore]   = useState(false)
-    const [hasMore, setHasMore]               = useState(false)
-    const [totalElements, setTotalElements]   = useState(0)
-    const [currentPage, setCurrentPage]       = useState(0)
-    const [filtroPlaca, setFiltroPlacaState]  = useState('')
-    const [isDeleting, setIsDeleting]         = useState(false)
-    const [toast, setToast]                   = useState<ToastState | null>(null)
+    const [ingresos, setIngresos]           = useState<IngresoVehiculoResponse[]>([])
+    const [isLoading, setIsLoading]         = useState(true)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [hasMore, setHasMore]             = useState(false)
+    const [totalElements, setTotalElements] = useState(0)
+    const [currentPage, setCurrentPage]     = useState(0)
+    const [filtroPlaca, setFiltroPlacaState] = useState('')
+    const [isDeleting, setIsDeleting]       = useState(false)
+    const [isEditing, setIsEditing]         = useState(false)
+    const [toast, setToast]                 = useState<ToastState | null>(null)
 
     const filtroPlacaRef = useRef(filtroPlaca)
     const currentPageRef = useRef(currentPage)
@@ -36,8 +37,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     useEffect(() => { currentPageRef.current = currentPage }, [currentPage])
     useEffect(() => { isOnlineRef.current    = isOnline    }, [isOnline])
 
-    // ─── Toast auto-dismiss ────────────────────────────────────────────────────
-
+    // Toast auto-dismiss
     useEffect(() => {
         if (!toast) return
         const t = setTimeout(() => setToast(null), 3500)
@@ -88,13 +88,11 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         try {
             const data = await ingresoService.listarIngresos({ placa, page, size: PAGE_SIZE })
-
             setIngresos(prev => append ? [...prev, ...data.content] : data.content)
             setTotalElements(data.totalElements)
             setCurrentPage(data.page)
             setHasMore(data.page < data.totalPages - 1)
 
-            // SUB-1: cachear los 50 más recientes con estado INGRESADO
             if (page === 0 && !placa) {
                 const activos = data.content
                     .filter(i => i.estadoIngreso === 'INGRESADO')
@@ -117,10 +115,8 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         if (isOnline) {
             if (wasOfflineRef.current) {
                 wasOfflineRef.current = false
-                void cargarPaginaBackend(0, filtroPlacaRef.current, false)
-            } else {
-                void cargarPaginaBackend(0, filtroPlacaRef.current, false)
             }
+            void cargarPaginaBackend(0, filtroPlacaRef.current, false)
         } else {
             wasOfflineRef.current = true
             void cargarDesdeCache()
@@ -164,10 +160,9 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         setIsDeleting(true)
         try {
             await ingresoService.eliminarIngreso(id)
-            setToast({ message: 'Registro eliminado correctamente', type: 'success' })
-            // Quitar el registro de la lista local inmediatamente (optimistic)
             setIngresos(prev => prev.filter(i => i.idIngreso !== id))
             setTotalElements(prev => prev - 1)
+            setToast({ message: 'Registro eliminado correctamente', type: 'success' })
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al eliminar el registro'
             setToast({ message: msg, type: 'error' })
@@ -176,22 +171,32 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [])
 
+    // ─── HU-020: Editar ingreso ────────────────────────────────────────────────
+
+    const editarIngreso = useCallback(async (id: number, data: EditarIngresoRequest) => {
+        setIsEditing(true)
+        try {
+            const actualizado = await ingresoService.editarIngreso(id, data)
+            // Actualizar el registro en la lista local sin recargar todo
+            setIngresos(prev => prev.map(i => i.idIngreso === id ? actualizado : i))
+            setToast({ message: 'Registro actualizado correctamente', type: 'success' })
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Error al editar el registro'
+            setToast({ message: msg, type: 'error' })
+            throw err // re-lanzar para que el formulario pueda manejar el error también
+        } finally {
+            setIsEditing(false)
+        }
+    }, [])
+
     return (
         <IngresoContext.Provider value={{
-            ingresos,
-            isLoading,
-            isLoadingMore,
-            hasMore,
-            totalElements,
-            isOnline,
-            filtroPlaca,
-            setFiltroPlaca,
-            cargarMas,
-            refrescar,
-            eliminarIngreso,
-            isDeleting,
-            toast,
-            clearToast,
+            ingresos, isLoading, isLoadingMore, hasMore,
+            totalElements, isOnline, filtroPlaca,
+            setFiltroPlaca, cargarMas, refrescar,
+            eliminarIngreso, isDeleting,
+            editarIngreso, isEditing,
+            toast, clearToast,
         }}>
             {children}
         </IngresoContext.Provider>
