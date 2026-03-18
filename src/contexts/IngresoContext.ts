@@ -35,6 +35,8 @@ export interface IngresoContextType {
 
     editarIngreso: (id: number, data: EditarIngresoRequest) => Promise<void>
     isEditing: boolean
+    /** FASE 1: encola el ingreso en IndexedDB si no hay red */
+    registrarIngresoConOutbox: (payload: Record<string, unknown>) => Promise<'online' | 'encolado'>
     /** Toast de feedback para mostrar en la vista */
     toast: ToastState | null
     clearToast: () => void

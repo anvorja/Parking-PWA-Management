@@ -8,10 +8,15 @@ import Home from './pages/Home'
 import Entrada from './pages/Entrada'
 import Ingresos from './pages/Ingresos'
 import Users from './pages/Users'
+import Tarifas from './pages/Tarifas'
 import NotFound from './pages/NotFound'
 import { AuthProvider } from './providers/AuthProvider'
+import { AppProvider } from './providers/AppProvider'
 import { IngresoProvider } from './providers/IngresoProvider'
+import {TarifaProvider} from "./providers/Tarifaprovider";
 import { useAuth } from './hooks/useAuth'
+import {SalidaProvider} from "./providers/Salidaprovider";
+import Salida from "./pages/Salida";
 
 import '@ionic/react/css/core.css'
 import '@ionic/react/css/normalize.css'
@@ -25,6 +30,8 @@ import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 
 import './theme/variables.css'
+import {UbicacionProvider} from "./providers/Ubicacionprovider";
+import Ubicaciones from "./pages/Ubicaciones";
 
 setupIonicReact()
 
@@ -45,35 +52,44 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, ...re
     )
 }
 
-// IngresoProvider envuelve solo /ingresos para no instanciar el contexto
-// (con sus efectos y health-checks de red) en todas las páginas.
+// Providers por ruta — se instancian solo cuando la ruta está activa
 const IngresosConProvider: React.FC<RouteComponentProps> = () => (
-    <IngresoProvider>
-        <Ingresos />
-    </IngresoProvider>
+    <IngresoProvider><Ingresos /></IngresoProvider>
+)
+const SalidaConProvider: React.FC<RouteComponentProps> = () => (
+    <SalidaProvider><Salida /></SalidaProvider>
+)
+const UbicacionesConProvider: React.FC<RouteComponentProps> = () => (
+    <UbicacionProvider><Ubicaciones /></UbicacionProvider>
+)
+const TarifasConProvider: React.FC<RouteComponentProps> = () => (
+    <TarifaProvider><Tarifas /></TarifaProvider>
 )
 
 const App: React.FC = () => (
     <IonApp>
         <AuthProvider>
-            <IonReactRouter>
-                <IonRouterOutlet>
-                    <Route exact path="/login">
-                        <Login />
-                    </Route>
-                    <PrivateRoute exact path="/home"     component={Home} />
-                    <PrivateRoute exact path="/entrada"  component={Entrada} />
-                    <PrivateRoute exact path="/ingresos" component={IngresosConProvider} />
-                    <PrivateRoute exact path="/users"    component={Users} />
-                    <Route exact path="/">
-                        <Redirect to="/entrada" />
-                    </Route>
-                    {/* Catch-all: cualquier ruta no definida → NotFound */}
-                    <Route>
-                        <NotFound />
-                    </Route>
-                </IonRouterOutlet>
-            </IonReactRouter>
+            {/*
+        Arquitectura final de providers:
+        AuthProvider → AppProvider → providers por ruta
+        AppProvider gestiona: red global, outbox, sync automático, banner de estado.
+      */}
+            <AppProvider>
+                <IonReactRouter>
+                    <IonRouterOutlet>
+                        <Route exact path="/login"><Login /></Route>
+                        <PrivateRoute exact path="/home"        component={Home} />
+                        <PrivateRoute exact path="/entrada"     component={Entrada} />
+                        <PrivateRoute exact path="/salida"      component={SalidaConProvider} />
+                        <PrivateRoute exact path="/ingresos"    component={IngresosConProvider} />
+                        <PrivateRoute exact path="/ubicaciones" component={UbicacionesConProvider} />
+                        <PrivateRoute exact path="/users"       component={Users} />
+                        <PrivateRoute exact path="/tarifas"     component={TarifasConProvider} />
+                        <Route exact path="/"><Redirect to="/entrada" /></Route>
+                        <Route><NotFound /></Route>
+                    </IonRouterOutlet>
+                </IonReactRouter>
+            </AppProvider>
         </AuthProvider>
     </IonApp>
 )
