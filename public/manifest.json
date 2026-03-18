@@ -10,18 +10,18 @@
   "lang": "es",
   "icons": [
     {
-      "src": "assets/icon/favicon.png",
+      "src": "/assets/icon/parking-icon.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/png"
     },
     {
-      "src": "assets/icon/icon.png",
+      "src": "/assets/icon/parking-icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "assets/icon/icon.png",
+      "src": "/assets/icon/parking-icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
