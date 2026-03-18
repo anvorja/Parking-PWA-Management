@@ -1,11 +1,13 @@
 // src/services/refDataService.ts
 //
 // TASK-PWA-IDB — Caché IndexedDB de datos de referencia al login.
-// Cachea ubicaciones y tipos de vehículo al login (fire-and-forget).
-// En modo offline, los formularios leen desde el caché local.
+// Cachea ubicaciones, tipos de vehículo y tarifas al login (fire-and-forget).
+// En modo offline los formularios leen desde el caché local.
+// FASE 2: se agregan tarifas para que el cálculo de costo funcione offline.
 
 import { get, set } from 'idb-keyval'
 import { authService } from './authService'
+import { TarifaResponse } from './tarifaService'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
 
@@ -14,6 +16,7 @@ const API_URL = import.meta.env.VITE_API_URL || ''
 export const IDB_KEYS = {
     UBICACIONES:    'ref_ubicaciones',
     TIPOS_VEHICULO: 'ref_tipos_vehiculo',
+    TARIFAS:        'ref_tarifas',
 } as const
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
@@ -30,13 +33,10 @@ export interface UbicacionRef {
 export interface TipoVehiculoRef {
     id:     number
     nombre: string
-    // icono es un campo de presentación del frontend — el backend no lo devuelve.
-    // Se asigna en Entrada.tsx al mapear la respuesta, por eso es opcional aquí.
     icono?: string
 }
 
 // ─── Iconos por convención de nombre ─────────────────────────────────────────
-// Centralizado para que cualquier componente pueda usarlo sin duplicar lógica.
 
 export function iconoParaTipo(nombreTipo: string): string {
     switch (nombreTipo.toUpperCase()) {
@@ -61,16 +61,17 @@ async function fetchWithAuth(path: string): Promise<Response> {
 // ─── Servicio ────────────────────────────────────────────────────────────────
 
 export const refDataService = {
+
     /**
-     * Descarga ubicaciones y tipos de vehículo del backend y los persiste en IndexedDB.
-     * Se llama fire-and-forget después del login exitoso — no bloquea la navegación al Home.
-     * Los tipos se guardan con el icono ya resuelto para que estén listos offline.
+     * Descarga ubicaciones, tipos de vehículo y tarifas del backend
+     * y los persiste en IndexedDB. Fire-and-forget tras login.
      */
     syncToIndexedDB: async (): Promise<void> => {
         try {
-            const [ubicacionesRes, tiposRes] = await Promise.all([
+            const [ubicacionesRes, tiposRes, tarifasRes] = await Promise.all([
                 fetchWithAuth('/api/v1/ubicaciones'),
                 fetchWithAuth('/api/v1/tipos-vehiculo'),
+                fetchWithAuth('/api/v1/tarifas'),
             ])
 
             if (ubicacionesRes.ok) {
@@ -80,12 +81,16 @@ export const refDataService = {
 
             if (tiposRes.ok) {
                 const tiposRaw: Array<{ id: number; nombre: string }> = await tiposRes.json()
-                // Enriquecer con icono antes de persistir
                 const tipos: TipoVehiculoRef[] = tiposRaw.map(t => ({
                     ...t,
                     icono: iconoParaTipo(t.nombre),
                 }))
                 await set(IDB_KEYS.TIPOS_VEHICULO, tipos)
+            }
+
+            if (tarifasRes.ok) {
+                const tarifas: TarifaResponse[] = await tarifasRes.json()
+                await set(IDB_KEYS.TARIFAS, tarifas)
             }
         } catch (error) {
             console.warn('[refDataService] No se pudieron sincronizar datos de referencia:', error)
@@ -98,5 +103,20 @@ export const refDataService = {
 
     getTiposVehiculo: async (): Promise<TipoVehiculoRef[] | null> => {
         return (await get<TipoVehiculoRef[]>(IDB_KEYS.TIPOS_VEHICULO)) ?? null
+    },
+
+    getTarifas: async (): Promise<TarifaResponse[] | null> => {
+        return (await get<TarifaResponse[]>(IDB_KEYS.TARIFAS)) ?? null
+    },
+
+    /**
+     * Devuelve la tarifa activa para un tipo de vehículo dado.
+     * Lee del caché IDB — funciona offline.
+     * Usado en el cálculo de costo preview en la pantalla de Salida.
+     */
+    getTarifaPorTipo: async (idTipoVehiculo: number): Promise<TarifaResponse | null> => {
+        const tarifas = await refDataService.getTarifas()
+        if (!tarifas) return null
+        return tarifas.find(t => t.idTipoVehiculo === idTipoVehiculo && t.activa) ?? null
     },
 }

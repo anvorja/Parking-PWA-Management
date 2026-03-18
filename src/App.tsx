@@ -8,9 +8,12 @@ import Home from './pages/Home'
 import Entrada from './pages/Entrada'
 import Ingresos from './pages/Ingresos'
 import Users from './pages/Users'
+import Tarifas from './pages/Tarifas'
 import NotFound from './pages/NotFound'
 import { AuthProvider } from './providers/AuthProvider'
+import { AppProvider } from './providers/AppProvider'
 import { IngresoProvider } from './providers/IngresoProvider'
+import {TarifaProvider} from "./providers/Tarifaprovider";
 import { useAuth } from './hooks/useAuth'
 
 import '@ionic/react/css/core.css'
@@ -25,7 +28,7 @@ import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 
 import './theme/variables.css'
-import {AppProvider} from "./providers/AppProvider";
+
 
 setupIonicReact()
 
@@ -46,21 +49,26 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, ...re
     )
 }
 
-// IngresoProvider envuelve solo /ingresos para no instanciar el contexto
-// (con sus efectos y health-checks de red) en todas las páginas.
+// Providers por ruta — solo se instancian cuando la ruta es activa
 const IngresosConProvider: React.FC<RouteComponentProps> = () => (
     <IngresoProvider>
         <Ingresos />
     </IngresoProvider>
 )
 
+const TarifasConProvider: React.FC<RouteComponentProps> = () => (
+    <TarifaProvider>
+        <Tarifas />
+    </TarifaProvider>
+)
+
 const App: React.FC = () => (
     <IonApp>
         <AuthProvider>
             {/*
-        AppProvider envuelve el router para que el banner global de red
-        sea visible en todas las páginas. Se monta una sola vez.
-        Arquitectura: AuthProvider → AppProvider → rutas por módulo
+        Arquitectura de providers:
+        AuthProvider → AppProvider → providers por ruta
+        AppProvider gestiona red global, outbox y banner de sincronización.
       */}
             <AppProvider>
                 <IonReactRouter>
@@ -72,6 +80,7 @@ const App: React.FC = () => (
                         <PrivateRoute exact path="/entrada"  component={Entrada} />
                         <PrivateRoute exact path="/ingresos" component={IngresosConProvider} />
                         <PrivateRoute exact path="/users"    component={Users} />
+                        <PrivateRoute exact path="/tarifas"  component={TarifasConProvider} />
                         <Route exact path="/">
                             <Redirect to="/entrada" />
                         </Route>
