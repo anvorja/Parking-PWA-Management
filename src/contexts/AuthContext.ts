@@ -1,8 +1,4 @@
 // src/contexts/AuthContext.tsx
-//
-// Solo define la estructura del contexto (interfaz + createContext).
-// Sin lógica de negocio, sin JSX, sin efectos secundarios.
-// Actúa como contrato entre AuthProvider y useAuth.
 
 import { createContext } from 'react'
 import { AuthenticatedUser, LoginRequest, LoginResponse } from '../services/authService'

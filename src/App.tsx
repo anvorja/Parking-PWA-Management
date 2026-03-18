@@ -25,6 +25,7 @@ import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 
 import './theme/variables.css'
+import {AppProvider} from "./providers/AppProvider";
 
 setupIonicReact()
 
@@ -56,24 +57,30 @@ const IngresosConProvider: React.FC<RouteComponentProps> = () => (
 const App: React.FC = () => (
     <IonApp>
         <AuthProvider>
-            <IonReactRouter>
-                <IonRouterOutlet>
-                    <Route exact path="/login">
-                        <Login />
-                    </Route>
-                    <PrivateRoute exact path="/home"     component={Home} />
-                    <PrivateRoute exact path="/entrada"  component={Entrada} />
-                    <PrivateRoute exact path="/ingresos" component={IngresosConProvider} />
-                    <PrivateRoute exact path="/users"    component={Users} />
-                    <Route exact path="/">
-                        <Redirect to="/entrada" />
-                    </Route>
-                    {/* Catch-all: cualquier ruta no definida → NotFound */}
-                    <Route>
-                        <NotFound />
-                    </Route>
-                </IonRouterOutlet>
-            </IonReactRouter>
+            {/*
+        AppProvider envuelve el router para que el banner global de red
+        sea visible en todas las páginas. Se monta una sola vez.
+        Arquitectura: AuthProvider → AppProvider → rutas por módulo
+      */}
+            <AppProvider>
+                <IonReactRouter>
+                    <IonRouterOutlet>
+                        <Route exact path="/login">
+                            <Login />
+                        </Route>
+                        <PrivateRoute exact path="/home"     component={Home} />
+                        <PrivateRoute exact path="/entrada"  component={Entrada} />
+                        <PrivateRoute exact path="/ingresos" component={IngresosConProvider} />
+                        <PrivateRoute exact path="/users"    component={Users} />
+                        <Route exact path="/">
+                            <Redirect to="/entrada" />
+                        </Route>
+                        <Route>
+                            <NotFound />
+                        </Route>
+                    </IonRouterOutlet>
+                </IonReactRouter>
+            </AppProvider>
         </AuthProvider>
     </IonApp>
 )
