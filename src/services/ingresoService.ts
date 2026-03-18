@@ -1,0 +1,132 @@
+// src/services/ingresoService.ts
+import { authService } from './authService'
+
+const API_URL = import.meta.env.VITE_API_URL || ''
+
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
+export interface RegistrarIngresoRequest {
+    placa: string
+    idTipoVehiculo: number
+    idUbicacion: number
+    fechaHoraIngreso?: string
+}
+
+export interface IngresoVehiculoResponse {
+    idIngreso: number
+    placa: string
+    idTipoVehiculo: number
+    tipoVehiculo: string
+    idUbicacion: number
+    ubicacion: string
+    idEstadoIngreso: number
+    estadoIngreso: string
+    fechaHoraIngreso: string
+    fechaCreacion: string
+    idUsuarioRegistro: number
+    usuarioRegistro: string
+    valorCobrado: number | null
+}
+
+export interface IngresoPageResponse {
+    content: IngresoVehiculoResponse[]
+    page: number
+    size: number
+    totalElements: number
+    totalPages: number
+}
+
+export interface ListarIngresosParams {
+    placa?: string
+    estado?: string
+    page?: number
+    size?: number
+}
+
+// Interfaces de datos de referencia — alineadas con los endpoints del backend
+export interface TipoVehiculo {
+    id: number
+    nombre: string
+}
+
+export interface Ubicacion {
+    id: number
+    nombre: string
+    idTipoVehiculoNativo: number
+    tipoVehiculoNativo: string
+    capacidad: number
+    disponible: boolean
+}
+
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+async function fetchConAuth(path: string, options: RequestInit = {}): Promise<Response> {
+    const token = await authService.getToken()
+    return fetch(`${API_URL}${path}`, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...options.headers,
+        },
+    })
+}
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
+export const ingresoService = {
+
+    // ── Registrar ingreso ──────────────────────────────────────────────────────
+
+    async registrarIngreso(data: RegistrarIngresoRequest): Promise<IngresoVehiculoResponse> {
+        const response = await fetchConAuth('/api/ingresos', {
+            method: 'POST',
+            body: JSON.stringify({
+                ...data,
+                fechaHoraIngreso: data.fechaHoraIngreso || new Date().toISOString(),
+            }),
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null)
+            throw new Error(errorData?.message || `Error al registrar ingreso (${response.status})`)
+        }
+
+        return response.json()
+    },
+
+    // ── Listar ingresos — HU-018 ───────────────────────────────────────────────
+
+    async listarIngresos(params: ListarIngresosParams = {}): Promise<IngresoPageResponse> {
+        const { placa = '', estado = '', page = 0, size = 20 } = params
+
+        const query = new URLSearchParams()
+        if (placa)  query.set('placa',  placa)
+        if (estado) query.set('estado', estado)
+        query.set('page', String(page))
+        query.set('size', String(size))
+
+        const response = await fetchConAuth(`/api/ingresos?${query.toString()}`)
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null)
+            throw new Error(errorData?.message || `Error al listar ingresos (${response.status})`)
+        }
+
+        return response.json()
+    },
+
+    // ── Datos de referencia (para formularios y caché PWA) ────────────────────
+
+    async getUbicaciones(): Promise<Ubicacion[]> {
+        const response = await fetchConAuth('/api/v1/ubicaciones')
+        if (!response.ok) throw new Error(`Error al obtener ubicaciones (${response.status})`)
+        return response.json()
+    },
+
+    async getTiposVehiculo(): Promise<TipoVehiculo[]> {
+        const response = await fetchConAuth('/api/v1/tipos-vehiculo')
+        if (!response.ok) throw new Error(`Error al obtener tipos de vehículo (${response.status})`)
+        return response.json()
+    },
+}

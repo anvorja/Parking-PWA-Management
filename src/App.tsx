@@ -1,73 +1,81 @@
-import { Redirect, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import Login from './pages/Login';
-import Home from './pages/Home';
-import Users from './pages/Users';
-import { AuthProvider, useAuth } from './context/AuthContext';
-/* Core CSS required for Ionic components to work properly */
-import '@ionic/react/css/core.css';
+// src/App.tsx
+import React, { ComponentType } from 'react'
+import { Redirect, Route, RouteComponentProps } from 'react-router-dom'
+import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react'
+import { IonReactRouter } from '@ionic/react-router'
+import Login from './pages/Login'
+import Home from './pages/Home'
+import Entrada from './pages/Entrada'
+import Ingresos from './pages/Ingresos'
+import Users from './pages/Users'
+import NotFound from './pages/NotFound'
+import { AuthProvider } from './providers/AuthProvider'
+import { IngresoProvider } from './providers/IngresoProvider'
+import { useAuth } from './hooks/useAuth'
 
-/* Basic CSS for apps built with Ionic */
-import '@ionic/react/css/normalize.css';
-import '@ionic/react/css/structure.css';
-import '@ionic/react/css/typography.css';
+import '@ionic/react/css/core.css'
+import '@ionic/react/css/normalize.css'
+import '@ionic/react/css/structure.css'
+import '@ionic/react/css/typography.css'
+import '@ionic/react/css/padding.css'
+import '@ionic/react/css/float-elements.css'
+import '@ionic/react/css/text-alignment.css'
+import '@ionic/react/css/text-transformation.css'
+import '@ionic/react/css/flex-utils.css'
+import '@ionic/react/css/display.css'
 
-/* Optional CSS utils that can be commented out */
-import '@ionic/react/css/padding.css';
-import '@ionic/react/css/float-elements.css';
-import '@ionic/react/css/text-alignment.css';
-import '@ionic/react/css/text-transformation.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
+import './theme/variables.css'
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+setupIonicReact()
 
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-/* import '@ionic/react/css/palettes/dark.system.css'; */
+interface PrivateRouteProps {
+    component: ComponentType<RouteComponentProps>
+    path: string
+    exact: boolean
+}
 
-/* Theme variables */
-import './theme/variables.css';
+const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, ...rest }) => {
+    const { token, isLoading } = useAuth()
+    if (isLoading) return null
+    return (
+        <Route
+            {...rest}
+            render={props => (token ? <Component {...props} /> : <Redirect to="/login" />)}
+        />
+    )
+}
 
-setupIonicReact();
-
-const PrivateRoute: React.FC<{ component: React.FC<any>; path: string; exact: boolean }> = ({ component: Component, ...rest }) => {
-  const { token, isLoading } = useAuth();
-
-  if (isLoading) {
-    return null; // Podría ser un spinner global
-  }
-
-  return (
-    <Route {...rest} render={(props) => (
-      token ? <Component {...props} /> : <Redirect to="/login" />
-    )} />
-  );
-};
+// IngresoProvider envuelve solo /ingresos para no instanciar el contexto
+// (con sus efectos y health-checks de red) en todas las páginas.
+const IngresosConProvider: React.FC<RouteComponentProps> = () => (
+    <IngresoProvider>
+        <Ingresos />
+    </IngresoProvider>
+)
 
 const App: React.FC = () => (
-  <IonApp>
-    <AuthProvider>
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <Route exact path="/login">
-            <Login />
-          </Route>
-          <PrivateRoute exact path="/home" component={Home} />
-          <PrivateRoute exact path="/users" component={Users} />
-          <Route exact path="/">
-            <Redirect to="/home" />
-          </Route>
-        </IonRouterOutlet>
-      </IonReactRouter>
-    </AuthProvider>
-  </IonApp>
-);
+    <IonApp>
+        <AuthProvider>
+            <IonReactRouter>
+                <IonRouterOutlet>
+                    <Route exact path="/login">
+                        <Login />
+                    </Route>
+                    <PrivateRoute exact path="/home"     component={Home} />
+                    <PrivateRoute exact path="/entrada"  component={Entrada} />
+                    <PrivateRoute exact path="/ingresos" component={IngresosConProvider} />
+                    <PrivateRoute exact path="/users"    component={Users} />
+                    <Route exact path="/">
+                        <Redirect to="/entrada" />
+                    </Route>
+                    {/* Catch-all: cualquier ruta no definida → NotFound */}
+                    <Route>
+                        <NotFound />
+                    </Route>
+                </IonRouterOutlet>
+            </IonReactRouter>
+        </AuthProvider>
+    </IonApp>
+)
 
-export default App;
+export default App
