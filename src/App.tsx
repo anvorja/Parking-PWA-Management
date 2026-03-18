@@ -30,6 +30,8 @@ import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 
 import './theme/variables.css'
+import {UbicacionProvider} from "./providers/Ubicacionprovider";
+import Ubicaciones from "./pages/Ubicaciones";
 
 setupIonicReact()
 
@@ -50,12 +52,15 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, ...re
     )
 }
 
-// Providers por ruta — solo se instancian cuando la ruta es activa
+// Providers por ruta — se instancian solo cuando la ruta está activa
 const IngresosConProvider: React.FC<RouteComponentProps> = () => (
     <IngresoProvider><Ingresos /></IngresoProvider>
 )
 const SalidaConProvider: React.FC<RouteComponentProps> = () => (
     <SalidaProvider><Salida /></SalidaProvider>
+)
+const UbicacionesConProvider: React.FC<RouteComponentProps> = () => (
+    <UbicacionProvider><Ubicaciones /></UbicacionProvider>
 )
 const TarifasConProvider: React.FC<RouteComponentProps> = () => (
     <TarifaProvider><Tarifas /></TarifaProvider>
@@ -64,17 +69,22 @@ const TarifasConProvider: React.FC<RouteComponentProps> = () => (
 const App: React.FC = () => (
     <IonApp>
         <AuthProvider>
-            {/* Arquitectura: AuthProvider → AppProvider → providers por ruta */}
+            {/*
+        Arquitectura final de providers:
+        AuthProvider → AppProvider → providers por ruta
+        AppProvider gestiona: red global, outbox, sync automático, banner de estado.
+      */}
             <AppProvider>
                 <IonReactRouter>
                     <IonRouterOutlet>
                         <Route exact path="/login"><Login /></Route>
-                        <PrivateRoute exact path="/home"     component={Home} />
-                        <PrivateRoute exact path="/entrada"  component={Entrada} />
-                        <PrivateRoute exact path="/salida"   component={SalidaConProvider} />
-                        <PrivateRoute exact path="/ingresos" component={IngresosConProvider} />
-                        <PrivateRoute exact path="/users"    component={Users} />
-                        <PrivateRoute exact path="/tarifas"  component={TarifasConProvider} />
+                        <PrivateRoute exact path="/home"        component={Home} />
+                        <PrivateRoute exact path="/entrada"     component={Entrada} />
+                        <PrivateRoute exact path="/salida"      component={SalidaConProvider} />
+                        <PrivateRoute exact path="/ingresos"    component={IngresosConProvider} />
+                        <PrivateRoute exact path="/ubicaciones" component={UbicacionesConProvider} />
+                        <PrivateRoute exact path="/users"       component={Users} />
+                        <PrivateRoute exact path="/tarifas"     component={TarifasConProvider} />
                         <Route exact path="/"><Redirect to="/entrada" /></Route>
                         <Route><NotFound /></Route>
                     </IonRouterOutlet>
