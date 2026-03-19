@@ -4,7 +4,7 @@
 // HU-020: botón editar (todos los roles) + modal con campos condicionales según rol
 
 import React, { useEffect, useRef, useState } from 'react'
-import { IonPage, IonContent } from '@ionic/react'
+import { IonPage, IonContent, useIonRouter } from '@ionic/react'
 import { useIngresos } from '../hooks/useIngresos'
 import { useAuth } from '../hooks/useAuth'
 import { EditarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService'
@@ -285,6 +285,7 @@ const Ingresos: React.FC = () => {
 
     const { user } = useAuth()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
+    const router  = useIonRouter()
 
     const [deleteTarget, setDeleteTarget] = useState<IngresoVehiculoResponse | null>(null)
     const [editTarget,   setEditTarget]   = useState<IngresoVehiculoResponse | null>(null)
@@ -465,8 +466,10 @@ const Ingresos: React.FC = () => {
 
                                                 {/* Botón salida */}
                                                 {esIngresado && (
-                                                    <button disabled={!isOnline}
-                                                            style={{ width: '100%', padding: '9px', borderRadius: '10px', border: 'none', background: isOnline ? '#137fec' : '#e2e8f0', color: isOnline ? '#fff' : '#94a3b8', fontSize: '13px', fontWeight: 700, cursor: isOnline ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'background 0.2s' }}>
+                                                    <button
+                                                        disabled={!isOnline}
+                                                        onClick={() => router.push(`/salida?placa=${encodeURIComponent(ingreso.placa)}`, 'forward', 'push')}
+                                                        style={{ width: '100%', padding: '9px', borderRadius: '10px', border: 'none', background: isOnline ? '#137fec' : '#e2e8f0', color: isOnline ? '#fff' : '#94a3b8', fontSize: '13px', fontWeight: 700, cursor: isOnline ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'background 0.2s' }}>
                                                         <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
                                                         {isOnline ? 'Registrar Salida' : 'No disponible sin conexión'}
                                                     </button>

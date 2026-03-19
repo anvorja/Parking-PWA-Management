@@ -3,8 +3,8 @@
 // HU-010: salida manual por placa
 // HU-011: resumen de cobro tras confirmar salida
 
-import React, { useState } from 'react'
-import { IonPage, IonContent } from '@ionic/react'
+import React, { useState, useEffect } from 'react'
+import { IonPage, IonContent, useIonRouter } from '@ionic/react'
 import { useSalida } from '../hooks/useSalida'
 import QRScanner from '../components/QRScanner'
 import BottomNav from '../components/BottomNav'
@@ -61,6 +61,18 @@ const Salida: React.FC = () => {
     } = useSalida()
 
     const [placa, setPlaca] = useState('')
+    const router = useIonRouter()
+
+    // Si se navega desde Ingresos con ?placa=XYZ, disparar búsqueda automática en tab manual
+    useEffect(() => {
+        const params = new URLSearchParams(router.routeInfo.search ?? '')
+        const placaParam = params.get('placa')
+        if (placaParam) {
+            setPlaca(placaParam)
+            setModoBusqueda('manual')
+            void buscarPorPlaca(placaParam)
+        }
+    }, [])
 
     const handleBuscarPlaca = () => {
         void buscarPorPlaca(placa)
