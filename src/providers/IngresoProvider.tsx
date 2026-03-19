@@ -107,12 +107,23 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [])
 
     // ─── Carga desde backend ───────────────────────────────────────────────────
+    //
+    // Bug 2 fix: si hay INGRESO_EDITAR pendientes en la outbox, no recargar
+    // la lista desde el backend (page=0, no append). El backend aún no tiene
+    // esos cambios — pisar el optimistic update con datos viejos del backend.
+    // handleSyncComplete recargará cuando la outbox esté limpia.
 
     const cargarPaginaBackend = useCallback(async (
         page: number,
         placa: string,
         append: boolean
     ) => {
+        if (!append && page === 0) {
+            const pendientes = await outboxService.getPendientes()
+            const hayEdiciones = pendientes.some(e => e.type === 'INGRESO_EDITAR')
+            if (hayEdiciones) return
+        }
+
         if (isLoadingRef.current) return
         isLoadingRef.current = true
 
@@ -245,6 +256,16 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             } else {
                 await outboxService.enqueue('INGRESO_EDITAR', { id, ...data })
                 // Optimistic update: reflejar en la UI sin esperar al backend
+                const ingresosActualizados = (await get<IngresoVehiculoResponse[]>(IDB_KEY_INGRESOS)) ?? []
+                const cacheActualizado = ingresosActualizados.map(i => {
+                    if (i.idIngreso !== id) return i
+                    return {
+                        ...i,
+                        ...(data.placa            && { placa:            data.placa.toUpperCase() }),
+                        ...(data.fechaHoraIngreso  && { fechaHoraIngreso: data.fechaHoraIngreso }),
+                    }
+                })
+                await set(IDB_KEY_INGRESOS, cacheActualizado)
                 setIngresos(prev => prev.map(i => {
                     if (i.idIngreso !== id) return i
                     return {
