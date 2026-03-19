@@ -1,36 +1,204 @@
-import React from 'react';
-import { useIonRouter } from '@ionic/react';
+// src/components/BottomNav.tsx
+import React, { useState } from 'react'
+import { useIonRouter } from '@ionic/react'
+import { useAuth }      from '../hooks/useAuth'
 
-const BottomNav: React.FC = () => {
-    const router = useIonRouter();
-    const currentPath = router.routeInfo.pathname;
+// ─── Modal de confirmación de logout ─────────────────────────────────────────
 
-    return (
-        <nav className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-4 pb-safe-bottom pt-1.5 backdrop-blur-md z-30">
-            <div className="flex justify-between items-center pb-1.5">
+interface LogoutModalProps {
+    isLoggingOut: boolean
+    onConfirm:    () => void
+    onCancel:     () => void
+}
+
+const LogoutModal: React.FC<LogoutModalProps> = ({ isLoggingOut, onConfirm, onCancel }) => (
+    <div
+        style={{
+            position: 'fixed', inset: 0, zIndex: 9998,
+            background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+        }}
+        onClick={e => { if (e.target === e.currentTarget && !isLoggingOut) onCancel() }}
+    >
+        <div style={{
+            background: '#fff', borderRadius: '20px', padding: '28px 24px',
+            width: '100%', maxWidth: '340px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
+        }}>
+            {/* Icono */}
+            <div style={{
+                width: '52px', height: '52px', borderRadius: '14px',
+                background: '#fef2f2', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', margin: '0 auto 16px',
+            }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '26px', color: '#ef4444' }}>
+                    logout
+                </span>
+            </div>
+
+            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', textAlign: 'center', margin: '0 0 8px' }}>
+                ¿Cerrar sesión?
+            </h3>
+            <p style={{ fontSize: '13px', color: '#64748b', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
+                Se cerrará tu sesión en este dispositivo. Las operaciones pendientes de sincronización se perderán.
+            </p>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
                 <button
-                    onClick={() => router.push('/home', 'root', 'replace')}
-                    className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors ${currentPath === '/home' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
+                    onClick={onCancel}
+                    disabled={isLoggingOut}
+                    style={{
+                        flex: 1, padding: '12px', borderRadius: '12px',
+                        border: '1.5px solid #e2e8f0', background: '#fff',
+                        color: '#475569', fontSize: '14px', fontWeight: 600,
+                        cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+                    }}
                 >
-                    <span className="material-symbols-outlined text-[24px]" style={currentPath === '/home' ? { fontVariationSettings: "'FILL' 1" } : {}}>directions_car</span>
-                    <span className="text-[9px] font-medium leading-normal">Operación</span>
+                    Cancelar
                 </button>
                 <button
-                    className="flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-primary transition-colors"
+                    onClick={onConfirm}
+                    disabled={isLoggingOut}
+                    style={{
+                        flex: 1, padding: '12px', borderRadius: '12px',
+                        border: 'none',
+                        background: isLoggingOut ? '#fca5a5' : '#ef4444',
+                        color: '#fff', fontSize: '14px', fontWeight: 700,
+                        cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    }}
                 >
-                    <span className="material-symbols-outlined text-[24px]">grid_view</span>
-                    <span className="text-[9px] font-medium leading-normal">Ubicaciones</span>
-                </button>
-                <button
-                    onClick={() => router.push('/users', 'root', 'replace')}
-                    className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors ${currentPath === '/users' ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
-                >
-                    <span className="material-symbols-outlined text-[24px]" style={currentPath === '/users' ? { fontVariationSettings: "'FILL' 1" } : {}}>admin_panel_settings</span>
-                    <span className="text-[9px] font-medium leading-normal">Administración</span>
+                    {isLoggingOut ? (
+                        <>
+                            <div style={{
+                                width: '14px', height: '14px',
+                                border: '2px solid rgba(255,255,255,0.4)',
+                                borderTopColor: '#fff', borderRadius: '50%',
+                                animation: 'spin 0.8s linear infinite',
+                            }} />
+                            Saliendo...
+                        </>
+                    ) : (
+                        'Cerrar sesión'
+                    )}
                 </button>
             </div>
-        </nav>
-    );
-};
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+    </div>
+)
 
-export default BottomNav;
+// ─── BottomNav ────────────────────────────────────────────────────────────────
+
+const BottomNav: React.FC = () => {
+    const router      = useIonRouter()
+    const currentPath = router.routeInfo.pathname
+    const { user, logout, isLoggingOut } = useAuth()
+    const esAdmin = user?.rol === 'ADMINISTRADOR'
+
+    const [mostrarConfirmLogout, setMostrarConfirmLogout] = useState(false)
+
+    const tabs = [
+        { path: '/entrada',     label: 'ENTRADA',    icon: 'login' },
+        { path: '/salida',      label: 'SALIDA',      icon: 'logout' },
+        { path: '/ingresos',    label: 'INGRESOS',    icon: 'format_list_bulleted' },
+        { path: '/ubicaciones', label: 'PARQUEADERO', icon: 'grid_view' },
+        { path: '/users',       label: 'USUARIOS',    icon: 'group',    soloAdmin: true },
+        { path: '/tarifas',     label: 'TARIFAS',     icon: 'payments', soloAdmin: true },
+    ].filter(tab => !('soloAdmin' in tab) || !tab.soloAdmin || esAdmin)
+
+    const handleConfirmLogout = async () => {
+        await logout()
+        setMostrarConfirmLogout(false)
+    }
+
+    return (
+        <>
+            <nav style={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
+                background: '#fff', borderTop: '1px solid #e2e8f0',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            }}>
+                <div style={{
+                    display: 'flex', justifyContent: 'space-around',
+                    alignItems: 'center', paddingTop: '8px', paddingBottom: '10px',
+                }}>
+                    {/* Tabs de navegación */}
+                    {tabs.map(tab => {
+                        const isActive = currentPath === tab.path ||
+                            (tab.path === '/entrada' && currentPath === '/home')
+                        return (
+                            <button
+                                key={tab.path}
+                                onClick={() => router.push(tab.path, 'root', 'replace')}
+                                style={{
+                                    display: 'flex', flexDirection: 'column',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    gap: '2px', background: 'none', border: 'none',
+                                    outline: 'none', cursor: 'pointer',
+                                    padding: '4px 6px', margin: 0,
+                                    color: isActive ? '#137fec' : '#94a3b8',
+                                    transition: 'color 0.2s', flex: 1,
+                                }}
+                            >
+                                <span
+                                    className="material-symbols-outlined"
+                                    style={{
+                                        fontSize: '22px',
+                                        ...(isActive ? { fontVariationSettings: "'FILL' 1" } : {}),
+                                    }}
+                                >
+                                    {tab.icon}
+                                </span>
+                                <span style={{
+                                    fontSize: '8px', fontWeight: 600,
+                                    letterSpacing: '0.4px', lineHeight: 1.2, textAlign: 'center',
+                                }}>
+                                    {tab.label}
+                                </span>
+                            </button>
+                        )
+                    })}
+
+                    {/* Botón logout — separado visualmente de los tabs de navegación */}
+                    <button
+                        onClick={() => setMostrarConfirmLogout(true)}
+                        disabled={isLoggingOut}
+                        style={{
+                            display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center',
+                            gap: '2px', background: 'none', border: 'none',
+                            outline: 'none',
+                            cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+                            padding: '4px 6px', margin: 0,
+                            color: '#ef4444',
+                            opacity: isLoggingOut ? 0.5 : 1,
+                            transition: 'opacity 0.2s', flex: 1,
+                        }}
+                        title="Cerrar sesión"
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>
+                            power_settings_new
+                        </span>
+                        <span style={{
+                            fontSize: '8px', fontWeight: 600,
+                            letterSpacing: '0.4px', lineHeight: 1.2, textAlign: 'center',
+                        }}>
+                            SALIR
+                        </span>
+                    </button>
+                </div>
+            </nav>
+
+            {mostrarConfirmLogout && (
+                <LogoutModal
+                    isLoggingOut={isLoggingOut}
+                    onConfirm={handleConfirmLogout}
+                    onCancel={() => setMostrarConfirmLogout(false)}
+                />
+            )}
+        </>
+    )
+}
+
+export default BottomNav

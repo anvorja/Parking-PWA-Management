@@ -13,6 +13,7 @@
 
 # misc
 .DS_Store
+.env
 .env.local
 .env.development.local
 .env.test.local
@@ -33,3 +34,23 @@ yarn-error.log*
 # Directorios ignorados a petición del usuario
 /Documentacion
 /backend-repo
+/.tmp-backend
+
+# Scripts y archivos temporales
+*.py
+*.sql
+*.json
+!package.json
+!package-lock.json
+!ionic.config.json
+!tsconfig.json
+!tsconfig.node.json
+*.log
+*.txt
+*.mjs
+*.cjs
+backup_project_files_script.sh
+miproyecto_copy/
+docs/
+vite.config.ts.timestamp-*.mjs
+backup_project_files_(indicando).sh

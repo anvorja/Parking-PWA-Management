@@ -16,3 +16,15 @@ http://ionicframework.com/docs/theming/ */
     --radius-xl: 0.75rem;
     --radius-full: 9999px;
 }
+
+/* Toast slide-in animation */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

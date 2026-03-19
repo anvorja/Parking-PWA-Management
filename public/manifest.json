@@ -1,21 +1,30 @@
 {
-  "short_name": "Ionic App",
-  "name": "My Ionic App",
+  "name": "Parqueadero",
+  "short_name": "Parqueadero",
+  "description": "Sistema de gestión de parqueadero",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#137fec",
+  "background_color": "#f6f7f8",
+  "lang": "es",
   "icons": [
     {
-      "src": "assets/icon/favicon.png",
+      "src": "/assets/icon/parking-icon.png",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "assets/icon/icon.png",
+      "src": "/assets/icon/parking-icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icon/parking-icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+  ]
 }
