@@ -13,10 +13,12 @@ import NotFound from './pages/NotFound'
 import { AuthProvider } from './providers/AuthProvider'
 import { AppProvider } from './providers/AppProvider'
 import { IngresoProvider } from './providers/IngresoProvider'
-import {TarifaProvider} from "./providers/Tarifaprovider";
+import { TarifaProvider } from './providers/Tarifaprovider'
 import { useAuth } from './hooks/useAuth'
-import {SalidaProvider} from "./providers/Salidaprovider";
-import Salida from "./pages/Salida";
+import { SalidaProvider } from './providers/Salidaprovider'
+import Salida from './pages/Salida'
+import { UbicacionProvider } from './providers/Ubicacionprovider'
+import Ubicaciones from './pages/Ubicaciones'
 
 import '@ionic/react/css/core.css'
 import '@ionic/react/css/normalize.css'
@@ -30,8 +32,6 @@ import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 
 import './theme/variables.css'
-import {UbicacionProvider} from "./providers/Ubicacionprovider";
-import Ubicaciones from "./pages/Ubicaciones";
 
 setupIonicReact()
 
@@ -52,7 +52,17 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, ...re
     )
 }
 
-// Providers por ruta — se instancian solo cuando la ruta está activa
+// ─── Providers por ruta ───────────────────────────────────────────────────────
+// Cada provider se instancia solo cuando su ruta está activa.
+//
+// Entrada e Ingresos comparten IngresoProvider porque ambas necesitan
+// la outbox de ingresos:
+//   - Entrada.tsx: registrarIngresoConOutbox (offline)
+//   - Ingresos.tsx: lista, editar, eliminar, salidasPendientes
+
+const EntradaConProvider: React.FC<RouteComponentProps> = () => (
+    <IngresoProvider><Entrada /></IngresoProvider>
+)
 const IngresosConProvider: React.FC<RouteComponentProps> = () => (
     <IngresoProvider><Ingresos /></IngresoProvider>
 )
@@ -70,16 +80,16 @@ const App: React.FC = () => (
     <IonApp>
         <AuthProvider>
             {/*
-        Arquitectura final de providers:
-        AuthProvider → AppProvider → providers por ruta
-        AppProvider gestiona: red global, outbox, sync automático, banner de estado.
-      */}
+                Arquitectura final de providers:
+                AuthProvider → AppProvider → providers por ruta
+                AppProvider gestiona: red global, outbox, sync automático, banner de estado.
+            */}
             <AppProvider>
                 <IonReactRouter>
                     <IonRouterOutlet>
                         <Route exact path="/login"><Login /></Route>
                         <PrivateRoute exact path="/home"        component={Home} />
-                        <PrivateRoute exact path="/entrada"     component={Entrada} />
+                        <PrivateRoute exact path="/entrada"     component={EntradaConProvider} />
                         <PrivateRoute exact path="/salida"      component={SalidaConProvider} />
                         <PrivateRoute exact path="/ingresos"    component={IngresosConProvider} />
                         <PrivateRoute exact path="/ubicaciones" component={UbicacionesConProvider} />

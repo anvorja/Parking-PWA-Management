@@ -9,6 +9,7 @@ import QRCode from 'react-qr-code';
 import BottomNav from '../components/BottomNav';
 import { ingresoService, RegistrarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService';
 import { refDataService, UbicacionRef, TipoVehiculoRef, iconoParaTipo } from '../services/refDataService';
+import { useIngresos } from '../hooks/useIngresos';
 
 // ─── Fallbacks ────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,8 @@ const PRINT_STYLES = `
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 const Entrada: React.FC = () => {
+    const { registrarIngresoConOutbox } = useIngresos()
+
     const [tipos, setTipos]             = useState<TipoVehiculoRef[]>(TIPOS_FALLBACK)
     const [ubicaciones, setUbicaciones] = useState<UbicacionRef[]>([])
     const [loadingUbicaciones, setLoadingUbicaciones] = useState(true)
@@ -175,12 +178,30 @@ const Entrada: React.FC = () => {
             placa: placa.trim(),
             idTipoVehiculo: selectedTipo,
             idUbicacion: selectedUbicacion,
+            // Capturar la hora exacta aquí para que, si se encola offline,
+            // el backend registre el momento real del ingreso y no el de la sync.
+            fechaHoraIngreso: new Date().toISOString(),
         }
 
         try {
             setIsSubmitting(true)
-            const response = await ingresoService.registrarIngreso(data)
-            setTicketData(response)
+
+            // Primero consultar si hay red a través del contexto.
+            // Si offline → registrarIngresoConOutbox encola la operación en IDB
+            // y devuelve 'encolado'. El toast ya lo muestra IngresoProvider.
+            // Si online  → devuelve 'online' y procedemos con la llamada normal.
+            const modo = await registrarIngresoConOutbox(data)
+
+            if (modo === 'online') {
+                const response = await ingresoService.registrarIngreso(data)
+                setTicketData(response)
+            } else {
+                // Offline: limpiar el formulario para el siguiente ingreso.
+                // No hay tiquete porque aún no tenemos respuesta del backend.
+                setPlaca('')
+                setSelectedUbicacion(null)
+                setSelectedTipo(tipos[0]?.id ?? TIPOS_FALLBACK[0].id)
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al registrar el ingreso'
             setToast({ message: msg, type: 'error' })
