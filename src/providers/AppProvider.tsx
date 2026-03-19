@@ -9,10 +9,6 @@ const API_URL                  = import.meta.env.VITE_API_URL || ''
 const HEALTH_CHECK_INTERVAL_MS = 30_000
 const HEALTH_CHECK_TIMEOUT_MS  = 5_000
 
-// ─── Nombre del evento de sync completado ────────────────────────────────────
-// Declarado como constante para que IngresoProvider lo importe
-// y no haya strings duplicados.
-
 export const SYNC_COMPLETE_EVENT = 'parking:sync-complete'
 
 // ─── Helper health-check ──────────────────────────────────────────────────────
@@ -84,11 +80,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [actualizarContadores])
 
     // ── Health-check y detección de red ───────────────────────────────────────
+    //   1. runHealthCheck captura eraOffline ANTES del await.
+    //   2. handleOnline actualiza isOnlineRef manualmente de forma síncrona
+    //      y dispara ejecutarSync directamente, sin esperar al health-check.
+    //      Así el sync ocurre al instante tanto con WiFi físico como con
+    //      el throttling de DevTools (Offline → No throttling).
 
     const runHealthCheck = useCallback(async () => {
-        const reachable  = await checkBackendReachable()
+        // Capturar ANTES del await — puede cambiar durante la espera async
         const eraOffline = !isOnlineRef.current
 
+        const reachable = await checkBackendReachable()
         setIsOnline(reachable)
 
         if (reachable && eraOffline) {
@@ -97,8 +99,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [ejecutarSync])
 
     useEffect(() => {
-        const handleOnline  = () => { setIsOnline(true);  void runHealthCheck() }
-        const handleOffline = () => { setIsOnline(false) }
+        const handleOnline = () => {
+            // Actualizar el ref síncronamente ANTES de llamar ejecutarSync,
+            // porque ejecutarSync lo lee y sin esto vería isOnlineRef=false
+            // durante la ventana de tiempo hasta el próximo render.
+            isOnlineRef.current = true
+            setIsOnline(true)
+            // Disparar sync de inmediato — el navegador ya confirmó red.
+            void ejecutarSync()
+            // Health-check confirma que el BACKEND es alcanzable (no solo la red local).
+            void runHealthCheck()
+        }
+        const handleOffline = () => {
+            isOnlineRef.current = false
+            setIsOnline(false)
+        }
 
         window.addEventListener('online',  handleOnline)
         window.addEventListener('offline', handleOffline)
@@ -113,7 +128,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             window.removeEventListener('offline', handleOffline)
             if (intervalRef.current) clearInterval(intervalRef.current)
         }
-    }, [runHealthCheck, actualizarContadores])
+    }, [runHealthCheck, ejecutarSync, actualizarContadores])
 
     // ── Sincronización manual ─────────────────────────────────────────────────
 
@@ -125,8 +140,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // ── Estado unificado de red ───────────────────────────────────────────────
 
     const estadoRed: EstadoRed = (() => {
-        if (!isOnline)        return 'offline'
-        if (isSincronizando)  return 'sincronizando'
+        if (!isOnline)         return 'offline'
+        if (isSincronizando)   return 'sincronizando'
         if (muertasOutbox > 0) return 'error_sync'
         return 'online'
     })()
@@ -153,7 +168,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 }
 
 // ─── Banner global de red ─────────────────────────────────────────────────────
-// Componente interno — no se exporta ni se usa fuera de este archivo.
 
 interface NetworkBannerProps {
     estadoRed:    EstadoRed
