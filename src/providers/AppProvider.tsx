@@ -1,8 +1,4 @@
 // src/providers/AppProvider.tsx
-//
-// FASE 1 — Provider global de estado de red y outbox.
-// Se monta UNA SOLA VEZ en App.tsx, dentro de AuthProvider.
-// Gestiona: detección de red, disparo de syncService, banner global de estado.
 
 import React, { useState, useEffect, useCallback, useRef, ReactNode } from 'react'
 import { AppContext, AppContextType, EstadoRed } from '../contexts/AppContext'
@@ -13,9 +9,13 @@ const API_URL                  = import.meta.env.VITE_API_URL || ''
 const HEALTH_CHECK_INTERVAL_MS = 30_000
 const HEALTH_CHECK_TIMEOUT_MS  = 5_000
 
+// ─── Nombre del evento de sync completado ────────────────────────────────────
+// Declarado como constante para que IngresoProvider lo importe
+// y no haya strings duplicados.
+
+export const SYNC_COMPLETE_EVENT = 'parking:sync-complete'
+
 // ─── Helper health-check ──────────────────────────────────────────────────────
-// Mismo patrón que useNetworkStatus pero a nivel de provider global.
-// useNetworkStatus sigue usándose en los providers de módulo para compatibilidad.
 
 async function checkBackendReachable(): Promise<boolean> {
     try {
@@ -39,12 +39,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [pendientesOutbox, setPendientesOutbox] = useState(0)
     const [muertasOutbox, setMuertasOutbox]       = useState(0)
 
-    const isOnlineRef   = useRef(isOnline)
-    const intervalRef   = useRef<ReturnType<typeof setInterval> | null>(null)
+    const isOnlineRef = useRef(isOnline)
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
     useEffect(() => { isOnlineRef.current = isOnline }, [isOnline])
 
-    // ── Actualizar contadores de outbox ──────────────────────────────────────────
+    // ── Actualizar contadores de outbox ───────────────────────────────────────
 
     const actualizarContadores = useCallback(async () => {
         const [total, muertas] = await Promise.all([
@@ -55,7 +55,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setMuertasOutbox(muertas.length)
     }, [])
 
-    // ── Ejecutar sync ────────────────────────────────────────────────────────────
+    // ── Ejecutar sync ─────────────────────────────────────────────────────────
 
     const ejecutarSync = useCallback(async () => {
         if (!isOnlineRef.current || syncService.isSincronizando()) return
@@ -68,10 +68,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         setIsSincronizando(true)
 
-        await syncService.procesarOutbox((parcial: SyncResult) => {
-            // Actualizar contadores después de cada operación procesada
+        const result = await syncService.procesarOutbox((parcial: SyncResult) => {
             void actualizarContadores()
-            // Suprimir el warning de unused — parcial se usa para logging en desarrollo
             if (import.meta.env.DEV) {
                 console.debug('[AppProvider] Progreso sync:', parcial)
             }
@@ -79,18 +77,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         setIsSincronizando(false)
         await actualizarContadores()
+
+        window.dispatchEvent(
+            new CustomEvent<SyncResult>(SYNC_COMPLETE_EVENT, { detail: result })
+        )
     }, [actualizarContadores])
 
-    // ── Health-check y detección de red ──────────────────────────────────────────
+    // ── Health-check y detección de red ───────────────────────────────────────
 
     const runHealthCheck = useCallback(async () => {
-        const reachable = await checkBackendReachable()
+        const reachable  = await checkBackendReachable()
         const eraOffline = !isOnlineRef.current
 
         setIsOnline(reachable)
 
         if (reachable && eraOffline) {
-            // Acaba de recuperar la conexión → disparar sync
             void ejecutarSync()
         }
     }, [ejecutarSync])
@@ -104,7 +105,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         intervalRef.current = setInterval(() => { void runHealthCheck() }, HEALTH_CHECK_INTERVAL_MS)
 
-        // Check inicial + contadores iniciales
         void runHealthCheck()
         void actualizarContadores()
 
@@ -115,18 +115,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [runHealthCheck, actualizarContadores])
 
-    // ── Sincronización manual ────────────────────────────────────────────────────
+    // ── Sincronización manual ─────────────────────────────────────────────────
 
     const sincronizarAhora = useCallback(async () => {
         if (!isOnlineRef.current) return
         await ejecutarSync()
     }, [ejecutarSync])
 
-    // ── Estado unificado de red ───────────────────────────────────────────────────
+    // ── Estado unificado de red ───────────────────────────────────────────────
 
     const estadoRed: EstadoRed = (() => {
-        if (!isOnline) return 'offline'
-        if (isSincronizando) return 'sincronizando'
+        if (!isOnline)        return 'offline'
+        if (isSincronizando)  return 'sincronizando'
         if (muertasOutbox > 0) return 'error_sync'
         return 'online'
     })()
@@ -141,8 +141,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     return (
         <AppContext.Provider value={value}>
-            {/* Banner global de estado de red */}
-            <NetworkBanner estadoRed={estadoRed} pendientes={pendientesOutbox} muertas={muertasOutbox} onReintentar={sincronizarAhora} />
+            <NetworkBanner
+                estadoRed={estadoRed}
+                pendientes={pendientesOutbox}
+                muertas={muertasOutbox}
+                onReintentar={sincronizarAhora}
+            />
             {children}
         </AppContext.Provider>
     )
@@ -150,27 +154,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 // ─── Banner global de red ─────────────────────────────────────────────────────
 // Componente interno — no se exporta ni se usa fuera de este archivo.
-// Solo visible cuando el estado no es 'online'.
 
 interface NetworkBannerProps {
-    estadoRed:  EstadoRed
-    pendientes: number
-    muertas:    number
+    estadoRed:    EstadoRed
+    pendientes:   number
+    muertas:      number
     onReintentar: () => void
 }
 
-const NetworkBanner: React.FC<NetworkBannerProps> = ({ estadoRed, pendientes, muertas, onReintentar }) => {
-    if (estadoRed === 'online') return null
+const NetworkBanner: React.FC<NetworkBannerProps> = ({
+                                                         estadoRed, pendientes, muertas, onReintentar,
+                                                     }) => {
+    if (estadoRed === 'online') {
+        return (
+            <div style={{
+                position: 'fixed', top: '8px', right: '12px', zIndex: 9999,
+                width: '8px', height: '8px', borderRadius: '50%',
+                background: '#10b981',
+                boxShadow: '0 0 0 2px rgba(16,185,129,0.25)',
+            }} />
+        )
+    }
 
     const configs: Record<Exclude<EstadoRed, 'online'>, {
         bg: string; borde: string; icono: string; texto: string; color: string
     }> = {
         offline: {
-            bg:     '#fffbeb',
-            borde:  '#fcd34d',
-            color:  '#92400e',
-            icono:  'wifi_off',
-            texto:  'Sin conexión — los cambios se guardarán localmente',
+            bg:    '#fffbeb',
+            borde: '#fcd34d',
+            color: '#92400e',
+            icono: 'wifi_off',
+            texto: 'Sin conexión — los cambios se guardarán localmente',
         },
         sincronizando: {
             bg:    '#eff6ff',
@@ -196,18 +210,18 @@ const NetworkBanner: React.FC<NetworkBannerProps> = ({ estadoRed, pendientes, mu
             background: cfg.bg, borderBottom: `1px solid ${cfg.borde}`,
             padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px',
         }}>
-      <span
-          className="material-symbols-outlined"
-          style={{
-              fontSize: '18px', color: cfg.color, flexShrink: 0,
-              animation: estadoRed === 'sincronizando' ? 'spin 1s linear infinite' : 'none',
-          }}
-      >
-        {cfg.icono}
-      </span>
+            <span
+                className="material-symbols-outlined"
+                style={{
+                    fontSize: '18px', color: cfg.color, flexShrink: 0,
+                    animation: estadoRed === 'sincronizando' ? 'spin 1s linear infinite' : 'none',
+                }}
+            >
+                {cfg.icono}
+            </span>
             <span style={{ fontSize: '12px', fontWeight: 600, color: cfg.color, flex: 1 }}>
-        {cfg.texto}
-      </span>
+                {cfg.texto}
+            </span>
             {estadoRed === 'error_sync' && (
                 <button
                     onClick={onReintentar}

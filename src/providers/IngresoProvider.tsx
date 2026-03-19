@@ -3,6 +3,12 @@
 // HU-019: eliminarIngreso con optimistic update
 // HU-020: editarIngreso con actualización local de la lista
 // FASE 1: outbox — si no hay red al registrar un ingreso, se encola en IndexedDB
+//
+// Escucha el CustomEvent 'parking:sync-complete' emitido por AppProvider
+// y refresca la lista desde el backend cuando el sync termina.
+//
+// Mantiene el Set de idIngresos que están pendientes en la outbox
+// (type='SALIDA') para que Ingresos.tsx pueda mostrar el badge.
 
 import React, { useState, useEffect, useCallback, useRef, ReactNode } from 'react'
 import { get, set } from 'idb-keyval'
@@ -10,6 +16,8 @@ import { IngresoContext, ToastState } from '../contexts/IngresoContext'
 import { EditarIngresoRequest, ingresoService, IngresoVehiculoResponse } from '../services/ingresoService'
 import { outboxService } from '../services/outboxService'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import {SYNC_COMPLETE_EVENT} from "./AppProvider";
+import { SyncResult } from '../services/syncService'
 
 const IDB_KEY_INGRESOS = 'ingresos_activos_cache'
 const CACHE_MAX         = 50
@@ -28,6 +36,8 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isDeleting, setIsDeleting]         = useState(false)
     const [isEditing, setIsEditing]           = useState(false)
     const [toast, setToast]                   = useState<ToastState | null>(null)
+    // Gap 3: ids de ingresos que tienen una SALIDA pendiente en la outbox
+    const [salidasPendientes, setSalidasPendientes] = useState<Set<number>>(new Set())
 
     const filtroPlacaRef = useRef(filtroPlaca)
     const currentPageRef = useRef(currentPage)
@@ -47,6 +57,26 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [toast])
 
     const clearToast = useCallback(() => setToast(null), [])
+
+    // Se recalcula al montar y cada vez que la outbox puede haber cambiado
+    // (tras registrar una salida offline o tras un sync).
+
+    const actualizarSalidasPendientes = useCallback(async () => {
+        const todas = await outboxService.getAll()
+        const ids = todas
+            .filter(e => e.type === 'SALIDA')
+            .map(e => {
+                const payload = e.payload as { idIngreso?: number }
+                return typeof payload.idIngreso === 'number' ? payload.idIngreso : null
+            })
+            .filter((id): id is number => id !== null)
+        setSalidasPendientes(new Set(ids))
+    }, [])
+
+    // Calcular al montar
+    useEffect(() => {
+        void actualizarSalidasPendientes()
+    }, [actualizarSalidasPendientes])
 
     // ─── Carga desde IndexedDB (modo offline) ─────────────────────────────────
 
@@ -112,7 +142,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [cargarDesdeCache])
 
-    // ─── Efecto principal ──────────────────────────────────────────────────────
+    // ─── Efecto principal de carga ─────────────────────────────────────────────
 
     useEffect(() => {
         if (isOnline) {
@@ -125,6 +155,27 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             void cargarDesdeCache()
         }
     }, [isOnline, cargarPaginaBackend, cargarDesdeCache])
+
+    // Cuando AppProvider termina de procesar la outbox, emite SYNC_COMPLETE_EVENT.
+    // Si hubo exitosas (exitosas > 0), recargamos desde el backend para reflejar
+    // los estados reales (ej: ingresos que pasaron a ENTREGADO por salidas encoladas).
+
+    useEffect(() => {
+        const handleSyncComplete = (event: Event) => {
+            const customEvent = event as CustomEvent<SyncResult>
+            const { exitosas } = customEvent.detail
+            if (exitosas > 0 && isOnlineRef.current) {
+                void cargarPaginaBackend(0, filtroPlacaRef.current, false)
+                // Recalcular outbox pendientes tras sync
+                void actualizarSalidasPendientes()
+            }
+        }
+
+        window.addEventListener(SYNC_COMPLETE_EVENT, handleSyncComplete)
+        return () => {
+            window.removeEventListener(SYNC_COMPLETE_EVENT, handleSyncComplete)
+        }
+    }, [cargarPaginaBackend, actualizarSalidasPendientes])
 
     // ─── API pública ───────────────────────────────────────────────────────────
 
@@ -157,8 +208,6 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [cargarPaginaBackend])
 
-    // ─── HU-019: Eliminar ingreso ──────────────────────────────────────────────
-
     const eliminarIngreso = useCallback(async (id: number) => {
         setIsDeleting(true)
         try {
@@ -173,8 +222,6 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             setIsDeleting(false)
         }
     }, [])
-
-    // ─── HU-020: Editar ingreso ────────────────────────────────────────────────
 
     const editarIngreso = useCallback(async (id: number, data: EditarIngresoRequest) => {
         setIsEditing(true)
@@ -191,23 +238,12 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [])
 
-    // ─── FASE 1: Outbox ingresos ───────────────────────────────────────────────
-    // registrarIngreso se usa en Entrada.tsx directamente vía ingresoService.
-    // La integración con la outbox se hace aquí para que el IngresoProvider
-    // controle el estado de la lista de ingresos tras encolar.
-    //
-    // Flujo:
-    //   Online  → llama al backend normalmente, actualiza la lista.
-    //   Offline → encola en IndexedDB con type='INGRESO', muestra toast
-    //             informativo, el listado refleja el estado cacheado.
-
     const registrarIngresoConOutbox = useCallback(async (
         payload: Record<string, unknown>
     ): Promise<'online' | 'encolado'> => {
         if (isOnlineRef.current) {
-            return 'online' // Entrada.tsx llama ingresoService directamente cuando hay red
+            return 'online'
         }
-        // Sin red → encolar
         await outboxService.enqueue('INGRESO', payload)
         setToast({
             message: 'Sin conexión — el ingreso se registrará automáticamente al recuperar la red',
@@ -215,6 +251,24 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         })
         return 'encolado'
     }, [])
+
+    // SalidaProvider llama a outboxService.enqueue directamente, así que
+    // IngresoProvider no sabe cuándo se encola una salida.
+    // La solución es exponer una función que Ingresos.tsx puede llamar
+    // tras navegar de vuelta desde la pantalla de Salida (ver nota abajo),
+    // O simplemente recalcular al montar cada vez que el componente se activa.
+    // Usamos el enfoque de recalcular en cada visibilitychange del documento
+    // y en el focus de la ventana, que cubre el regreso desde Salida.
+
+    useEffect(() => {
+        const recalcular = () => { void actualizarSalidasPendientes() }
+        window.addEventListener('focus', recalcular)
+        document.addEventListener('visibilitychange', recalcular)
+        return () => {
+            window.removeEventListener('focus', recalcular)
+            document.removeEventListener('visibilitychange', recalcular)
+        }
+    }, [actualizarSalidasPendientes])
 
     return (
         <IngresoContext.Provider value={{
@@ -235,6 +289,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             toast,
             clearToast,
             registrarIngresoConOutbox,
+            salidasPendientes,
         }}>
             {children}
         </IngresoContext.Provider>

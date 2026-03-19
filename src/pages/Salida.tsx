@@ -3,7 +3,7 @@
 // HU-010: salida manual por placa
 // HU-011: resumen de cobro tras confirmar salida
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { IonPage, IonContent, useIonRouter } from '@ionic/react'
 import { useSalida } from '../hooks/useSalida'
 import QRScanner from '../components/QRScanner'
@@ -63,16 +63,25 @@ const Salida: React.FC = () => {
     const [placa, setPlaca] = useState('')
     const router = useIonRouter()
 
-    // Si se navega desde Ingresos con ?placa=XYZ, disparar búsqueda automática en tab manual
+    // Capturamos router.routeInfo.search en un ref al montar.
+    // router.routeInfo es un objeto de Ionic que cambia referencia en cada
+    // render del router — si lo incluyéramos en el array de dependencias, el
+    // efecto se volvería a ejecutar en cada navegación, disparando búsquedas
+    // repetidas. Leerlo una sola vez con un ref es el patrón correcto.
+    const initialSearchRef = useRef(router.routeInfo.search ?? '')
+
+    // Si se navega desde Ingresos con ?placa=XYZ, disparar búsqueda automática
+    // en el tab manual. buscarPorPlaca y setModoBusqueda son useCallback
+    // estables del SalidaProvider — pueden incluirse en el array sin riesgo.
     useEffect(() => {
-        const params = new URLSearchParams(router.routeInfo.search ?? '')
+        const params     = new URLSearchParams(initialSearchRef.current)
         const placaParam = params.get('placa')
         if (placaParam) {
             setPlaca(placaParam)
             setModoBusqueda('manual')
             void buscarPorPlaca(placaParam)
         }
-    }, [])
+    }, [buscarPorPlaca, setModoBusqueda])
 
     const handleBuscarPlaca = () => {
         void buscarPorPlaca(placa)
@@ -123,9 +132,9 @@ const Salida: React.FC = () => {
                                     <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                         {[
                                             { label: 'Hora de entrada', value: formatFecha(salidaConfirmada.fechaHoraIngreso) },
-                                            { label: 'Hora de salida', value: formatFecha(salidaConfirmada.fechaHoraSalida) },
-                                            { label: 'Horas cobradas', value: `${salidaConfirmada.horasCobradas} hora${salidaConfirmada.horasCobradas !== 1 ? 's' : ''}` },
-                                            { label: 'Tarifa por hora', value: formatCOP(salidaConfirmada.tarifaPorHora) },
+                                            { label: 'Hora de salida',  value: formatFecha(salidaConfirmada.fechaHoraSalida)  },
+                                            { label: 'Horas cobradas',  value: `${salidaConfirmada.horasCobradas} hora${salidaConfirmada.horasCobradas !== 1 ? 's' : ''}` },
+                                            { label: 'Tarifa por hora', value: formatCOP(salidaConfirmada.tarifaPorHora)      },
                                         ].map(({ label, value }) => (
                                             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                 <span style={{ fontSize: '13px', color: '#64748b' }}>{label}</span>
