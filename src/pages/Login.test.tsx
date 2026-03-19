@@ -31,6 +31,7 @@ describe('Pruebas Unitarias del Componente Login', () => {
             login: mockLogin,
             logout: vi.fn(),
             checkAuth: vi.fn(),
+            isLoggingOut: false,
         });
     });
 
