@@ -1,8 +1,16 @@
 // src/services/outboxService.ts
 //
-// FASE 1 — Cola offline (outbox) en IndexedDB.
+// Cola offline (outbox) en IndexedDB.
 // Persiste operaciones que no pudieron enviarse al backend por falta de red.
 // El syncService las consume en orden FIFO al recuperar la conexión.
+//
+// OutboxType se extiende para cubrir todas las operaciones mutantes:
+//   INGRESO          → POST   /api/ingresos
+//   INGRESO_EDITAR   → PUT    /api/ingresos/{id}
+//   SALIDA           → POST   /api/ingresos/{id}/salida
+//   UBICACION        → POST   /api/v1/ubicaciones  (crear, sin id en payload)
+//   UBICACION_EDITAR → PUT    /api/v1/ubicaciones/{id}  (con id en payload)
+//   UBICACION_BORRAR → DELETE /api/v1/ubicaciones/{id}
 
 import { get, set } from 'idb-keyval'
 
@@ -12,12 +20,18 @@ const OUTBOX_KEY = 'outbox_queue'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
-export type OutboxType = 'INGRESO' | 'SALIDA' | 'UBICACION'
+export type OutboxType =
+    | 'INGRESO'
+    | 'INGRESO_EDITAR'
+    | 'SALIDA'
+    | 'UBICACION'
+    | 'UBICACION_EDITAR'
+    | 'UBICACION_BORRAR'
 
 export interface OutboxEntry {
     /** UUID generado localmente — identifica la operación de forma única */
     id:        string
-    /** Tipo de operación — define el endpoint destino en el syncService */
+    /** Tipo de operación — define el endpoint y método HTTP en el syncService */
     type:      OutboxType
     /** Body que se enviará al backend tal cual */
     payload:   Record<string, unknown>
@@ -28,20 +42,28 @@ export interface OutboxEntry {
 }
 
 // ─── Límite de reintentos ─────────────────────────────────────────────────────
-// Si una entrada supera este valor, se considera "muerta" y se notifica
-// al usuario. No se elimina automáticamente.
 
 export const MAX_RETRIES = 3
 
-// ─── Helper UUID simple ───────────────────────────────────────────────────────
-// crypto.randomUUID está disponible en todos los navegadores modernos y en
-// el Service Worker. Es suficiente para identificar entradas de la outbox.
+// ─── Orden de procesamiento por tipo ─────────────────────────────────────────
+// Garantiza que las operaciones se apliquen en un orden lógico:
+// primero ingresos, luego salidas, luego cambios de ubicación.
+
+export const ORDEN_TIPO: Record<OutboxType, number> = {
+    INGRESO:          0,
+    INGRESO_EDITAR:   1,
+    SALIDA:           2,
+    UBICACION:        3,
+    UBICACION_EDITAR: 4,
+    UBICACION_BORRAR: 5,
+}
+
+// ─── Helper UUID ──────────────────────────────────────────────────────────────
 
 function generarId(): string {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID()
     }
-    // Fallback para entornos sin crypto.randomUUID (tests, Safari antiguo)
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
@@ -66,7 +88,6 @@ export const outboxService = {
     /**
      * Añade una nueva operación a la cola.
      * Genera el id y el createdAt automáticamente.
-     * Devuelve la entrada creada para que el llamador pueda referenciarla.
      */
     enqueue: async (
         type: OutboxType,
@@ -103,8 +124,7 @@ export const outboxService = {
 
     /**
      * Incrementa el contador de reintentos de una entrada.
-     * Si retries alcanza MAX_RETRIES, la entrada queda "muerta"
-     * (permanece en la outbox pero el syncService no la volverá a intentar).
+     * Si retries alcanza MAX_RETRIES la entrada queda "muerta".
      */
     incrementRetries: async (id: string): Promise<OutboxEntry | null> => {
         try {
@@ -127,47 +147,33 @@ export const outboxService = {
 
     /**
      * Devuelve solo las entradas que aún pueden reintentarse
-     * (retries < MAX_RETRIES), ordenadas por createdAt ASC (FIFO)
-     * y por tipo: INGRESO primero, luego SALIDA, luego UBICACION.
+     * (retries < MAX_RETRIES), ordenadas por tipo y luego por createdAt ASC.
      */
     getPendientes: async (): Promise<OutboxEntry[]> => {
         const all = await outboxService.getAll()
-        const ORDEN: Record<OutboxType, number> = {
-            INGRESO:   0,
-            SALIDA:    1,
-            UBICACION: 2,
-        }
         return all
             .filter(e => e.retries < MAX_RETRIES)
             .sort((a, b) => {
-                const tipoA = ORDEN[a.type]
-                const tipoB = ORDEN[b.type]
-                if (tipoA !== tipoB) return tipoA - tipoB
+                const ordenA = ORDEN_TIPO[a.type]
+                const ordenB = ORDEN_TIPO[b.type]
+                if (ordenA !== ordenB) return ordenA - ordenB
                 return a.createdAt - b.createdAt
             })
     },
 
-    /**
-     * Devuelve las entradas que superaron MAX_RETRIES (muertas).
-     * Usadas para mostrar el banner de error al usuario.
-     */
+    /** Devuelve las entradas que superaron MAX_RETRIES (muertas). */
     getMuertas: async (): Promise<OutboxEntry[]> => {
         const all = await outboxService.getAll()
         return all.filter(e => e.retries >= MAX_RETRIES)
     },
 
-    /**
-     * Cuenta total de entradas en la outbox (pendientes + muertas).
-     * Usado por el AppProvider para el indicador global.
-     */
+    /** Cuenta total de entradas en la outbox (pendientes + muertas). */
     count: async (): Promise<number> => {
         const all = await outboxService.getAll()
         return all.length
     },
 
-    /**
-     * Elimina completamente la outbox — solo para uso en tests o reset manual.
-     */
+    /** Elimina completamente la outbox — solo para tests o reset manual. */
     clear: async (): Promise<void> => {
         try {
             await set(OUTBOX_KEY, [])

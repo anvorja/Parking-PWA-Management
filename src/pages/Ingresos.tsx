@@ -2,6 +2,9 @@
 // HU-018: listado scroll infinito, filtro placa, banner offline, botón salida
 // HU-019: botón eliminar solo ADMINISTRADOR + modal confirmación
 // HU-020: botón editar (todos los roles) + modal con campos condicionales según rol
+//
+// muestra badge "Sincronización pendiente" en tarjetas cuyo idIngreso
+// está en salidasPendientes (salidas encoladas sin conexión).
 
 import React, { useEffect, useRef, useState } from 'react'
 import { IonPage, IonContent, useIonRouter } from '@ionic/react'
@@ -281,6 +284,7 @@ const Ingresos: React.FC = () => {
         eliminarIngreso, isDeleting,
         editarIngreso, isEditing,
         toast, clearToast,
+        salidasPendientes,   // Gap 3
     } = useIngresos()
 
     const { user } = useAuth()
@@ -318,7 +322,7 @@ const Ingresos: React.FC = () => {
     }
     useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
-    // IntersectionObserver
+    // IntersectionObserver para scroll infinito
     const sentinelRef = useRef<HTMLDivElement | null>(null)
     useEffect(() => {
         const sentinel = sentinelRef.current
@@ -399,7 +403,7 @@ const Ingresos: React.FC = () => {
                             </div>
                         ) : ingresos.length === 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', gap: '12px' }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#cbd5e1' }}>directions_car</span>
+                                <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#cbd5e1' }}>inbox</span>
                                 <p style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', margin: 0 }}>
                                     {filtroPlaca ? `Sin resultados para "${filtroPlaca}"` : 'No hay registros de ingreso'}
                                 </p>
@@ -408,10 +412,46 @@ const Ingresos: React.FC = () => {
                             <>
                                 <ul style={{ listStyle: 'none', margin: 0, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     {ingresos.map(ingreso => {
-                                        const estadoStyle = getEstadoStyle(ingreso.estadoIngreso)
-                                        const esIngresado = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
+                                        const estadoStyle    = getEstadoStyle(ingreso.estadoIngreso)
+                                        const esIngresado    = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
+                                        // Gap 3: ¿tiene una salida pendiente de sincronizar?
+                                        const salidaPendiente = salidasPendientes.has(ingreso.idIngreso)
+
                                         return (
-                                            <li key={ingreso.idIngreso} style={{ background: '#fff', borderRadius: '14px', border: '1.5px solid #f1f5f9', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                                            <li
+                                                key={ingreso.idIngreso}
+                                                style={{
+                                                    background: '#fff',
+                                                    borderRadius: '14px',
+                                                    // Borde naranja discreto cuando la salida está pendiente de sync
+                                                    border: salidaPendiente
+                                                        ? '1.5px solid #fb923c'
+                                                        : '1.5px solid #f1f5f9',
+                                                    padding: '14px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '10px',
+                                                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                                                }}
+                                            >
+                                                {/* Gap 3: badge "Salida pendiente de sincronización" */}
+                                                {salidaPendiente && (
+                                                    <div style={{
+                                                        display: 'flex', alignItems: 'center', gap: '6px',
+                                                        background: '#fff7ed', borderRadius: '8px',
+                                                        padding: '5px 10px',
+                                                    }}>
+                                                        <span
+                                                            className="material-symbols-outlined"
+                                                            style={{ fontSize: '14px', color: '#ea580c' }}
+                                                        >
+                                                            cloud_off
+                                                        </span>
+                                                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#ea580c' }}>
+                                                            Salida pendiente de sincronización
+                                                        </span>
+                                                    </div>
+                                                )}
 
                                                 {/* Placa + estado + acciones */}
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -425,20 +465,24 @@ const Ingresos: React.FC = () => {
                                                             {ingreso.estadoIngreso}
                                                         </div>
                                                         {/* Editar — todos los roles */}
-                                                        <button onClick={() => setEditTarget(ingreso)}
-                                                                style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #dbeafe', background: '#fff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
-                                                                onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff' }}
-                                                                onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
-                                                                title="Editar registro">
+                                                        <button
+                                                            onClick={() => setEditTarget(ingreso)}
+                                                            style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #dbeafe', background: '#fff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
+                                                            onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff' }}
+                                                            onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+                                                            title="Editar registro"
+                                                        >
                                                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                                                         </button>
                                                         {/* Eliminar — solo ADMIN */}
                                                         {esAdmin && (
-                                                            <button onClick={() => setDeleteTarget(ingreso)}
-                                                                    style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #fee2e2', background: '#fff', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2' }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
-                                                                    title="Eliminar registro">
+                                                            <button
+                                                                onClick={() => setDeleteTarget(ingreso)}
+                                                                style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #fee2e2', background: '#fff', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
+                                                                onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2' }}
+                                                                onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+                                                                title="Eliminar registro"
+                                                            >
                                                                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                                                             </button>
                                                         )}
@@ -467,11 +511,25 @@ const Ingresos: React.FC = () => {
                                                 {/* Botón salida */}
                                                 {esIngresado && (
                                                     <button
-                                                        disabled={!isOnline}
+                                                        disabled={!isOnline || salidaPendiente}
                                                         onClick={() => router.push(`/salida?placa=${encodeURIComponent(ingreso.placa)}`, 'forward', 'push')}
-                                                        style={{ width: '100%', padding: '9px', borderRadius: '10px', border: 'none', background: isOnline ? '#137fec' : '#e2e8f0', color: isOnline ? '#fff' : '#94a3b8', fontSize: '13px', fontWeight: 700, cursor: isOnline ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'background 0.2s' }}>
+                                                        style={{
+                                                            width: '100%', padding: '9px', borderRadius: '10px',
+                                                            border: 'none',
+                                                            background: (!isOnline || salidaPendiente) ? '#e2e8f0' : '#137fec',
+                                                            color: (!isOnline || salidaPendiente) ? '#94a3b8' : '#fff',
+                                                            fontSize: '13px', fontWeight: 700,
+                                                            cursor: (!isOnline || salidaPendiente) ? 'not-allowed' : 'pointer',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                                            transition: 'background 0.2s',
+                                                        }}
+                                                    >
                                                         <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-                                                        {isOnline ? 'Registrar Salida' : 'No disponible sin conexión'}
+                                                        {salidaPendiente
+                                                            ? 'Salida pendiente de sincronización'
+                                                            : isOnline
+                                                                ? 'Registrar Salida'
+                                                                : 'No disponible sin conexión'}
                                                     </button>
                                                 )}
                                             </li>

@@ -53,3 +53,4 @@ backup_project_files_script.sh
 miproyecto_copy/
 docs/
 vite.config.ts.timestamp-*.mjs
+backup_project_files_(indicando).sh

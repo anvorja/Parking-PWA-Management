@@ -1,7 +1,7 @@
 // src/contexts/IngresoContext.ts
 
 import { createContext } from 'react'
-import {EditarIngresoRequest, IngresoVehiculoResponse} from '../services/ingresoService'
+import { EditarIngresoRequest, IngresoVehiculoResponse, RegistrarIngresoRequest } from '../services/ingresoService'
 
 export interface ToastState {
     message: string
@@ -32,11 +32,17 @@ export interface IngresoContextType {
     eliminarIngreso: (id: number) => Promise<void>
     /** true mientras se ejecuta la eliminación */
     isDeleting: boolean
-
+    /** HU-020: editar registro */
     editarIngreso: (id: number, data: EditarIngresoRequest) => Promise<void>
     isEditing: boolean
     /** FASE 1: encola el ingreso en IndexedDB si no hay red */
-    registrarIngresoConOutbox: (payload: Record<string, unknown>) => Promise<'online' | 'encolado'>
+    registrarIngresoConOutbox: (data: RegistrarIngresoRequest) => Promise<'online' | 'encolado'>
+    /**
+     * Set de idIngreso que tienen una SALIDA pendiente en la outbox.
+     * Ingresos.tsx lo usa para mostrar el badge "Sincronización pendiente"
+     * en la tarjeta correspondiente.
+     */
+    salidasPendientes: Set<number>
     /** Toast de feedback para mostrar en la vista */
     toast: ToastState | null
     clearToast: () => void

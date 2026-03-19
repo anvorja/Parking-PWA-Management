@@ -1,15 +1,20 @@
 // src/providers/IngresoProvider.tsx
 // HU-018: scroll infinito + caché IndexedDB + offline SUB-1/2/3/4
-// HU-019: eliminarIngreso con optimistic update
-// HU-020: editarIngreso con actualización local de la lista
-// FASE 1: outbox — si no hay red al registrar un ingreso, se encola en IndexedDB
+// HU-019: eliminarIngreso — bloqueado offline (operación crítica e irreversible)
+// HU-020: editarIngreso — offline: encola INGRESO_EDITAR + optimistic update
+// FASE 1: registrarIngresoConOutbox — offline: encola INGRESO
+//
+// Escucha 'parking:sync-complete' para refrescar la lista tras sync
+// Expone salidasPendientes para el badge en Ingresos.tsx
 
 import React, { useState, useEffect, useCallback, useRef, ReactNode } from 'react'
 import { get, set } from 'idb-keyval'
 import { IngresoContext, ToastState } from '../contexts/IngresoContext'
-import { EditarIngresoRequest, ingresoService, IngresoVehiculoResponse } from '../services/ingresoService'
+import { EditarIngresoRequest, ingresoService, IngresoVehiculoResponse, RegistrarIngresoRequest } from '../services/ingresoService'
 import { outboxService } from '../services/outboxService'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import { SYNC_COMPLETE_EVENT } from './AppProvider'
+import { SyncResult } from '../services/syncService'
 
 const IDB_KEY_INGRESOS = 'ingresos_activos_cache'
 const CACHE_MAX         = 50
@@ -28,6 +33,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isDeleting, setIsDeleting]         = useState(false)
     const [isEditing, setIsEditing]           = useState(false)
     const [toast, setToast]                   = useState<ToastState | null>(null)
+    const [salidasPendientes, setSalidasPendientes] = useState<Set<number>>(new Set())
 
     const filtroPlacaRef = useRef(filtroPlaca)
     const currentPageRef = useRef(currentPage)
@@ -47,6 +53,34 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [toast])
 
     const clearToast = useCallback(() => setToast(null), [])
+
+    // ─── Gap 3: calcular salidasPendientes desde la outbox ────────────────────
+
+    const actualizarSalidasPendientes = useCallback(async () => {
+        const todas = await outboxService.getAll()
+        const ids = todas
+            .filter(e => e.type === 'SALIDA')
+            .map(e => {
+                const payload = e.payload as { idIngreso?: number }
+                return typeof payload.idIngreso === 'number' ? payload.idIngreso : null
+            })
+            .filter((id): id is number => id !== null)
+        setSalidasPendientes(new Set(ids))
+    }, [])
+
+    useEffect(() => {
+        void actualizarSalidasPendientes()
+    }, [actualizarSalidasPendientes])
+
+    useEffect(() => {
+        const recalcular = () => { void actualizarSalidasPendientes() }
+        window.addEventListener('focus', recalcular)
+        document.addEventListener('visibilitychange', recalcular)
+        return () => {
+            window.removeEventListener('focus', recalcular)
+            document.removeEventListener('visibilitychange', recalcular)
+        }
+    }, [actualizarSalidasPendientes])
 
     // ─── Carga desde IndexedDB (modo offline) ─────────────────────────────────
 
@@ -95,7 +129,6 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             setCurrentPage(data.page)
             setHasMore(data.page < data.totalPages - 1)
 
-            // SUB-1: cachear los 50 más recientes con estado INGRESADO
             if (page === 0 && !placa) {
                 const activos = data.content
                     .filter(i => i.estadoIngreso === 'INGRESADO')
@@ -112,7 +145,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
     }, [cargarDesdeCache])
 
-    // ─── Efecto principal ──────────────────────────────────────────────────────
+    // ─── Efecto principal de carga ─────────────────────────────────────────────
 
     useEffect(() => {
         if (isOnline) {
@@ -125,6 +158,23 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             void cargarDesdeCache()
         }
     }, [isOnline, cargarPaginaBackend, cargarDesdeCache])
+
+    // ─── Gap 2: refrescar lista al completar sync ─────────────────────────────
+
+    useEffect(() => {
+        const handleSyncComplete = (event: Event) => {
+            const customEvent = event as CustomEvent<SyncResult>
+            const { exitosas } = customEvent.detail
+            if (exitosas > 0 && isOnlineRef.current) {
+                void cargarPaginaBackend(0, filtroPlacaRef.current, false)
+                void actualizarSalidasPendientes()
+            }
+        }
+        window.addEventListener(SYNC_COMPLETE_EVENT, handleSyncComplete)
+        return () => {
+            window.removeEventListener(SYNC_COMPLETE_EVENT, handleSyncComplete)
+        }
+    }, [cargarPaginaBackend, actualizarSalidasPendientes])
 
     // ─── API pública ───────────────────────────────────────────────────────────
 
@@ -158,8 +208,14 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [cargarPaginaBackend])
 
     // ─── HU-019: Eliminar ingreso ──────────────────────────────────────────────
+    // Eliminar es una acción irreversible sobre datos que no podemos verificar
+    // sin conexión. Se bloquea con mensaje claro: el operador debe esperar red.
 
     const eliminarIngreso = useCallback(async (id: number) => {
+        if (!isOnlineRef.current) {
+            setToast({ message: 'Sin conexión — la eliminación requiere conexión a internet', type: 'error' })
+            return
+        }
         setIsDeleting(true)
         try {
             await ingresoService.eliminarIngreso(id)
@@ -175,13 +231,30 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [])
 
     // ─── HU-020: Editar ingreso ────────────────────────────────────────────────
+    // Online  → llama al backend, actualiza lista y caché IDB.
+    // Offline → encola INGRESO_EDITAR, aplica optimistic update en placa y fecha
+    //           (campos que el usuario puede editar sin validación del backend).
 
     const editarIngreso = useCallback(async (id: number, data: EditarIngresoRequest) => {
         setIsEditing(true)
         try {
-            const actualizado = await ingresoService.editarIngreso(id, data)
-            setIngresos(prev => prev.map(i => i.idIngreso === id ? actualizado : i))
-            setToast({ message: 'Registro actualizado correctamente', type: 'success' })
+            if (isOnlineRef.current) {
+                const actualizado = await ingresoService.editarIngreso(id, data)
+                setIngresos(prev => prev.map(i => i.idIngreso === id ? actualizado : i))
+                setToast({ message: 'Registro actualizado correctamente', type: 'success' })
+            } else {
+                await outboxService.enqueue('INGRESO_EDITAR', { id, ...data })
+                // Optimistic update: reflejar en la UI sin esperar al backend
+                setIngresos(prev => prev.map(i => {
+                    if (i.idIngreso !== id) return i
+                    return {
+                        ...i,
+                        ...(data.placa            && { placa:            data.placa.toUpperCase() }),
+                        ...(data.fechaHoraIngreso  && { fechaHoraIngreso: data.fechaHoraIngreso }),
+                    }
+                }))
+                setToast({ message: 'Sin conexión — el cambio se aplicará al recuperar la red', type: 'success' })
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al editar el registro'
             setToast({ message: msg, type: 'error' })
@@ -192,23 +265,17 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [])
 
     // ─── FASE 1: Outbox ingresos ───────────────────────────────────────────────
-    // registrarIngreso se usa en Entrada.tsx directamente vía ingresoService.
-    // La integración con la outbox se hace aquí para que el IngresoProvider
-    // controle el estado de la lista de ingresos tras encolar.
-    //
-    // Flujo:
-    //   Online  → llama al backend normalmente, actualiza la lista.
-    //   Offline → encola en IndexedDB con type='INGRESO', muestra toast
-    //             informativo, el listado refleja el estado cacheado.
+    // Entrada.tsx llama esta función en lugar de ingresoService directamente.
+    // Online  → devuelve 'online' y Entrada.tsx llama al service normalmente.
+    // Offline → encola INGRESO en IDB y devuelve 'encolado'.
 
     const registrarIngresoConOutbox = useCallback(async (
-        payload: Record<string, unknown>
+        data: RegistrarIngresoRequest
     ): Promise<'online' | 'encolado'> => {
         if (isOnlineRef.current) {
-            return 'online' // Entrada.tsx llama ingresoService directamente cuando hay red
+            return 'online'
         }
-        // Sin red → encolar
-        await outboxService.enqueue('INGRESO', payload)
+        await outboxService.enqueue('INGRESO', data as unknown as Record<string, unknown>)
         setToast({
             message: 'Sin conexión — el ingreso se registrará automáticamente al recuperar la red',
             type: 'success',
@@ -235,6 +302,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             toast,
             clearToast,
             registrarIngresoConOutbox,
+            salidasPendientes,
         }}>
             {children}
         </IngresoContext.Provider>

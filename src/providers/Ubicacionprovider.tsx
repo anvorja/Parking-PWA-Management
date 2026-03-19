@@ -3,7 +3,7 @@
 // HU-014: listar ubicaciones activas
 // HU-015: editar ubicación
 // HU-016: desactivar ubicación (soft delete)
-// FASE 4 offline: cambios de ubicación se encolan si no hay red
+// FASE 4 offline: todas las operaciones mutantes se encolan si no hay red
 
 import React, { useState, useEffect, useCallback, ReactNode } from 'react'
 import { get, set } from 'idb-keyval'
@@ -97,7 +97,7 @@ export const UbicacionProvider: React.FC<{ children: ReactNode }> = ({ children 
                 await set(IDB_KEY_UBICACIONES, actualizadas)
                 setToast({ message: 'Ubicación actualizada correctamente', type: 'success' })
             } else {
-                await outboxService.enqueue('UBICACION', { id, ...data })
+                await outboxService.enqueue('UBICACION_EDITAR', { id, ...data })
                 setToast({ message: 'Sin conexión — el cambio se aplicará al recuperar la red', type: 'success' })
             }
         } catch (err: unknown) {
@@ -110,15 +110,28 @@ export const UbicacionProvider: React.FC<{ children: ReactNode }> = ({ children 
     }, [isOnline, ubicaciones])
 
     // ── HU-016: Desactivar ────────────────────────────────────────────────────
+    // Offline: se encola el DELETE para ejecutar al recuperar la red.
+    // El caché IDB se actualiza de inmediato (optimistic update) para que la
+    // UI refleje la desactivación sin esperar la sincronización.
 
     const desactivar = useCallback(async (id: number) => {
         setIsSaving(true)
         try {
-            await ubicacionService.desactivar(id)
-            setUbicaciones(prev => prev.filter(u => u.id !== id))
-            const actualizadas = ubicaciones.filter(u => u.id !== id)
-            await set(IDB_KEY_UBICACIONES, actualizadas)
-            setToast({ message: 'Ubicación desactivada correctamente', type: 'success' })
+            if (isOnline) {
+                await ubicacionService.desactivar(id)
+                setUbicaciones(prev => prev.filter(u => u.id !== id))
+                const actualizadas = ubicaciones.filter(u => u.id !== id)
+                await set(IDB_KEY_UBICACIONES, actualizadas)
+                setToast({ message: 'Ubicación desactivada correctamente', type: 'success' })
+            } else {
+                // Optimistic update local: la sacamos del estado y del caché IDB
+                // para que la UI no la muestre. Al sincronizar, el DELETE se aplica en el backend.
+                await outboxService.enqueue('UBICACION_BORRAR', { id })
+                setUbicaciones(prev => prev.filter(u => u.id !== id))
+                const actualizadas = ubicaciones.filter(u => u.id !== id)
+                await set(IDB_KEY_UBICACIONES, actualizadas)
+                setToast({ message: 'Sin conexión — la desactivación se aplicará al recuperar la red', type: 'success' })
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al desactivar la ubicación'
             setToast({ message: msg, type: 'error' })
@@ -126,7 +139,7 @@ export const UbicacionProvider: React.FC<{ children: ReactNode }> = ({ children 
         } finally {
             setIsSaving(false)
         }
-    }, [ubicaciones])
+    }, [isOnline, ubicaciones])
 
     return (
         <UbicacionContext.Provider value={{
