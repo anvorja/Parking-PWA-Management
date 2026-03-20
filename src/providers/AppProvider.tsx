@@ -168,6 +168,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 }
 
 // ─── Banner global de red ─────────────────────────────────────────────────────
+// El banner se renderiza en position:fixed top:0 y actualiza la CSS variable
+// --network-banner-height en :root para que los headers sticky de cada página
+// puedan desplazarse hacia abajo y nunca queden tapados por el banner.
+// Cuando el estado es 'online' el banner no se muestra y la variable vale 0px.
+
+const BANNER_HEIGHT_VAR = '--network-banner-height'
 
 interface NetworkBannerProps {
     estadoRed:    EstadoRed
@@ -179,16 +185,19 @@ interface NetworkBannerProps {
 const NetworkBanner: React.FC<NetworkBannerProps> = ({
                                                          estadoRed, pendientes, muertas, onReintentar,
                                                      }) => {
-    if (estadoRed === 'online') {
-        return (
-            <div style={{
-                position: 'fixed', top: '8px', right: '12px', zIndex: 9999,
-                width: '8px', height: '8px', borderRadius: '50%',
-                background: '#10b981',
-                boxShadow: '0 0 0 2px rgba(16,185,129,0.25)',
-            }} />
-        )
-    }
+    // Sincronizar CSS variable con visibilidad del banner
+    useEffect(() => {
+        const root = document.documentElement
+        if (estadoRed === 'online') {
+            root.style.setProperty(BANNER_HEIGHT_VAR, '0px')
+        } else {
+            // El banner tiene padding 8px*2 + font ~16px ≈ 36px
+            root.style.setProperty(BANNER_HEIGHT_VAR, '37px')
+        }
+        return () => { root.style.setProperty(BANNER_HEIGHT_VAR, '0px') }
+    }, [estadoRed])
+
+    if (estadoRed === 'online') return null
 
     const configs: Record<Exclude<EstadoRed, 'online'>, {
         bg: string; borde: string; icono: string; texto: string; color: string
@@ -223,6 +232,8 @@ const NetworkBanner: React.FC<NetworkBannerProps> = ({
             position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
             background: cfg.bg, borderBottom: `1px solid ${cfg.borde}`,
             padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '10px',
+            // Garantiza que el banner nunca tape la safe area de iOS
+            paddingTop: `calc(8px + env(safe-area-inset-top, 0px))`,
         }}>
             <span
                 className="material-symbols-outlined"
@@ -242,7 +253,7 @@ const NetworkBanner: React.FC<NetworkBannerProps> = ({
                     style={{
                         padding: '4px 10px', borderRadius: '6px', border: 'none',
                         background: '#ef4444', color: '#fff',
-                        fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+                        fontSize: '11px', fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                     }}
                 >
                     Reintentar

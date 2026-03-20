@@ -10,6 +10,7 @@ import BottomNav from '../components/BottomNav';
 import { ingresoService, RegistrarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService';
 import { refDataService, UbicacionRef, TipoVehiculoRef, iconoParaTipo } from '../services/refDataService';
 import { useIngresos } from '../hooks/useIngresos';
+import { useApp } from '../hooks/useApp';
 
 // ─── Fallbacks ────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ const PRINT_STYLES = `
 
 const Entrada: React.FC = () => {
     const { registrarIngresoConOutbox } = useIngresos()
+    const { estadoRed } = useApp()
 
     const [tipos, setTipos]             = useState<TipoVehiculoRef[]>(TIPOS_FALLBACK)
     const [ubicaciones, setUbicaciones] = useState<UbicacionRef[]>([])
@@ -242,11 +244,28 @@ const Entrada: React.FC = () => {
             <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white selection:bg-primary/20">
 
                 {/* Header */}
-                <header style={{ position: 'sticky', top: 0, zIndex: 20, display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #e2e8f0', background: '#fff', padding: '12px 16px' }}>
+                <header style={{
+                    position: 'sticky',
+                    top: 'var(--network-banner-height, 0px)',
+                    zIndex: 20,
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    borderBottom: '1px solid #e2e8f0', background: '#fff', padding: '12px 16px',
+                }}>
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#137fec', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>login</span>
                     </div>
-                    <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Registrar Ingreso</h1>
+                    <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0, flex: 1 }}>Registrar Ingreso</h1>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        fontSize: '11px', fontWeight: 600,
+                        color: estadoRed === 'online' ? '#059669' : estadoRed === 'offline' ? '#dc2626' : '#1e40af',
+                    }}>
+                        <div style={{
+                            width: '7px', height: '7px', borderRadius: '50%',
+                            background: estadoRed === 'online' ? '#10b981' : estadoRed === 'offline' ? '#ef4444' : '#3b82f6',
+                        }} />
+                        {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
+                    </div>
                 </header>
 
                 <IonContent fullscreen style={{ '--background': '#f8fafc' }}>
