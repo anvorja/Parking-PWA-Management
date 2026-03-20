@@ -7,8 +7,9 @@
 //      automáticamente, sin paso extra del usuario.
 //   2. Si no hay cámara o el usuario la cierra → input manual/lector externo.
 //
-// El QR del tiquete contiene un JSON: { id, placa, ubicacion, tipo, entrada }
-// Solo se necesita "id" para buscarPorId en el backend.
+// IMPORTANTE: el div#QR_REGION_ID debe estar siempre en el DOM antes de
+// instanciar Html5Qrcode. Por eso está siempre montado y se oculta con CSS
+// cuando la cámara no está activa.
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
@@ -16,11 +17,11 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
 interface QRScannerProps {
-    /** Callback con el id de ingreso leído del QR — dispara búsqueda automática */
     onDetected: (idIngreso: number) => void
-    /** true mientras el provider está procesando la búsqueda */
-    isLoading: boolean
+    isLoading:  boolean
 }
+
+type EstadoCamara = 'inactiva' | 'iniciando' | 'activa' | 'error'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,28 +36,28 @@ function parsearIdDeQR(rawValue: string): number | null {
         }
         return null
     } catch {
-        // Si no es JSON, intentar como número directo (compatibilidad)
         const num = parseInt(rawValue.trim(), 10)
         return !isNaN(num) && num > 0 ? num : null
     }
 }
 
-// ID único del div que html5-qrcode necesita para montar el video
-const QR_REGION_ID = 'qr-scanner-region'
+const QR_REGION_ID = 'html5-qrcode-parking-scanner'
 
 // ── Componente ────────────────────────────────────────────────────────────────
 
 const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
-    const scannerRef     = useRef<Html5Qrcode | null>(null)
-    const detectadoRef   = useRef(false)          // evita doble disparo en el mismo frame
+    const scannerRef   = useRef<Html5Qrcode | null>(null)
+    const detectadoRef = useRef(false)
+    // Señal para que el useEffect arranque la cámara tras el render
+    const [querierArrancar, setQuieroArrancar] = useState(false)
 
-    const [tieneCamara, setTieneCamara]     = useState(false)
-    const [camaraActiva, setCamaraActiva]   = useState(false)
-    const [errorCamara, setErrorCamara]     = useState('')
-    const [inputManual, setInputManual]     = useState('')
-    const [errorManual, setErrorManual]     = useState('')
+    const [tieneCamara,  setTieneCamara]  = useState(false)
+    const [estadoCamara, setEstadoCamara] = useState<EstadoCamara>('inactiva')
+    const [errorMsg,     setErrorMsg]     = useState('')
+    const [inputManual,  setInputManual]  = useState('')
+    const [errorManual,  setErrorManual]  = useState('')
 
-    // ── Detectar si hay cámara disponible ────────────────────────────────────
+    // ── Detectar cámara disponible ────────────────────────────────────────────
 
     useEffect(() => {
         const verificar = async () => {
@@ -72,6 +73,78 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
         void verificar()
     }, [])
 
+    // ── Arrancar cámara DESPUÉS de que el div ya está en el DOM ───────────────
+    // querierArrancar cambia a true → React re-renderiza → el div ya existe
+    // → este useEffect corre DESPUÉS del render y puede instanciar Html5Qrcode
+
+    useEffect(() => {
+        if (!querierArrancar) return
+        setQuieroArrancar(false)   // resetear la señal
+
+        // Verificar que el div realmente existe en el DOM
+        const divEl = document.getElementById(QR_REGION_ID)
+        if (!divEl) {
+            setErrorMsg('Error interno: no se pudo montar el escáner.')
+            setEstadoCamara('error')
+            return
+        }
+
+        detectadoRef.current = false
+        setEstadoCamara('iniciando')
+        setErrorMsg('')
+
+        const scanner = new Html5Qrcode(QR_REGION_ID, {
+            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+            verbose: false,
+        })
+        scannerRef.current = scanner
+
+        scanner.start(
+            { facingMode: 'environment' },
+            {
+                fps: 10,
+                qrbox: { width: 220, height: 220 },
+                aspectRatio: 1.0,
+            },
+            (decodedText) => {
+                if (detectadoRef.current || isLoading) return
+                const id = parsearIdDeQR(decodedText)
+                if (id === null) return
+
+                detectadoRef.current = true
+                // Detener y notificar
+                void scanner.stop()
+                    .then(() => { scannerRef.current = null })
+                    .catch(() => null)
+                    .finally(() => {
+                        setEstadoCamara('inactiva')
+                        onDetected(id)
+                    })
+            },
+            () => { /* frame sin QR — ignorar */ }
+        )
+            .then(() => {
+                setEstadoCamara('activa')
+            })
+            .catch((err: unknown) => {
+                const msg = err instanceof Error ? err.message : String(err)
+                scannerRef.current = null
+
+                if (/permission|notallowed/i.test(msg)) {
+                    setErrorMsg('Permiso de cámara denegado. Habilítalo en la configuración del navegador.')
+                } else if (/notfound|no camera|devicenotfound/i.test(msg)) {
+                    setErrorMsg('No se encontró cámara en este dispositivo.')
+                } else {
+                    setErrorMsg('No se pudo iniciar la cámara. Intenta recargar la página.')
+                }
+                setEstadoCamara('error')
+            })
+
+        // isLoading y onDetected son estables (useCallback en el provider).
+        // querierArrancar es la señal reactiva que controla este efecto.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [querierArrancar])
+
     // ── Limpiar al desmontar ──────────────────────────────────────────────────
 
     useEffect(() => {
@@ -83,67 +156,25 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
         }
     }, [])
 
-    // ── Iniciar escáner ───────────────────────────────────────────────────────
-
-    const iniciarCamara = useCallback(async () => {
-        setErrorCamara('')
-        detectadoRef.current = false
-
-        try {
-            const scanner = new Html5Qrcode(QR_REGION_ID, {
-                formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-                verbose: false,
-            })
-            scannerRef.current = scanner
-
-            await scanner.start(
-                { facingMode: 'environment' },   // cámara trasera
-                {
-                    fps: 10,
-                    qrbox: { width: 220, height: 220 },
-                    aspectRatio: 1.0,
-                },
-                (decodedText) => {
-                    // Callback de éxito — puede llamarse múltiples veces en el mismo frame
-                    if (detectadoRef.current || isLoading) return
-                    const id = parsearIdDeQR(decodedText)
-                    if (id === null) return
-
-                    detectadoRef.current = true
-                    void detenerCamara()
-                    onDetected(id)          // dispara buscarPorId → búsqueda automática
-                },
-                () => {
-                    // Callback de error de frame — se ignora (frames sin QR)
-                }
-            )
-
-            setCamaraActiva(true)
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : ''
-            scannerRef.current = null
-
-            if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('notallowed')) {
-                setErrorCamara('Permiso de cámara denegado. Ingresa el código manualmente.')
-            } else if (msg.toLowerCase().includes('notfound') || msg.toLowerCase().includes('no camera')) {
-                setErrorCamara('No se encontró cámara. Ingresa el código manualmente.')
-            } else {
-                setErrorCamara('No se pudo iniciar la cámara. Ingresa el código manualmente.')
-            }
-        }
-    }, [isLoading, onDetected]) // eslint-disable-line react-hooks/exhaustive-deps
+    // ── Detener cámara ────────────────────────────────────────────────────────
 
     const detenerCamara = useCallback(async () => {
         if (scannerRef.current) {
-            try {
-                await scannerRef.current.stop()
-            } catch { /* ignorar si ya estaba detenido */ }
+            try { await scannerRef.current.stop() } catch { /* ignorar */ }
             scannerRef.current = null
         }
-        setCamaraActiva(false)
+        setEstadoCamara('inactiva')
     }, [])
 
-    // ── Input manual / lector externo ─────────────────────────────────────────
+    // ── Solicitar arranque — solo cambia el estado, el efecto hace el trabajo ─
+
+    const solicitarCamara = useCallback(() => {
+        setErrorMsg('')
+        setEstadoCamara('iniciando')
+        setQuieroArrancar(true)  // ← dispara el useEffect tras el render
+    }, [])
+
+    // ── Input manual ──────────────────────────────────────────────────────────
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInputManual(e.target.value)
@@ -152,10 +183,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
 
     const handleInputSubmit = () => {
         const id = parsearIdDeQR(inputManual.trim())
-        if (id === null) {
-            setErrorManual('Ingresa un número de tiquete válido')
-            return
-        }
+        if (id === null) { setErrorManual('Ingresa un número de tiquete válido'); return }
         onDetected(id)
         setInputManual('')
     }
@@ -164,53 +192,20 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
         if (e.key === 'Enter') handleInputSubmit()
     }
 
+    const camaraActiva  = estadoCamara === 'activa'
+    const iniciando     = estadoCamara === 'iniciando'
+
     // ── Render ────────────────────────────────────────────────────────────────
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-            {/* ── Sección de cámara — solo si hay cámara disponible ─────────── */}
             {tieneCamara && (
                 <div>
-                    {camaraActiva ? (
-                        <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', background: '#000' }}>
-                            {/*
-                                html5-qrcode monta el <video> dentro de este div.
-                                El tamaño del div determina el tamaño del visor.
-                            */}
-                            <div
-                                id={QR_REGION_ID}
-                                style={{ width: '100%', minHeight: '280px' }}
-                            />
-
-                            {/* Overlay con instrucción */}
-                            <p style={{
-                                position: 'absolute', bottom: '12px', left: 0, right: 0,
-                                textAlign: 'center', color: '#fff', fontSize: '12px',
-                                fontWeight: 600, margin: 0,
-                                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-                            }}>
-                                Apunta al código QR del tiquete
-                            </p>
-
-                            {/* Botón cerrar */}
-                            <button
-                                onClick={() => void detenerCamara()}
-                                style={{
-                                    position: 'absolute', top: '10px', right: '10px',
-                                    background: 'rgba(0,0,0,0.55)', border: 'none',
-                                    borderRadius: '50%', width: '34px', height: '34px',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    cursor: 'pointer', color: '#fff',
-                                }}
-                            >
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
-                            </button>
-                        </div>
-                    ) : (
-                        /* Botón para activar la cámara */
+                    {/* ── Botón activar (visible cuando la cámara está inactiva) ── */}
+                    {!camaraActiva && !iniciando && (
                         <button
-                            onClick={() => void iniciarCamara()}
+                            onClick={solicitarCamara}
                             disabled={isLoading}
                             style={{
                                 width: '100%', padding: '22px', borderRadius: '14px',
@@ -239,18 +234,82 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                         </button>
                     )}
 
+                    {/* ── Spinner mientras arranca ─────────────────────────── */}
+                    {iniciando && (
+                        <div style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                            gap: '10px', padding: '28px', borderRadius: '14px',
+                            background: '#f8fafc', border: '2px dashed #cbd5e1',
+                        }}>
+                            <div style={{
+                                width: '36px', height: '36px',
+                                border: '3px solid #bfdbfe', borderTopColor: '#137fec',
+                                borderRadius: '50%', animation: 'spin 0.8s linear infinite',
+                            }} />
+                            <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
+                                Iniciando cámara...
+                            </span>
+                        </div>
+                    )}
+
+                    {/*
+                        ── Visor de cámara ────────────────────────────────────
+                        SIEMPRE en el DOM una vez que se solicitó la cámara.
+                        Se oculta visualmente cuando no está activa para que
+                        html5-qrcode pueda encontrar el div por ID en el efecto.
+                    */}
+                    <div style={{
+                        display: (camaraActiva || iniciando) ? 'block' : 'none',
+                        position: 'relative', borderRadius: '14px', overflow: 'hidden',
+                        background: '#000',
+                    }}>
+                        <div
+                            id={QR_REGION_ID}
+                            style={{ width: '100%', minHeight: '280px' }}
+                        />
+
+                        {/* Instrucción superpuesta */}
+                        {camaraActiva && (
+                            <p style={{
+                                position: 'absolute', bottom: '12px', left: 0, right: 0,
+                                textAlign: 'center', color: '#fff', fontSize: '12px',
+                                fontWeight: 600, margin: 0,
+                                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                                pointerEvents: 'none',
+                            }}>
+                                Apunta al código QR del tiquete
+                            </p>
+                        )}
+
+                        {/* Botón cerrar */}
+                        {camaraActiva && (
+                            <button
+                                onClick={() => void detenerCamara()}
+                                style={{
+                                    position: 'absolute', top: '10px', right: '10px',
+                                    background: 'rgba(0,0,0,0.55)', border: 'none',
+                                    borderRadius: '50%', width: '34px', height: '34px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', color: '#fff', zIndex: 10,
+                                }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                            </button>
+                        )}
+                    </div>
+
                     {/* Error de cámara */}
-                    {errorCamara && (
+                    {estadoCamara === 'error' && errorMsg && (
                         <div style={{
                             marginTop: '8px', padding: '10px 12px', borderRadius: '10px',
                             background: '#fef2f2', border: '1px solid #fecaca',
                             display: 'flex', alignItems: 'flex-start', gap: '8px',
                         }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#ef4444', flexShrink: 0, marginTop: '1px' }}>
-                                error
-                            </span>
+                            <span className="material-symbols-outlined" style={{
+                                fontSize: '16px', color: '#ef4444', flexShrink: 0, marginTop: '1px',
+                            }}>error</span>
                             <p style={{ fontSize: '12px', color: '#dc2626', margin: 0, lineHeight: 1.4 }}>
-                                {errorCamara}
+                                {errorMsg}
                             </p>
                         </div>
                     )}
@@ -266,7 +325,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                 <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
             </div>
 
-            {/* ── Input manual / lector externo ─────────────────────────────── */}
+            {/* ── Input manual ──────────────────────────────────────────────── */}
             <div>
                 <label style={{
                     display: 'block', fontSize: '11px', fontWeight: 700,
@@ -289,8 +348,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                             background: '#f8fafc', fontSize: '15px', fontWeight: 600,
                             color: '#0f172a', outline: 'none', fontFamily: 'monospace',
                         }}
-                        onFocus={e  => { e.target.style.borderColor = '#137fec' }}
-                        onBlur={e   => { e.target.style.borderColor = errorManual ? '#ef4444' : '#e2e8f0' }}
+                        onFocus={e => { e.target.style.borderColor = '#137fec' }}
+                        onBlur={e  => { e.target.style.borderColor = errorManual ? '#ef4444' : '#e2e8f0' }}
                     />
                     <button
                         onClick={handleInputSubmit}
@@ -316,7 +375,6 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                         }
                     </button>
                 </div>
-
                 {errorManual && (
                     <p style={{ fontSize: '12px', color: '#ef4444', margin: '6px 0 0' }}>
                         {errorManual}
@@ -328,10 +386,11 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
             </div>
 
             <style>{`
-                /* html5-qrcode inyecta su propio botón de encendido/apagado — lo ocultamos */
-                #${QR_REGION_ID} > img { display: none !important; }
-                #${QR_REGION_ID} button { display: none !important; }
-                #${QR_REGION_ID} video { border-radius: 0 !important; }
+                /* Ocultar botones y elementos extra que inyecta html5-qrcode */
+                #${QR_REGION_ID} > img    { display: none !important; }
+                #${QR_REGION_ID} > button { display: none !important; }
+                #${QR_REGION_ID} video    { border-radius: 0 !important; display: block !important; }
+                #${QR_REGION_ID} > div > span { display: none !important; }
                 @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
         </div>
