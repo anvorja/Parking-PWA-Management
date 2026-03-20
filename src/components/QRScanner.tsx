@@ -1,41 +1,25 @@
 // src/components/QRScanner.tsx
 // HU-009 — Escaneo de QR del tiquete de ingreso.
 //
-// Estrategia por entorno:
-//   1. Móvil/tablet con cámara + BarcodeDetector API:
-//      <input type="file" capture="environment"> delega al SO la apertura de cámara,
-//      el operador toma la foto → BarcodeDetector la procesa → autocompleta el input.
-//   2. PC o dispositivo sin cámara / sin BarcodeDetector:
-//      Campo de texto directo (lector QR USB/BT o ingreso manual).
+// Estrategia:
+//   1. Si el dispositivo tiene cámara → html5-qrcode en tiempo real.
+//      Al detectar el QR extrae el "id" del JSON y llama onDetected(id)
+//      automáticamente, sin paso extra del usuario.
+//   2. Si no hay cámara o el usuario la cierra → input manual/lector externo.
 //
-// El resultado siempre autocompleta el input "Número de tiquete" para que
-// el usuario pueda revisar y confirmar antes de buscar.
-//
-// El QR del tiquete contiene un JSON: { id, placa, ubicación, tipo, entrada }
-// Solo se necesita el campo "id".
+// El QR del tiquete contiene un JSON: { id, placa, ubicacion, tipo, entrada }
+// Solo se necesita "id" para buscarPorId en el backend.
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-
-interface QRScannerProps {
-    /** Callback con el id de ingreso leído del QR */
-    onDetected: (idIngreso: number) => void
-    /** true mientras el provider está procesando la búsqueda */
-    isLoading: boolean
-}
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
-interface BarcodeResult {
-    rawValue: string
-}
-
-interface BarcodeDetectorInstance {
-    detect(source: ImageBitmapSource): Promise<BarcodeResult[]>
-}
-
-interface BarcodeDetectorConstructor {
-    new(options?: { formats: string[] }): BarcodeDetectorInstance
-    getSupportedFormats(): Promise<string[]>
+interface QRScannerProps {
+    /** Callback con el id de ingreso leído del QR — dispara búsqueda automática */
+    onDetected: (idIngreso: number) => void
+    /** true mientras el provider está procesando la búsqueda */
+    isLoading: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -51,37 +35,31 @@ function parsearIdDeQR(rawValue: string): number | null {
         }
         return null
     } catch {
+        // Si no es JSON, intentar como número directo (compatibilidad)
         const num = parseInt(rawValue.trim(), 10)
         return !isNaN(num) && num > 0 ? num : null
     }
 }
 
-function getBarcodeDetector(): BarcodeDetectorConstructor | null {
-    if ('BarcodeDetector' in window) {
-        return (window as unknown as { BarcodeDetector: BarcodeDetectorConstructor }).BarcodeDetector
-    }
-    return null
-}
+// ID único del div que html5-qrcode necesita para montar el video
+const QR_REGION_ID = 'qr-scanner-region'
 
 // ── Componente ────────────────────────────────────────────────────────────────
 
 const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
-    const fileInputRef = useRef<HTMLInputElement | null>(null)
+    const scannerRef     = useRef<Html5Qrcode | null>(null)
+    const detectadoRef   = useRef(false)          // evita doble disparo en el mismo frame
 
-    const [tieneCamara, setTieneCamara]         = useState(false)
-    const [tieneBarcodeAPI, setTieneBarcodeAPI] = useState(false)
-    const [procesando, setProcesando]           = useState(false)
-    const [errorEscaneo, setErrorEscaneo]       = useState('')
-    const [inputManual, setInputManual]         = useState('')
-    const [errorManual, setErrorManual]         = useState('')
-    // feedback visual verde por 2 segundos tras detectar QR
-    const [escaneado, setEscaneado]             = useState(false)
+    const [tieneCamara, setTieneCamara]     = useState(false)
+    const [camaraActiva, setCamaraActiva]   = useState(false)
+    const [errorCamara, setErrorCamara]     = useState('')
+    const [inputManual, setInputManual]     = useState('')
+    const [errorManual, setErrorManual]     = useState('')
 
-    // ── Detectar capacidades del dispositivo ─────────────────────────────────
+    // ── Detectar si hay cámara disponible ────────────────────────────────────
 
     useEffect(() => {
         const verificar = async () => {
-            // Detectar cámara
             try {
                 if (navigator.mediaDevices?.enumerateDevices) {
                     const devices = await navigator.mediaDevices.enumerateDevices()
@@ -90,84 +68,86 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
             } catch {
                 setTieneCamara(false)
             }
-
-            // Detectar BarcodeDetector con soporte para qr_code
-            const BD = getBarcodeDetector()
-            if (BD) {
-                try {
-                    const formatos = await BD.getSupportedFormats()
-                    setTieneBarcodeAPI(formatos.includes('qr_code'))
-                } catch {
-                    setTieneBarcodeAPI(false)
-                }
-            }
         }
         void verificar()
     }, [])
 
-    // ── Procesar imagen capturada por el SO ───────────────────────────────────
+    // ── Limpiar al desmontar ──────────────────────────────────────────────────
 
-    const procesarImagen = useCallback(async (file: File) => {
-        setErrorEscaneo('')
-        setProcesando(true)
-
-        const BD = getBarcodeDetector()
-        if (!BD) {
-            setErrorEscaneo('Tu navegador no soporta lectura de QR automática. Ingresa el código manualmente.')
-            setProcesando(false)
-            return
+    useEffect(() => {
+        return () => {
+            if (scannerRef.current) {
+                void scannerRef.current.stop().catch(() => null)
+                scannerRef.current = null
+            }
         }
+    }, [])
+
+    // ── Iniciar escáner ───────────────────────────────────────────────────────
+
+    const iniciarCamara = useCallback(async () => {
+        setErrorCamara('')
+        detectadoRef.current = false
 
         try {
-            const bitmap  = await createImageBitmap(file)
-            const detector = new BD({ formats: ['qr_code'] })
-            const resultados = await detector.detect(bitmap)
-            bitmap.close()
+            const scanner = new Html5Qrcode(QR_REGION_ID, {
+                formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+                verbose: false,
+            })
+            scannerRef.current = scanner
 
-            if (resultados.length === 0) {
-                setErrorEscaneo('No se detectó ningún QR en la imagen. Enfoca bien el código e intenta de nuevo.')
-                setProcesando(false)
-                return
+            await scanner.start(
+                { facingMode: 'environment' },   // cámara trasera
+                {
+                    fps: 10,
+                    qrbox: { width: 220, height: 220 },
+                    aspectRatio: 1.0,
+                },
+                (decodedText) => {
+                    // Callback de éxito — puede llamarse múltiples veces en el mismo frame
+                    if (detectadoRef.current || isLoading) return
+                    const id = parsearIdDeQR(decodedText)
+                    if (id === null) return
+
+                    detectadoRef.current = true
+                    void detenerCamara()
+                    onDetected(id)          // dispara buscarPorId → búsqueda automática
+                },
+                () => {
+                    // Callback de error de frame — se ignora (frames sin QR)
+                }
+            )
+
+            setCamaraActiva(true)
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : ''
+            scannerRef.current = null
+
+            if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('notallowed')) {
+                setErrorCamara('Permiso de cámara denegado. Ingresa el código manualmente.')
+            } else if (msg.toLowerCase().includes('notfound') || msg.toLowerCase().includes('no camera')) {
+                setErrorCamara('No se encontró cámara. Ingresa el código manualmente.')
+            } else {
+                setErrorCamara('No se pudo iniciar la cámara. Ingresa el código manualmente.')
             }
-
-            const id = parsearIdDeQR(resultados[0].rawValue)
-            if (id === null) {
-                setErrorEscaneo('El QR no contiene un número de tiquete válido.')
-                setProcesando(false)
-                return
-            }
-
-            // Autocompletar el input con el número del tiquete
-            setInputManual(String(id).padStart(9, '0'))
-            setEscaneado(true)
-            setTimeout(() => setEscaneado(false), 2500)
-            setProcesando(false)
-
-        } catch {
-            setErrorEscaneo('Error al leer la imagen. Intenta de nuevo con mejor iluminación.')
-            setProcesando(false)
         }
+    }, [isLoading, onDetected]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    const detenerCamara = useCallback(async () => {
+        if (scannerRef.current) {
+            try {
+                await scannerRef.current.stop()
+            } catch { /* ignorar si ya estaba detenido */ }
+            scannerRef.current = null
+        }
+        setCamaraActiva(false)
     }, [])
 
-    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        void procesarImagen(file)
-        // Limpiar para permitir capturar la misma imagen de nuevo si hay error
-        e.target.value = ''
-    }, [procesarImagen])
-
-    const abrirCamara = useCallback(() => {
-        setErrorEscaneo('')
-        fileInputRef.current?.click()
-    }, [])
-
-    // ── Input manual ──────────────────────────────────────────────────────────
+    // ── Input manual / lector externo ─────────────────────────────────────────
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInputManual(e.target.value)
         setErrorManual('')
-        if (escaneado) setEscaneado(false)
     }
 
     const handleInputSubmit = () => {
@@ -177,80 +157,90 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
             return
         }
         onDetected(id)
+        setInputManual('')
     }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') handleInputSubmit()
     }
 
-    // Solo mostramos el botón de cámara si el dispositivo tiene cámara Y BarcodeDetector
-    const mostrarBotonCamara = tieneCamara && tieneBarcodeAPI
+    // ── Render ────────────────────────────────────────────────────────────────
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-            {/* ── Botón de cámara ──────────────────────────────────────────── */}
-            {mostrarBotonCamara && (
+            {/* ── Sección de cámara — solo si hay cámara disponible ─────────── */}
+            {tieneCamara && (
                 <div>
-                    {/*
-                        Input oculto: type="file" + capture="environment" abre la cámara
-                        trasera directamente en Android/iOS sin necesidad de getUserMedia.
-                        Funciona en PWA, navegador Chrome/Safari, con HTTPS.
-                    */}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                        aria-hidden="true"
-                    />
+                    {camaraActiva ? (
+                        <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', background: '#000' }}>
+                            {/*
+                                html5-qrcode monta el <video> dentro de este div.
+                                El tamaño del div determina el tamaño del visor.
+                            */}
+                            <div
+                                id={QR_REGION_ID}
+                                style={{ width: '100%', minHeight: '280px' }}
+                            />
 
-                    <button
-                        onClick={abrirCamara}
-                        disabled={isLoading || procesando}
-                        style={{
-                            width: '100%', padding: '20px', borderRadius: '14px',
-                            border: `2px dashed ${procesando ? '#93c5fd' : escaneado ? '#86efac' : '#cbd5e1'}`,
-                            background: procesando ? '#eff6ff' : escaneado ? '#f0fdf4' : '#f8fafc',
-                            color: procesando ? '#1e40af' : escaneado ? '#16a34a' : '#475569',
-                            fontSize: '14px', fontWeight: 600,
-                            cursor: isLoading || procesando ? 'not-allowed' : 'pointer',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center',
-                            gap: '8px', transition: 'all 0.25s',
-                        }}
-                    >
-                        {procesando ? (
-                            <>
-                                <div style={{
-                                    width: '32px', height: '32px',
-                                    border: '3px solid #bfdbfe', borderTopColor: '#137fec',
-                                    borderRadius: '50%', animation: 'spin 0.8s linear infinite',
-                                }} />
-                                <span>Leyendo código QR...</span>
-                            </>
-                        ) : escaneado ? (
-                            <>
-                                <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>
-                                    check_circle
-                                </span>
-                                <span>¡QR detectado! Revisa el código abajo</span>
-                            </>
-                        ) : (
-                            <>
-                                <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#137fec' }}>
-                                    qr_code_scanner
-                                </span>
-                                <span>Escanear código QR con la cámara</span>
-                                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 400 }}>
-                                    Se abrirá la cámara del dispositivo
-                                </span>
-                            </>
-                        )}
-                    </button>
+                            {/* Overlay con instrucción */}
+                            <p style={{
+                                position: 'absolute', bottom: '12px', left: 0, right: 0,
+                                textAlign: 'center', color: '#fff', fontSize: '12px',
+                                fontWeight: 600, margin: 0,
+                                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                            }}>
+                                Apunta al código QR del tiquete
+                            </p>
 
-                    {errorEscaneo && (
+                            {/* Botón cerrar */}
+                            <button
+                                onClick={() => void detenerCamara()}
+                                style={{
+                                    position: 'absolute', top: '10px', right: '10px',
+                                    background: 'rgba(0,0,0,0.55)', border: 'none',
+                                    borderRadius: '50%', width: '34px', height: '34px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', color: '#fff',
+                                }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                            </button>
+                        </div>
+                    ) : (
+                        /* Botón para activar la cámara */
+                        <button
+                            onClick={() => void iniciarCamara()}
+                            disabled={isLoading}
+                            style={{
+                                width: '100%', padding: '22px', borderRadius: '14px',
+                                border: '2px dashed #cbd5e1', background: '#f8fafc',
+                                color: '#475569', fontSize: '14px', fontWeight: 600,
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                display: 'flex', flexDirection: 'column',
+                                alignItems: 'center', gap: '8px', transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.borderColor = '#137fec'
+                                e.currentTarget.style.background  = '#eff6ff'
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.borderColor = '#cbd5e1'
+                                e.currentTarget.style.background  = '#f8fafc'
+                            }}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#137fec' }}>
+                                qr_code_scanner
+                            </span>
+                            <span>Escanear código QR</span>
+                            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 400 }}>
+                                La cámara se activa en tiempo real
+                            </span>
+                        </button>
+                    )}
+
+                    {/* Error de cámara */}
+                    {errorCamara && (
                         <div style={{
                             marginTop: '8px', padding: '10px 12px', borderRadius: '10px',
                             background: '#fef2f2', border: '1px solid #fecaca',
@@ -260,23 +250,23 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                                 error
                             </span>
                             <p style={{ fontSize: '12px', color: '#dc2626', margin: 0, lineHeight: 1.4 }}>
-                                {errorEscaneo}
+                                {errorCamara}
                             </p>
                         </div>
                     )}
                 </div>
             )}
 
-            {/* ── Separador ────────────────────────────────────────────────── */}
+            {/* ── Separador ─────────────────────────────────────────────────── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
                 <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
-                    {mostrarBotonCamara ? 'O INGRESA EL CÓDIGO' : 'INGRESA EL CÓDIGO DEL TIQUETE'}
+                    {tieneCamara ? 'O INGRESA EL CÓDIGO' : 'INGRESA EL CÓDIGO DEL TIQUETE'}
                 </span>
                 <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
             </div>
 
-            {/* ── Input de número de tiquete ───────────────────────────────── */}
+            {/* ── Input manual / lector externo ─────────────────────────────── */}
             <div>
                 <label style={{
                     display: 'block', fontSize: '11px', fontWeight: 700,
@@ -286,49 +276,22 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                     Número de tiquete
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                    <div style={{ flex: 1, position: 'relative' }}>
-                        <input
-                            type="text"
-                            value={inputManual}
-                            onChange={handleInputChange}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Ej: 000000123"
-                            disabled={isLoading}
-                            style={{
-                                width: '100%',
-                                padding: '11px 12px',
-                                paddingRight: escaneado ? '36px' : '12px',
-                                borderRadius: '10px',
-                                border: `1.5px solid ${errorManual ? '#ef4444' : escaneado ? '#86efac' : '#e2e8f0'}`,
-                                background: escaneado ? '#f0fdf4' : '#f8fafc',
-                                fontSize: '15px', fontWeight: 600, color: '#0f172a',
-                                outline: 'none', fontFamily: 'monospace',
-                                boxSizing: 'border-box', transition: 'border-color 0.2s, background 0.2s',
-                            }}
-                            onFocus={e => {
-                                e.target.style.borderColor = '#137fec'
-                                e.target.style.background  = '#fff'
-                            }}
-                            onBlur={e => {
-                                e.target.style.borderColor = errorManual ? '#ef4444' : escaneado ? '#86efac' : '#e2e8f0'
-                                e.target.style.background  = escaneado ? '#f0fdf4' : '#f8fafc'
-                            }}
-                        />
-                        {/* Ícono QR verde cuando se autocompletó por escaneo */}
-                        {escaneado && (
-                            <span
-                                className="material-symbols-outlined"
-                                style={{
-                                    position: 'absolute', right: '10px', top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    fontSize: '16px', color: '#16a34a', pointerEvents: 'none',
-                                }}
-                            >
-                                qr_code
-                            </span>
-                        )}
-                    </div>
-
+                    <input
+                        type="text"
+                        value={inputManual}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Ej: 000000123"
+                        disabled={isLoading}
+                        style={{
+                            flex: 1, padding: '11px 12px', borderRadius: '10px',
+                            border: `1.5px solid ${errorManual ? '#ef4444' : '#e2e8f0'}`,
+                            background: '#f8fafc', fontSize: '15px', fontWeight: 600,
+                            color: '#0f172a', outline: 'none', fontFamily: 'monospace',
+                        }}
+                        onFocus={e  => { e.target.style.borderColor = '#137fec' }}
+                        onBlur={e   => { e.target.style.borderColor = errorManual ? '#ef4444' : '#e2e8f0' }}
+                    />
                     <button
                         onClick={handleInputSubmit}
                         disabled={isLoading || !inputManual.trim()}
@@ -359,16 +322,18 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                         {errorManual}
                     </p>
                 )}
-
                 <p style={{ fontSize: '11px', color: '#94a3b8', margin: '6px 0 0' }}>
-                    {mostrarBotonCamara
-                        ? 'El código se autocompleta al escanear. También puedes escribirlo o usar un lector externo.'
-                        : 'Ingresa el número manualmente o usa un lector QR externo conectado al dispositivo.'
-                    }
+                    También puedes usar un lector QR externo conectado al dispositivo.
                 </p>
             </div>
 
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <style>{`
+                /* html5-qrcode inyecta su propio botón de encendido/apagado — lo ocultamos */
+                #${QR_REGION_ID} > img { display: none !important; }
+                #${QR_REGION_ID} button { display: none !important; }
+                #${QR_REGION_ID} video { border-radius: 0 !important; }
+                @keyframes spin { to { transform: rotate(360deg); } }
+            `}</style>
         </div>
     )
 }
