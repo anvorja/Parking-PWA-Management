@@ -8,10 +8,10 @@ import React, { useState, useCallback, useEffect, ReactNode } from 'react'
 import { SalidaContext, ToastSalidaState, ModoBusqueda } from '../contexts/SalidaContext'
 import { salidaService, IngresoDetalle, SalidaResponse } from '../services/salidaService'
 import { outboxService } from '../services/outboxService'
-import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import { useApp } from '../hooks/useApp'
 
 export const SalidaProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { isOnline } = useNetworkStatus()
+    const { isOnline } = useApp()
 
     const [modoBusqueda, setModoBusqueda]         = useState<ModoBusqueda>('qr')
     const [ingresoEncontrado, setIngresoEncontrado] = useState<IngresoDetalle | null>(null)

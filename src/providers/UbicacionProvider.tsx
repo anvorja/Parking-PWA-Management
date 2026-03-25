@@ -15,12 +15,12 @@ import {
     EditarUbicacionRequest,
 } from '../services/ubicacionService'
 import { outboxService } from '../services/outboxService'
-import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import { useApp } from '../hooks/useApp'
 
 const IDB_KEY_UBICACIONES = 'ref_ubicaciones'
 
 export const UbicacionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { isOnline } = useNetworkStatus()
+    const { isOnline } = useApp()
 
     const [ubicaciones, setUbicaciones] = useState<UbicacionResponse[]>([])
     const [isLoading, setIsLoading]     = useState(true)
