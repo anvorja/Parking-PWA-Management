@@ -48,21 +48,12 @@ export default defineConfig(({ mode }) => {
 
           runtimeCaching: [
             {
-              // API REST → NetworkFirst
-              // Intenta la red primero; si falla (offline) sirve desde caché.
-              // networkTimeoutSeconds: 5 → si el backend tarda más de 5s, usa caché.
-              //
-              // IMPORTANTE: apiUrl se resuelve en build time via loadEnv y se embebe
-              // como string literal en el SW generado. No se usa import.meta.env aquí
-              // porque ese objeto no existe en el contexto del Service Worker.
-              urlPattern: ({ url }: { url: URL }) => {
-                if (apiUrl) {
-                  // Producción: URL absoluta del backend en Render
-                  return url.href.startsWith(apiUrl + '/api/')
-                }
-                // Desarrollo: proxy local /api/
-                return url.pathname.startsWith('/api/')
-              },
+              // El patrón cubre ambos entornos:
+              //   Producción → https://parking-api-1kwr.onrender.com/api/...
+              //   Desarrollo → http://localhost:8090/api/... o proxy /api/...
+              urlPattern: new RegExp(
+                  `^${apiUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/api/|^/api/`
+              ),
               handler: 'NetworkFirst' as const,
               options: {
                 cacheName: 'api-cache',
