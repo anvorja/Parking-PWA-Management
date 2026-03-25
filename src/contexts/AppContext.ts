@@ -13,6 +13,8 @@ export type EstadoRed =
 export interface AppContextType {
     /** Estado unificado de red + outbox */
     estadoRed: EstadoRed
+    /** true = backend alcanzable. Fuente de verdad única de conectividad para toda la app. */
+    isOnline: boolean
     /** Número de operaciones pendientes en la outbox (pendientes + muertas) */
     pendientesOutbox: number
     /** Número de entradas que superaron MAX_RETRIES y no pudieron sincronizarse */

@@ -12,7 +12,7 @@ import { get, set } from 'idb-keyval'
 import { IngresoContext, ToastState } from '../contexts/IngresoContext'
 import { EditarIngresoRequest, ingresoService, IngresoVehiculoResponse, RegistrarIngresoRequest } from '../services/ingresoService'
 import { outboxService } from '../services/outboxService'
-import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import { useApp } from '../hooks/useApp'
 import { SYNC_COMPLETE_EVENT } from './AppProvider'
 import { SyncResult } from '../services/syncService'
 
@@ -21,7 +21,7 @@ const CACHE_MAX         = 50
 const PAGE_SIZE         = 20
 
 export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { isOnline } = useNetworkStatus()
+    const { isOnline } = useApp()
 
     const [ingresos, setIngresos]             = useState<IngresoVehiculoResponse[]>([])
     const [isLoading, setIsLoading]           = useState(true)

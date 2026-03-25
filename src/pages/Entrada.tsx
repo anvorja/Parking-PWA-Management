@@ -203,6 +203,10 @@ const Entrada: React.FC = () => {
                 setPlaca('')
                 setSelectedUbicacion(null)
                 setSelectedTipo(tipos[0]?.id ?? TIPOS_FALLBACK[0].id)
+                setToast({
+                    message: 'Sin conexión — el ingreso se registrará al recuperar la red',
+                    type: 'success',
+                })
             }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Error al registrar el ingreso'
