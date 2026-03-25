@@ -148,6 +148,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const value: AppContextType = {
         estadoRed,
+        isOnline,
         pendientesOutbox,
         muertasOutbox,
         isSincronizando,
