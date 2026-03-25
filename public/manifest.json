@@ -3,6 +3,7 @@
   "short_name": "Parqueadero",
   "description": "Sistema de gestión de parqueadero",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#137fec",
@@ -13,6 +14,12 @@
       "src": "/assets/icon/parking-icon.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/png"
+    },
+    {
+      "src": "/assets/icon/parking-icon.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "/assets/icon/parking-icon.png",
