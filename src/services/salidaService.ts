@@ -61,7 +61,7 @@ export const salidaService = {
         const response = await fetchConAuth(`/api/ingresos/${id}`)
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Ingreso no encontrado (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Ingreso no encontrado (${response.status})`)
         }
         return response.json()
     },
@@ -71,7 +71,7 @@ export const salidaService = {
         const response = await fetchConAuth(`/api/ingresos/activo?placa=${encodeURIComponent(placa.trim().toUpperCase())}`)
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `No se encontró ingreso activo para la placa ${placa}`)
+            throw new Error(err?.error?.message || err?.message || `No se encontró ingreso activo para la placa ${placa}`)
         }
         return response.json()
     },
@@ -87,7 +87,7 @@ export const salidaService = {
         })
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al registrar la salida (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al registrar la salida (${response.status})`)
         }
         return response.json()
     },
