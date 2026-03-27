@@ -80,7 +80,7 @@ const Entrada: React.FC = () => {
     const [toast, setToast]                         = useState<{ message: string; type: 'success' | 'error' } | null>(null)
     const [isPrinting, setIsPrinting]               = useState(false)
 
-    const [filtroDisponibilidad, setFiltroDisponibilidad] = useState<'TODOS' | 'DISPONIBLES' | 'OCUPADOS'>('TODOS')
+    const [filtroDisponibilidad, setFiltroDisponibilidad] = useState<'TODOS' | 'DISPONIBLES'>('TODOS')
     const [filtroEspacioMoto, setFiltroEspacioMoto]       = useState<'TODOS' | 'MOTO' | 'CARRO'>('MOTO')
 
     // Referencia al <style> de impresión inyectado en <head>
@@ -193,8 +193,6 @@ const Entrada: React.FC = () => {
     let ubicacionesVisibles = ubicacionesPorTipo;
     if (filtroDisponibilidad === 'DISPONIBLES') {
         ubicacionesVisibles = ubicacionesVisibles.filter(u => u.disponible);
-    } else if (filtroDisponibilidad === 'OCUPADOS') {
-        ubicacionesVisibles = ubicacionesVisibles.filter(u => !u.disponible);
     }
 
     // ── Handlers ──────────────────────────────────────────────────────────────
@@ -406,9 +404,9 @@ const Entrada: React.FC = () => {
 
                                 {/* Group 2: Disponibilidad */}
                                 <div style={{ display: 'flex', gap: '6px' }}>
-                                    {(['TODOS', 'DISPONIBLES', 'OCUPADOS'] as const).map(f => {
+                                    {(['TODOS', 'DISPONIBLES'] as const).map(f => {
                                         const isActive = filtroDisponibilidad === f;
-                                        const label = f === 'TODOS' ? 'Todos' : f === 'DISPONIBLES' ? 'Disponible' : 'Ocupado';
+                                        const label = f === 'TODOS' ? 'Todos' : 'Disponible';
 
                                         return (
                                             <button key={f}
