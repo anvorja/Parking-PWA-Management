@@ -80,6 +80,9 @@ const Entrada: React.FC = () => {
     const [toast, setToast]                         = useState<{ message: string; type: 'success' | 'error' } | null>(null)
     const [isPrinting, setIsPrinting]               = useState(false)
 
+    const [filtroDisponibilidad, setFiltroDisponibilidad] = useState<'TODOS' | 'DISPONIBLES'>('TODOS')
+    const [filtroEspacioMoto, setFiltroEspacioMoto]       = useState<'TODOS' | 'MOTO' | 'CARRO'>('MOTO')
+
     // Referencia al <style> de impresión inyectado en <head>
     const printStyleRef = useRef<HTMLStyleElement | null>(null)
 
@@ -123,24 +126,30 @@ const Entrada: React.FC = () => {
 
                 if (ubicacionesCache && ubicacionesCache.length > 0) {
                     setUbicaciones(ubicacionesCache)
-                    return
+                    // Removido return para forzar el fetching en background si hay conexión
                 }
 
-                const [tiposRed, ubicacionesRed] = await Promise.all([
-                    ingresoService.getTiposVehiculo(),
-                    ingresoService.getUbicaciones(),
-                ])
+                try {
+                    const [tiposRed, ubicacionesRed] = await Promise.all([
+                        ingresoService.getTiposVehiculo(),
+                        ingresoService.getUbicaciones(),
+                    ])
 
-                setUbicaciones(ubicacionesRed)
-                if (tiposRed.length > 0) {
-                    const tiposConIcono: TipoVehiculoRef[] = tiposRed.map(t => ({
-                        ...t, icono: iconoParaTipo(t.nombre),
-                    }))
-                    setTipos(tiposConIcono)
-                    setSelectedTipo(tiposConIcono[0].id)
+                    setUbicaciones(ubicacionesRed)
+                    if (tiposRed.length > 0) {
+                        const tiposConIcono: TipoVehiculoRef[] = tiposRed.map((t: any) => ({
+                            ...t, icono: iconoParaTipo(t.nombre),
+                        }))
+                        setTipos(tiposConIcono)
+                        if (!tiposCache || tiposCache.length === 0) {
+                            setSelectedTipo(tiposConIcono[0].id)
+                        }
+                    }
+
+                    await refDataService.syncToIndexedDB()
+                } catch (e) {
+                    console.warn('[Entrada] Omitiendo fetch en red, usando caché (offline):', e)
                 }
-
-                await refDataService.syncToIndexedDB()
             } catch (err) {
                 console.error('[Entrada] Error cargando datos de referencia:', err)
             } finally {
@@ -158,7 +167,33 @@ const Entrada: React.FC = () => {
         }
     }, [toast])
 
-    const libres = ubicaciones.filter(u => u.disponible).length
+    // Vehicle type selection
+    const idMoto = tipos.find(t => t.nombre.toUpperCase() === 'MOTO')?.id ?? 2;
+    const idCarro = tipos.find(t => t.nombre.toUpperCase() === 'CARRO')?.id ?? 1;
+    const isMoto = selectedTipo === idMoto;
+    
+    // 1. Filter by location type (Nativo)
+    let ubicacionesPorTipo = ubicaciones;
+    if (isMoto) {
+        if (filtroEspacioMoto === 'MOTO') {
+            ubicacionesPorTipo = ubicaciones.filter(u => u.idTipoVehiculoNativo === idMoto);
+        } else if (filtroEspacioMoto === 'CARRO') {
+            ubicacionesPorTipo = ubicaciones.filter(u => u.idTipoVehiculoNativo === idCarro);
+        } else {
+            ubicacionesPorTipo = ubicaciones.filter(u => u.idTipoVehiculoNativo === idMoto || u.idTipoVehiculoNativo === idCarro);
+        }
+    } else {
+        ubicacionesPorTipo = ubicaciones.filter(u => u.idTipoVehiculoNativo === selectedTipo);
+    }
+    
+    // 2. Count libres (based on the type constraint above)
+    const libres = ubicacionesPorTipo.filter(u => u.disponible).length;
+
+    // 3. Apply availability filter for viewing
+    let ubicacionesVisibles = ubicacionesPorTipo;
+    if (filtroDisponibilidad === 'DISPONIBLES') {
+        ubicacionesVisibles = ubicacionesVisibles.filter(u => u.disponible);
+    }
 
     // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -216,12 +251,21 @@ const Entrada: React.FC = () => {
         }
     }
 
-    const handleCloseTicket = () => {
+    const handleCloseTicket = async () => {
         setTicketData(null)
         setPlaca('')
         setSelectedUbicacion(null)
-        setSelectedTipo(tipos[0]?.id ?? TIPOS_FALLBACK[0].id)
+        // No reseteamos selectedTipo para mayor comodidad de carga de datos secuencial
         setToast({ message: 'Tiquete generado exitosamente', type: 'success' })
+
+        // Refrescar las ubicaciones al vuelo si estamos online
+        try {
+            const ubicacionesActualizadas = await ingresoService.getUbicaciones()
+            setUbicaciones(ubicacionesActualizadas)
+            void refDataService.syncToIndexedDB()
+        } catch (error) {
+            console.warn('[Entrada] No se pudieron sincronizar espacios recién ocupados offline:', error)
+        }
     }
 
     // ── HU-007: Exportar a PDF ────────────────────────────────────────────────
@@ -272,8 +316,8 @@ const Entrada: React.FC = () => {
                     </div>
                 </header>
 
-                <IonContent fullscreen style={{ '--background': '#f8fafc' }}>
-                    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '18px', paddingBottom: '140px' }}>
+                <IonContent scrollY={false} className="app-bg">
+                    <div style={{ height: '100%', boxSizing: 'border-box', padding: '16px 16px 140px 16px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
                         {/* Placa */}
                         <section>
@@ -301,7 +345,11 @@ const Entrada: React.FC = () => {
                                     const isActive = selectedTipo === tipo.id
                                     return (
                                         <button key={tipo.id}
-                                                onClick={() => { setSelectedTipo(tipo.id); setSelectedUbicacion(null) }}
+                                                onClick={() => { 
+                                                    setSelectedTipo(tipo.id); 
+                                                    setSelectedUbicacion(null);
+                                                    if (tipo.nombre.toUpperCase() !== 'MOTO') setFiltroEspacioMoto('MOTO');
+                                                }}
                                                 style={{ flex: 1, padding: '10px 8px', borderRadius: '10px', border: isActive ? '2px solid #137fec' : '2px solid #e2e8f0', background: '#fff', color: isActive ? '#137fec' : '#64748b', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', transition: 'all 0.15s', outline: 'none' }}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>{tipo.icono ?? iconoParaTipo(tipo.nombre)}</span>
                                             <span>{tipo.nombre.charAt(0) + tipo.nombre.slice(1).toLowerCase()}</span>
@@ -312,14 +360,74 @@ const Entrada: React.FC = () => {
                         </section>
 
                         {/* Seleccionar Espacio */}
-                        <section>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
+                        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>
                                 <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                     Seleccionar Espacio
                                 </label>
                                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#137fec', background: 'rgba(19,127,236,0.1)', padding: '4px 10px', borderRadius: '6px' }}>
                                     {libres} Libres
                                 </span>
+                            </div>
+
+                            {/* Filtros Estilo Ubicaciones */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+                                {/* Group 1: Tipo Espacio (Only if MOTO) */}
+                                {isMoto && (
+                                    <>
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                            {(['TODOS', 'CARRO', 'MOTO'] as const).map(tipo => {
+                                                const isActive = filtroEspacioMoto === tipo;
+                                                return (
+                                                    <button key={tipo}
+                                                            onClick={() => { setFiltroEspacioMoto(tipo); setSelectedUbicacion(null); }}
+                                                            style={{ 
+                                                                padding: '6px 14px', 
+                                                                borderRadius: '20px', 
+                                                                border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0', 
+                                                                background: isActive ? '#3b82f6' : '#fff', 
+                                                                color: isActive ? '#fff' : '#1e40af', 
+                                                                fontSize: '12px', 
+                                                                fontWeight: 600, 
+                                                                cursor: 'pointer', 
+                                                                whiteSpace: 'nowrap',
+                                                                transition: 'all 0.2s'
+                                                            }}>
+                                                        {tipo === 'TODOS' ? 'Todos' : tipo === 'CARRO' ? 'Carro' : 'Moto'}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                        <div style={{ width: '1px', height: '20px', background: '#cbd5e1', margin: '0 4px', flexShrink: 0 }} />
+                                    </>
+                                )}
+
+                                {/* Group 2: Disponibilidad */}
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    {(['TODOS', 'DISPONIBLES'] as const).map(f => {
+                                        const isActive = filtroDisponibilidad === f;
+                                        const label = f === 'TODOS' ? 'Todos' : 'Disponible';
+
+                                        return (
+                                            <button key={f}
+                                                    onClick={() => { setFiltroDisponibilidad(f); setSelectedUbicacion(null); }}
+                                                    style={{ 
+                                                        padding: '6px 14px', 
+                                                        borderRadius: '20px', 
+                                                        border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0', 
+                                                        background: isActive ? '#3b82f6' : '#fff', 
+                                                        color: isActive ? '#fff' : '#1e40af', 
+                                                        fontSize: '12px', 
+                                                        fontWeight: 600, 
+                                                        cursor: 'pointer', 
+                                                        whiteSpace: 'nowrap',
+                                                        transition: 'all 0.2s'
+                                                    }}>
+                                                {label}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
                             </div>
 
                             {loadingUbicaciones ? (
@@ -333,18 +441,20 @@ const Entrada: React.FC = () => {
                                     No se pudieron cargar los espacios. Verifica la conexión.
                                 </p>
                             ) : (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                                    {ubicaciones.map((ub: UbicacionRef) => {
-                                        const isSelected = selectedUbicacion === ub.id
-                                        const isDisabled = !ub.disponible
-                                        return (
-                                            <button key={ub.id} disabled={isDisabled} onClick={() => setSelectedUbicacion(ub.id)}
-                                                    style={{ padding: '10px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', border: isSelected ? '2px solid #137fec' : isDisabled ? '2px solid #f1f5f9' : '2px solid #e2e8f0', background: isSelected ? '#137fec' : isDisabled ? '#f1f5f9' : '#fff', color: isSelected ? '#fff' : isDisabled ? '#94a3b8' : '#334155', cursor: isDisabled ? 'not-allowed' : 'pointer', fontWeight: 700, transition: 'all 0.15s', outline: 'none', margin: 0, boxShadow: isSelected ? '0 4px 14px rgba(19,127,236,0.3)' : 'none' }}>
-                                                <span style={{ fontSize: '10px', opacity: isSelected ? 0.8 : 0.6 }}>{ub.nombre.charAt(0)}</span>
-                                                <span style={{ fontSize: '18px', textDecoration: isDisabled ? 'line-through' : 'none' }}>{ub.nombre.slice(1)}</span>
-                                            </button>
-                                        )
-                                    })}
+                                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', margin: '-4px', padding: '4px 8px 4px 4px' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', paddingBottom: '16px' }}>
+                                        {ubicacionesVisibles.map((ub: UbicacionRef) => {
+                                            const isSelected = selectedUbicacion === ub.id
+                                            const isDisabled = !ub.disponible
+                                            return (
+                                                <button key={ub.id} disabled={isDisabled} onClick={() => setSelectedUbicacion(ub.id)}
+                                                        style={{ padding: '10px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', border: isSelected ? '2px solid #137fec' : isDisabled ? '2px solid #e2e8f0' : '2px solid #e2e8f0', background: isSelected ? '#137fec' : isDisabled ? '#f1f5f9' : '#fff', color: isSelected ? '#fff' : isDisabled ? '#64748b' : '#334155', cursor: isDisabled ? 'not-allowed' : 'pointer', fontWeight: 700, transition: 'all 0.15s', outline: 'none', margin: 0, boxShadow: isSelected ? '0 4px 14px rgba(19,127,236,0.3)' : 'none', opacity: isDisabled ? 0.45 : 1 }}>
+                                                    <span style={{ fontSize: '10px', opacity: isSelected ? 0.8 : 0.6 }}>{ub.nombre.charAt(0)}</span>
+                                                    <span style={{ fontSize: '18px', textDecoration: isDisabled ? 'line-through' : 'none' }}>{ub.nombre.slice(1)}</span>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
                                 </div>
                             )}
                         </section>
