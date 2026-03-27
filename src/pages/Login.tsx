@@ -12,10 +12,11 @@ const Login: React.FC = () => {
     const { login, token, isLoading: authLoading } = useAuth();
     const router = useIonRouter();
 
-    const [username, setUsername]       = useState('');
-    const [password, setPassword]       = useState('');
-    const [error, setError]             = useState('');
-    const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
+    const [username, setUsername]         = useState('');
+    const [password, setPassword]         = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError]               = useState('');
+    const [fieldErrors, setFieldErrors]   = useState<{ username?: string; password?: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -124,7 +125,7 @@ const Login: React.FC = () => {
                                     </label>
                                     <div className="relative flex items-center">
                                         <input
-                                            className={`peer w-full h-12 pl-4 pr-10 rounded-xl bg-slate-50 border text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all ${
+                                            className={`peer w-full h-12 pl-4 pr-12 rounded-xl bg-slate-50 border text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all ${
                                                 fieldErrors.password
                                                     ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500'
                                                     : 'border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary'
@@ -132,13 +133,23 @@ const Login: React.FC = () => {
                                             id="password"
                                             name="password"
                                             placeholder="••••••••"
-                                            type="password"
+                                            type={showPassword ? 'text' : 'password'}
                                             value={password}
                                             onChange={e => setPassword(e.target.value)}
                                             disabled={isSubmitting}
                                         />
-                                        <div className="absolute right-3 text-slate-400 pointer-events-none peer-focus:text-primary transition-colors">
-                                            <span className="material-symbols-outlined text-[20px]">lock</span>
+                                        <div className="absolute right-3 flex items-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(v => !v)}
+                                                className="text-slate-400 hover:text-primary transition-colors p-1 rounded-md"
+                                                tabIndex={-1}
+                                                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                            >
+                                              <span className="material-symbols-outlined text-[20px]">
+                                                {showPassword ? 'visibility_off' : 'visibility'}
+                                              </span>
+                                            </button>
                                         </div>
                                     </div>
                                     {fieldErrors.password && (

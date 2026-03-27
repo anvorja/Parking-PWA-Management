@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { IonPage, IonContent, useIonRouter } from '@ionic/react';
 import { usuarioService, UsuarioListItemResponse, CrearUsuarioRequest } from '../services/usuarioService';
+import { useApp } from '../hooks/useApp';
 import BottomNav from '../components/BottomNav';
 
 const initialFormData: CrearUsuarioRequest = {
@@ -27,6 +28,7 @@ const Users: React.FC = () => {
     const [editTarget, setEditTarget] = useState<UsuarioListItemResponse | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const router = useIonRouter();
+    const { estadoRed } = useApp();
 
     useEffect(() => {
         loadUsuarios();
@@ -197,14 +199,29 @@ const Users: React.FC = () => {
     return (
         <IonPage>
             <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white selection:bg-primary/20">
-                <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 py-2.5 pt-safe-top">
+                <header
+                    className="sticky z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 py-2.5"
+                    style={{ top: 'var(--network-banner-height, 0px)' }}
+                >
                     <div className="w-8">
                         <button onClick={handleBack} className="text-slate-400 hover:text-primary transition-colors">
                             <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                         </button>
                     </div>
                     <h1 className="text-base font-semibold text-slate-900 flex-1 text-center truncate">Gestión de Usuarios</h1>
-                    <div className="w-8 flex justify-end">
+                    <div className="flex items-center gap-2">
+                        {/* Indicador de estado de red */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                            fontSize: '11px', fontWeight: 600,
+                            color: estadoRed === 'online' ? '#059669' : estadoRed === 'offline' ? '#dc2626' : '#1e40af',
+                        }}>
+                            <div style={{
+                                width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
+                                background: estadoRed === 'online' ? '#10b981' : estadoRed === 'offline' ? '#ef4444' : '#3b82f6',
+                            }} />
+                            {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
+                        </div>
                         <button className="text-primary hover:text-primary/80 transition-colors">
                             <span className="material-symbols-outlined text-blue-500">settings</span>
                         </button>

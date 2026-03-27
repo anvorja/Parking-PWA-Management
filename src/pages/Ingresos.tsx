@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { IonPage, IonContent, useIonRouter } from '@ionic/react'
 import { useIngresos } from '../hooks/useIngresos'
 import { useAuth } from '../hooks/useAuth'
+import { useApp } from '../hooks/useApp'
 import { EditarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService'
 import { refDataService, UbicacionRef, TipoVehiculoRef } from '../services/refDataService'
 import BottomNav from '../components/BottomNav'
@@ -288,6 +289,7 @@ const Ingresos: React.FC = () => {
     } = useIngresos()
 
     const { user } = useAuth()
+    const { estadoRed } = useApp()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
     const router  = useIonRouter()
 
@@ -352,7 +354,13 @@ const Ingresos: React.FC = () => {
             <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white">
 
                 {/* Header */}
-                <header style={{ position: 'sticky', top: 0, zIndex: 20, display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #e2e8f0', background: '#fff', padding: '12px 16px' }}>
+                <header style={{
+                    position: 'sticky',
+                    top: 'var(--network-banner-height, 0px)',
+                    zIndex: 20,
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    borderBottom: '1px solid #e2e8f0', background: '#fff', padding: '12px 16px',
+                }}>
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#137fec', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>format_list_bulleted</span>
                     </div>
@@ -362,24 +370,22 @@ const Ingresos: React.FC = () => {
                             {isLoading ? 'Cargando...' : `${totalElements} ${totalElements === 1 ? 'registro' : 'registros'}`}
                         </p>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 600, color: isOnline ? '#059669' : '#dc2626' }}>
-                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: isOnline ? '#10b981' : '#ef4444' }} />
-                        {isOnline ? 'En línea' : 'Sin conexión'}
+                    {/* Indicador de estado de red — consistente en todas las páginas */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        fontSize: '11px', fontWeight: 600,
+                        color: estadoRed === 'online' ? '#059669' : estadoRed === 'offline' ? '#dc2626' : '#1e40af',
+                    }}>
+                        <div style={{
+                            width: '7px', height: '7px', borderRadius: '50%',
+                            background: estadoRed === 'online' ? '#10b981' : estadoRed === 'offline' ? '#ef4444' : '#3b82f6',
+                        }} />
+                        {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
                 </header>
 
                 <IonContent fullscreen style={{ '--background': '#f8fafc' }}>
                     <div style={{ paddingBottom: '88px' }}>
-
-                        {/* Banner offline */}
-                        {!isOnline && (
-                            <div style={{ margin: '12px 16px 0', padding: '10px 14px', borderRadius: '10px', background: '#fffbeb', border: '1px solid #fcd34d', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#d97706' }}>wifi_off</span>
-                                <p style={{ fontSize: '12px', color: '#92400e', margin: 0, lineHeight: 1.4 }}>
-                                    <strong>Sin conexión</strong> — mostrando registros guardados localmente
-                                </p>
-                            </div>
-                        )}
 
                         {/* Buscador */}
                         <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid #f1f5f9' }}>

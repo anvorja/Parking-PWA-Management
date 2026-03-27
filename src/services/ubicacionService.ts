@@ -54,7 +54,7 @@ export const ubicacionService = {
         const response = await fetchConAuth('/api/v1/ubicaciones')
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al obtener ubicaciones (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al obtener ubicaciones (${response.status})`)
         }
         return response.json()
     },
@@ -66,7 +66,7 @@ export const ubicacionService = {
         })
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al crear la ubicación (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al crear la ubicación (${response.status})`)
         }
         return response.json()
     },
@@ -78,7 +78,7 @@ export const ubicacionService = {
         })
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al editar la ubicación (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al editar la ubicación (${response.status})`)
         }
         return response.json()
     },
@@ -87,7 +87,7 @@ export const ubicacionService = {
         const response = await fetchConAuth(`/api/v1/ubicaciones/${id}`, { method: 'DELETE' })
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al desactivar la ubicación (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al desactivar la ubicación (${response.status})`)
         }
     },
 }

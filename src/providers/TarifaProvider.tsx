@@ -19,13 +19,13 @@ import {
     CrearTarifaRequest,
     EditarTarifaRequest,
 } from '../services/tarifaService'
-import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import { useApp } from '../hooks/useApp'
 import { useAuth } from '../hooks/useAuth'
 
 const IDB_KEY_TARIFAS = 'ref_tarifas'
 
 export const TarifaProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { isOnline } = useNetworkStatus()
+    const { isOnline } = useApp()
     const { user }     = useAuth()
 
     const [tarifas, setTarifas]     = useState<TarifaResponse[]>([])

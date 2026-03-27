@@ -52,7 +52,7 @@ export const tarifaService = {
         const response = await fetchConAuth('/api/v1/tarifas')
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al obtener tarifas (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al obtener tarifas (${response.status})`)
         }
         return response.json()
     },
@@ -64,7 +64,7 @@ export const tarifaService = {
         })
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al crear tarifa (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al crear tarifa (${response.status})`)
         }
         return response.json()
     },
@@ -76,7 +76,7 @@ export const tarifaService = {
         })
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al editar tarifa (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al editar tarifa (${response.status})`)
         }
         return response.json()
     },
@@ -85,7 +85,7 @@ export const tarifaService = {
         const response = await fetchConAuth(`/api/v1/tarifas/${id}`, { method: 'DELETE' })
         if (!response.ok) {
             const err = await response.json().catch(() => null)
-            throw new Error(err?.message || `Error al desactivar tarifa (${response.status})`)
+            throw new Error(err?.error?.message || err?.message || `Error al desactivar tarifa (${response.status})`)
         }
     },
 }
