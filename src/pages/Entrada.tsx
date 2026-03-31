@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IonPage, IonContent } from '@ionic/react';
 import QRCode from 'react-qr-code';
 import BottomNav from '../components/BottomNav';
-import { ingresoService, RegistrarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService';
+import { ingresoService, RegistrarIngresoRequest, IngresoVehiculoResponse, TipoVehiculo } from '../services/ingresoService';
 import { refDataService, UbicacionRef, TipoVehiculoRef, iconoParaTipo } from '../services/refDataService';
 import { useIngresos } from '../hooks/useIngresos';
 import { useApp } from '../hooks/useApp';
@@ -137,7 +137,7 @@ const Entrada: React.FC = () => {
 
                     setUbicaciones(ubicacionesRed)
                     if (tiposRed.length > 0) {
-                        const tiposConIcono: TipoVehiculoRef[] = tiposRed.map((t: any) => ({
+                        const tiposConIcono: TipoVehiculoRef[] = tiposRed.map((t: TipoVehiculo) => ({
                             ...t, icono: iconoParaTipo(t.nombre),
                         }))
                         setTipos(tiposConIcono)

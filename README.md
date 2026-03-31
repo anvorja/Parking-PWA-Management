@@ -6,7 +6,7 @@ Frontend de la PWA para la gestión del parqueadero. Ha sido construida utilizan
 
 Asegúrate de tener instalado en tu sistema:
 - [Node.js](https://nodejs.org/) (versión 16 o superior recomendada)
-- `npm` (que normalmente viene incluido con Node.js)
+- `npm` 
 
 ## Instalación y Ejecución Local
 
@@ -29,5 +29,11 @@ Para correr este proyecto en tu entorno local, sigue estos sencillos pasos:
    npm run dev -- --force
    ```
 
+   *Para ejecución de tests:*
+   ```bash
+   npm run test.unit -- --run --reporter=verbose
+   ```
+   Revisar *comandos-fases.html*
+
 ---
-**Nota:** Para que la aplicación funcione primero tiene que estar corriendo el backend. El backend se encuentra en el repositorio: https://github.com/yancertuche-univalle/parking-management-service
+**Nota:** Para que la aplicación funcione primero tiene que estar corriendo el backend.
