@@ -264,7 +264,7 @@ describe('AppProvider', () => {
             { id: '1', type: 'INGRESO', payload: {}, createdAt: 0, retries: 0 } as OutboxEntry,
         ])
 
-        let resolveProcesar!: (val: any) => void
+        let resolveProcesar!: (val: unknown) => void
         mockSync.procesarOutbox.mockReturnValue(
             new Promise(res => { resolveProcesar = res })
         )
