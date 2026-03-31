@@ -1,6 +1,6 @@
 // src/pages/Login.test.tsx
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Login from './Login';
 import * as AuthHookModule from '../hooks/useAuth';
@@ -144,6 +144,8 @@ describe('Pruebas Unitarias del Componente Login', () => {
         });
 
         // Resolver la promesa para no dejar la prueba con estado colgado
-        resolveLogin();
+        await act(async () => {
+            resolveLogin();
+        })
     });
 });
