@@ -228,4 +228,68 @@ describe('AppProvider', () => {
 
         expect(mockSync.procesarOutbox).not.toHaveBeenCalled()
     })
+
+    // ── 2.2.7 — Sync automático al volver online ──────────────────────────────
+
+    it('al recuperar conexión (evento online) dispara ejecutarSync() inmediatamente', async () => {
+        // Empezar offline
+        Object.defineProperty(navigator, 'onLine', { value: false, configurable: true })
+        vi.mocked(global.fetch).mockRejectedValue(new Error('no network'))
+
+        mockOutbox.getPendientes.mockResolvedValue([
+            { id: '1', type: 'INGRESO', payload: {}, createdAt: 0, retries: 0 } as OutboxEntry,
+        ])
+        mockSync.procesarOutbox.mockResolvedValue({ procesadas: 1, exitosas: 1, fallidas: 0, muertas: 0 })
+
+        renderAppProvider()
+        await waitFor(() => expect(screen.getByTestId('isOnline').textContent).toBe('false'))
+
+        // Volver online
+        vi.mocked(global.fetch).mockResolvedValue(new Response('ok', { status: 200 }))
+
+        act(() => {
+            window.dispatchEvent(new Event('online'))
+        })
+
+        await waitFor(() => {
+            expect(mockOutbox.getPendientes).toHaveBeenCalled()
+            expect(mockSync.procesarOutbox).toHaveBeenCalled()
+        })
+    })
+
+    // ── 2.2.8 — Estado sincronizando ──────────────────────────────────────────
+
+    it('estadoRed = sincronizando e isSincronizando = true mientras ejecutarSync está en curso', async () => {
+        mockOutbox.getPendientes.mockResolvedValue([
+            { id: '1', type: 'INGRESO', payload: {}, createdAt: 0, retries: 0 } as OutboxEntry,
+        ])
+
+        let resolveProcesar!: (val: any) => void
+        mockSync.procesarOutbox.mockReturnValue(
+            new Promise(res => { resolveProcesar = res })
+        )
+
+        renderAppProvider()
+        await waitFor(() => expect(screen.getByTestId('isOnline').textContent).toBe('true'))
+
+        // Disparar sync manual
+        act(() => {
+            screen.getByRole('button', { name: 'Sincronizar' }).click()
+        })
+
+        // Mientras procesarOutbox no resuelve, isSincronizando debe ser true
+        await waitFor(() => {
+            expect(screen.getByTestId('sincronizando').textContent).toBe('true')
+            expect(screen.getByTestId('estadoRed').textContent).toBe('sincronizando')
+        })
+
+        // Resolver sync — el estado debe volver a false
+        await act(async () => {
+            resolveProcesar({ procesadas: 1, exitosas: 1, fallidas: 0, muertas: 0 })
+        })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('sincronizando').textContent).toBe('false')
+        })
+    })
 })

@@ -229,4 +229,49 @@ siempre usar la parte del texto que sea única al elemento que quieres verificar
 
 ---
 
+---
+
+## Problema 8 — Verificar redirección de `history.replace` en AuthProvider
+
+**Archivos afectados:** `src/providers/AuthProvider.test.tsx`
+
+**Síntoma:**
+Los tests de `logout()` y `SESSION_EXPIRED_EVENT` solo verificaban que el estado se limpiaba, pero no que se redirigía a `/login`. El AuthProvider llama `history.replace('/login')` pero no había forma de interceptarlo en los tests sin mock explícito.
+
+**Causa raíz:**
+Los tests renderizaban AuthProvider dentro de MemoryRouter + IonReactRouter — esto provee contexto de router real, pero `history.replace(...)` no tiene efectos observables en jsdom (no hay navegación real). Sin mock, no se puede verificar si fue llamado ni con qué argumento.
+
+**Solución aplicada:**
+Mockear `useHistory` de `react-router-dom` para capturar las llamadas a `replace`:
+
+```ts
+const mockHistoryReplace = vi.fn()
+vi.mock('react-router-dom', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('react-router-dom')>()
+    return {
+        ...actual,
+        useHistory: () => ({ replace: mockHistoryReplace }),
+    }
+})
+// Limpiar en beforeEach:
+mockHistoryReplace.mockReset()
+```
+
+**Importante:** usar `...actual` para preservar el resto del módulo (MemoryRouter, Route, etc.), solo sobreescribir `useHistory`. El mock afecta a todos los tests del archivo, pero como los demás tests no verificaban redirección, no hay regresión.
+
+**Cuándo se repite:**
+Siempre que un Provider o componente llame `history.push/replace` y se quiera verificar la navegación en un test unitario.
+
+---
+
+## Convención — Estructura de tests migrados de A a B
+
+| Criterio | Decisión |
+|---|---|
+| Tests de redirección (logout, session expired) | Mock `useHistory` con `vi.fn()` — no depender del router real |
+| Tests de sincronización (sync automático, estado sincronizando) | Usar `OutboxEntry` tipado en los mocks para evitar errores de TypeScript |
+| Tests de UI post-acción (tiquete, resumen de cobro) | Usar el `renderEntrada` / `renderSalida` helper existente + `waitFor` |
+
+---
+
 _Documento actualizado a medida que se encuentran nuevos problemas._

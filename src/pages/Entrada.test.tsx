@@ -159,6 +159,31 @@ describe('Entrada — Flujo de registro de ingreso', () => {
 
     // ── 4.2.4 ─────────────────────────────────────────────────────────────────
 
+    it('envío online: muestra la sección "Tiquete Generado" tras registrar el ingreso', async () => {
+        renderEntrada({ isOnline: true })
+
+        // Esperar a que carguen los espacios
+        await waitFor(() => expect(screen.getByText('A')).toBeInTheDocument())
+
+        // Llenar placa
+        fireEvent.change(screen.getByPlaceholderText('ABC-1234'), { target: { value: 'ABC123' } })
+
+        // Seleccionar el espacio ZA (primer char 'Z' — segundo char 'A' es el visible en el botón)
+        const espacioBtn = screen.getByText('A').closest('button')!
+        fireEvent.click(espacioBtn)
+
+        // Enviar formulario
+        await act(async () => {
+            fireEvent.click(screen.getByText('Generar Tiquete'))
+        })
+
+        await waitFor(() => {
+            expect(screen.getByText('Tiquete Generado')).toBeInTheDocument()
+        })
+    })
+
+    // ── 4.2.5 ─────────────────────────────────────────────────────────────────
+
     it('envío offline: registrarIngresoConOutbox devuelve "encolado" y muestra toast offline', async () => {
         const registrarMock = vi.fn().mockResolvedValue('encolado')
         renderEntrada({ isOnline: false, registrarIngresoConOutbox: registrarMock })
