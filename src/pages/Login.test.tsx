@@ -82,4 +82,68 @@ describe('Pruebas Unitarias del Componente Login', () => {
             expect(mockLogin).toHaveBeenCalledWith({ username: 'admin', password: '1234' });
         });
     });
+
+    // ── Fase 4 — casos adicionales ────────────────────────────────────────────
+
+    it('4. Login exitoso llama a router.push con /home', async () => {
+        mockLogin.mockResolvedValue({ accessToken: 'tok', usuario: { nombreUsuario: 'admin' } });
+
+        render(
+            <IonReactRouter>
+                <Login />
+            </IonReactRouter>
+        );
+
+        fireEvent.change(screen.getByLabelText('Usuario o Correo Electrónico'), { target: { value: 'admin' } });
+        fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: '1234' } });
+        fireEvent.click(screen.getByRole('button', { name: /ingresar/i }));
+
+        await waitFor(() => {
+            expect(mockPush).toHaveBeenCalledWith('/home', 'forward', 'replace');
+        });
+    });
+
+    it('5. Login fallido muestra el mensaje de error en pantalla', async () => {
+        mockLogin.mockRejectedValue(new Error('Credenciales inválidas o error en el servidor'));
+
+        render(
+            <IonReactRouter>
+                <Login />
+            </IonReactRouter>
+        );
+
+        fireEvent.change(screen.getByLabelText('Usuario o Correo Electrónico'), { target: { value: 'admin' } });
+        fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'wrong' } });
+        fireEvent.click(screen.getByRole('button', { name: /ingresar/i }));
+
+        expect(await screen.findByText('Credenciales inválidas o error en el servidor')).toBeInTheDocument();
+        expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('6. El botón Ingresar está deshabilitado mientras isSubmitting = true', async () => {
+        // Login que tarda — el botón debe quedar disabled mientras espera
+        let resolveLogin!: () => void;
+        mockLogin.mockReturnValue(new Promise<void>(res => { resolveLogin = res }));
+
+        render(
+            <IonReactRouter>
+                <Login />
+            </IonReactRouter>
+        );
+
+        fireEvent.change(screen.getByLabelText('Usuario o Correo Electrónico'), { target: { value: 'admin' } });
+        fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: '1234' } });
+
+        // Guardar referencia ANTES de click — el texto cambia a spinner al enviar
+        const submitBtn = screen.getByRole('button', { name: /ingresar/i });
+        fireEvent.click(submitBtn);
+
+        // Mientras el login está pendiente, el mismo elemento debe estar deshabilitado
+        await waitFor(() => {
+            expect(submitBtn).toBeDisabled();
+        });
+
+        // Resolver la promesa para no dejar la prueba con estado colgado
+        resolveLogin();
+    });
 });
