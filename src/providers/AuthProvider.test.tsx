@@ -10,6 +10,15 @@ import { makeUser, makeLoginResponse } from '../test/mocks/factories'
 
 // ─── Mocks de módulos ─────────────────────────────────────────────────────────
 
+const mockHistoryReplace = vi.fn()
+vi.mock('react-router-dom', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('react-router-dom')>()
+    return {
+        ...actual,
+        useHistory: () => ({ replace: mockHistoryReplace }),
+    }
+})
+
 vi.mock('../services/authService', () => ({
     authService: {
         login:              vi.fn(),
@@ -73,6 +82,7 @@ describe('AuthProvider', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockRefData.syncToIndexedDB.mockResolvedValue(undefined)
+        mockHistoryReplace.mockReset()
     })
 
     // ── 2.1.1 ─────────────────────────────────────────────────────────────────
@@ -216,6 +226,43 @@ describe('AuthProvider', () => {
         await waitFor(() => {
             expect(screen.getByTestId('token').textContent).toBe('null')
             expect(screen.getByTestId('user').textContent).toBe('null')
+        })
+    })
+
+    // ── 2.1.8 ─────────────────────────────────────────────────────────────────
+
+    it('logout() redirige a /login tras limpiar el estado', async () => {
+        mockAuth.getToken.mockResolvedValue('token-activo')
+        mockAuth.getUser.mockResolvedValue(makeUser())
+        mockAuth.logout.mockResolvedValue(undefined)
+
+        renderAuthProvider()
+        await waitFor(() => expect(screen.getByTestId('token').textContent).toBe('token-activo'))
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Logout' }))
+        })
+
+        await waitFor(() => {
+            expect(mockHistoryReplace).toHaveBeenCalledWith('/login')
+        })
+    })
+
+    // ── 2.1.9 ─────────────────────────────────────────────────────────────────
+
+    it('SESSION_EXPIRED_EVENT redirige a /login', async () => {
+        mockAuth.getToken.mockResolvedValue('token-guardado')
+        mockAuth.getUser.mockResolvedValue(makeUser())
+
+        renderAuthProvider()
+        await waitFor(() => expect(screen.getByTestId('token').textContent).toBe('token-guardado'))
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT))
+        })
+
+        await waitFor(() => {
+            expect(mockHistoryReplace).toHaveBeenCalledWith('/login')
         })
     })
 })
