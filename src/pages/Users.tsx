@@ -199,32 +199,66 @@ const Users: React.FC = () => {
     return (
         <IonPage>
             <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white selection:bg-primary/20">
-                <header
-                    className="sticky z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 py-2.5"
-                    style={{ top: 'var(--network-banner-height, 0px)' }}
-                >
-                    <div className="w-8">
-                        <button onClick={handleBack} className="text-slate-400 hover:text-primary transition-colors">
-                            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                {/* Header */}
+                <header style={{
+                    position: 'sticky',
+                    top: 'var(--network-banner-height, 0px)',
+                    zIndex: 20,
+                    borderBottom: '1px solid #e2e8f0', background: '#fff', padding: '12px 16px',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                        <button onClick={handleBack} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 0, display: 'flex', outline: 'none' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>arrow_back</span>
                         </button>
-                    </div>
-                    <h1 className="text-base font-semibold text-slate-900 flex-1 text-center truncate">Gestión de Usuarios</h1>
-                    <div className="flex items-center gap-2">
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#137fec', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>group</span>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <h1 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Gestión de Usuarios</h1>
+                            <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>
+                                {isLoading ? 'Cargando...' : `${countAdmin} admin · ${countAuxiliar} auxiliar · ${countTodos} total`}
+                            </p>
+                        </div>
                         {/* Indicador de estado de red */}
                         <div style={{
-                            display: 'flex', alignItems: 'center', gap: '4px',
+                            display: 'flex', alignItems: 'center', gap: '5px',
                             fontSize: '11px', fontWeight: 600,
                             color: estadoRed === 'online' ? '#059669' : estadoRed === 'offline' ? '#dc2626' : '#1e40af',
                         }}>
                             <div style={{
-                                width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
+                                width: '7px', height: '7px', borderRadius: '50%',
                                 background: estadoRed === 'online' ? '#10b981' : estadoRed === 'offline' ? '#ef4444' : '#3b82f6',
                             }} />
                             {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                         </div>
-                        <button className="text-primary hover:text-primary/80 transition-colors">
-                            <span className="material-symbols-outlined text-blue-500">settings</span>
+                        <button
+                            onClick={handleOpenModal}
+                            style={{ width: '36px', height: '36px', borderRadius: '10px', border: 'none', background: '#137fec', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
                         </button>
+                    </div>
+
+                    {/* Filtros */}
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {(['Todos', 'ADMINISTRADOR', 'AUXILIAR'] as const).map(rol => (
+                            <button
+                                key={rol}
+                                onClick={() => setSelectedRole(rol)}
+                                style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '9999px',
+                                    border: `1px solid ${selectedRole === rol ? '#137fec' : '#e2e8f0'}`,
+                                    background: selectedRole === rol ? '#137fec' : '#fff',
+                                    color: selectedRole === rol ? '#fff' : '#64748b',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {rol === 'Todos' ? 'Todos' : rol === 'ADMINISTRADOR' ? 'Admin' : 'Auxiliar'}
+                            </button>
+                        ))}
                     </div>
                 </header>
 
@@ -246,30 +280,7 @@ const Users: React.FC = () => {
                             </label>
                         </div>
 
-                        {/* Filtros */}
-                        <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar bg-white">
-                            <div
-                                onClick={() => setSelectedRole('Todos')}
-                                className={`flex items-center gap-2 px-4 py-[6px] text-[13px] font-semibold whitespace-nowrap border cursor-pointer select-none transition-all ${selectedRole === 'Todos' ? 'bg-[#eef5fe] text-[#2563eb] border-[#bfdbfe]' : 'bg-[#f8fafc] text-slate-500 border-transparent hover:bg-slate-100'}`}
-                                style={{ borderRadius: '9999px' }}
-                            >
-                                Todos <span className={`flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-[11px] font-bold ${selectedRole === 'Todos' ? 'bg-white text-[#2563eb] shadow-sm' : 'bg-[#e2e8f0] text-slate-500'}`} style={{ borderRadius: '9999px' }}>{countTodos}</span>
-                            </div>
-                            <div
-                                onClick={() => setSelectedRole('ADMINISTRADOR')}
-                                className={`flex items-center gap-2 px-4 py-[6px] text-[13px] font-semibold whitespace-nowrap border cursor-pointer select-none transition-all ${selectedRole === 'ADMINISTRADOR' ? 'bg-[#eef5fe] text-[#2563eb] border-[#bfdbfe]' : 'bg-[#f8fafc] text-slate-500 border-transparent hover:bg-slate-100'}`}
-                                style={{ borderRadius: '9999px' }}
-                            >
-                                Admin <span className={`flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-[11px] font-bold ${selectedRole === 'ADMINISTRADOR' ? 'bg-white text-[#2563eb] shadow-sm' : 'bg-[#e2e8f0] text-slate-500'}`} style={{ borderRadius: '9999px' }}>{countAdmin}</span>
-                            </div>
-                            <div
-                                onClick={() => setSelectedRole('AUXILIAR')}
-                                className={`flex items-center gap-2 px-4 py-[6px] text-[13px] font-semibold whitespace-nowrap border cursor-pointer select-none transition-all ${selectedRole === 'AUXILIAR' ? 'bg-[#eef5fe] text-[#2563eb] border-[#bfdbfe]' : 'bg-[#f8fafc] text-slate-500 border-transparent hover:bg-slate-100'}`}
-                                style={{ borderRadius: '9999px' }}
-                            >
-                                Auxiliar <span className={`flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-[11px] font-bold ${selectedRole === 'AUXILIAR' ? 'bg-white text-[#2563eb] shadow-sm' : 'bg-[#e2e8f0] text-slate-500'}`} style={{ borderRadius: '9999px' }}>{countAuxiliar}</span>
-                            </div>
-                        </div>
+
 
                         <div className="px-4 pt-4 pb-2">
                             <h3 className="text-xs font-semibold tracking-wider text-slate-500">Lista de Usuarios</h3>
@@ -325,14 +336,7 @@ const Users: React.FC = () => {
                     </div>
                 </IonContent>
 
-                {/* Floating Add Button */}
-                <button
-                    onClick={handleOpenModal}
-                    className="fixed bottom-[80px] right-5 z-20 flex h-[52px] w-[52px] items-center justify-center bg-[#137fec] text-white shadow-xl shadow-blue-500/30 hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 focus:outline-none"
-                    style={{ borderRadius: '9999px' }}
-                >
-                    <span className="material-symbols-outlined text-[28px]">add</span>
-                </button>
+
 
                 <BottomNav />
 

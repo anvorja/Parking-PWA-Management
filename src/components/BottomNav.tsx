@@ -125,8 +125,7 @@ const BottomNav: React.FC = () => {
                 }}>
                     {/* Tabs de navegación */}
                     {tabs.map(tab => {
-                        const isActive = currentPath === tab.path ||
-                            (tab.path === '/entrada' && currentPath === '/home')
+                        const isActive = currentPath === tab.path
                         return (
                             <button
                                 key={tab.path}

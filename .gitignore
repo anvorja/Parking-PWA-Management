@@ -35,6 +35,7 @@ yarn-error.log*
 /Documentacion
 /backend-repo
 /.tmp-backend
+/Mokups
 
 # Scripts y archivos temporales
 *.py

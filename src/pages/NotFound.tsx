@@ -9,7 +9,7 @@ const NotFound: React.FC = () => {
     // Cuenta regresiva: redirige a /entrada automáticamente en 5s
     useEffect(() => {
         if (countdown === 0) {
-            router.push('/entrada', 'root', 'replace')
+            router.push('/home', 'root', 'replace')
             return
         }
         const t = setTimeout(() => setCountdown(c => c - 1), 1000)
@@ -99,7 +99,7 @@ const NotFound: React.FC = () => {
 
                     {/* Botón principal */}
                     <button
-                        onClick={() => router.push('/entrada', 'root', 'replace')}
+                        onClick={() => router.push('/home', 'root', 'replace')}
                         style={{
                             padding: '14px 32px',
                             borderRadius: '12px',
@@ -136,7 +136,13 @@ const NotFound: React.FC = () => {
 
                     {/* Botón secundario */}
                     <button
-                        onClick={() => router.goBack()}
+                        onClick={() => {
+                            if (window.history.length > 1) {
+                                router.goBack()
+                            } else {
+                                router.push('/home', 'root', 'replace')
+                            }
+                        }}
                         style={{
                             padding: '12px 32px',
                             borderRadius: '12px',
