@@ -103,9 +103,7 @@ const Users: React.FC = () => {
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
     };
 
-    const handleBack = () => {
-        router.goBack();
-    };
+
 
     const handleOpenModal = () => {
         setEditTarget(null);
@@ -207,9 +205,6 @@ const Users: React.FC = () => {
                     borderBottom: '1px solid #e2e8f0', background: '#fff', padding: '12px 16px',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                        <button onClick={handleBack} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 0, display: 'flex', outline: 'none' }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>arrow_back</span>
-                        </button>
                         <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#137fec', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>group</span>
                         </div>
