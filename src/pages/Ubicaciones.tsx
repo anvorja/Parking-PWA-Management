@@ -22,8 +22,8 @@ const TIPOS_VEHICULO = [
 function getEstadoColor(estado: string | undefined): { bg: string; text: string; dot: string } {
     switch ((estado ?? '').toUpperCase()) {
         case 'DISPONIBLE': return { bg: '#ecfdf5', text: '#059669', dot: '#10b981' }
-        case 'OCUPADO':    return { bg: '#fef2f2', text: '#dc2626', dot: '#ef4444' }
-        default:           return { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8' }
+        case 'OCUPADO': return { bg: '#fef2f2', text: '#dc2626', dot: '#ef4444' }
+        default: return { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8' }
     }
 }
 
@@ -50,10 +50,10 @@ interface UbicacionModalProps {
 }
 
 function UbicacionModal({ titulo, inicial, isSaving, tieneIngresos, onGuardar, onCancelar }: UbicacionModalProps) {
-    const [nombre, setNombre]       = useState(inicial.nombre)
-    const [idTipo, setIdTipo]       = useState(inicial.idTipoVehiculoNativo)
+    const [nombre, setNombre] = useState(inicial.nombre)
+    const [idTipo, setIdTipo] = useState(inicial.idTipoVehiculoNativo)
     const [capacidad, setCapacidad] = useState(String(inicial.capacidad))
-    const [error, setError]         = useState('')
+    const [error, setError] = useState('')
 
     const handleGuardar = async () => {
         setError('')
@@ -95,7 +95,7 @@ function UbicacionModal({ titulo, inicial, isSaving, tieneIngresos, onGuardar, o
                             maxLength={50} placeholder="Ej: A51"
                             style={{ ...inputStyle, textTransform: 'uppercase', fontWeight: 700 }}
                             onFocus={e => { e.target.style.borderColor = '#137fec' }}
-                            onBlur={e  => { e.target.style.borderColor = '#e2e8f0' }}
+                            onBlur={e => { e.target.style.borderColor = '#e2e8f0' }}
                         />
                     </div>
 
@@ -113,7 +113,7 @@ function UbicacionModal({ titulo, inicial, isSaving, tieneIngresos, onGuardar, o
                                 disabled={tieneIngresos}
                                 style={{ ...selectStyle, opacity: tieneIngresos ? 0.6 : 1 }}
                                 onFocus={e => { e.target.style.borderColor = '#137fec' }}
-                                onBlur={e  => { e.target.style.borderColor = '#e2e8f0' }}
+                                onBlur={e => { e.target.style.borderColor = '#e2e8f0' }}
                             >
                                 {TIPOS_VEHICULO.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
@@ -127,7 +127,7 @@ function UbicacionModal({ titulo, inicial, isSaving, tieneIngresos, onGuardar, o
                             type="number" value={capacidad} onChange={e => setCapacidad(e.target.value)}
                             min="1" max="10" style={inputStyle}
                             onFocus={e => { e.target.style.borderColor = '#137fec' }}
-                            onBlur={e  => { e.target.style.borderColor = '#e2e8f0' }}
+                            onBlur={e => { e.target.style.borderColor = '#e2e8f0' }}
                         />
                         <p style={{ fontSize: '11px', color: '#94a3b8', margin: '4px 0 0' }}>
                             Un espacio de carro puede admitir hasta 4 motos cuando está vacío.
@@ -161,23 +161,30 @@ interface OpcionesModalProps {
 }
 
 function OpcionesModal({ ubicacion, onEditar, onDesactivar, onCerrar }: OpcionesModalProps) {
+    const colores = getEstadoColor(ubicacion.estadoNombre ?? '')
+    
     return (
         <div
             style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
             onClick={e => { if (e.target === e.currentTarget) onCerrar() }}
         >
-            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 32px', width: '100%', maxWidth: '480px' }}>
+            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 32px', width: '100%', maxWidth: '480px', position: 'relative' }}>
                 <div style={{ width: '40px', height: '4px', background: '#e2e8f0', borderRadius: '9999px', margin: '0 auto 16px' }} />
+                
+                <div style={{ position: 'absolute', top: '24px', right: '20px', background: colores.bg, color: colores.text, border: `1px solid ${colores.dot}`, padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                    {ubicacion.estadoNombre}
+                </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '22px', color: '#137fec' }}>
-              {ubicacion.tipoVehiculoNativo === 'MOTO' ? 'two_wheeler' : 'directions_car'}
-            </span>
+                        <span className="material-symbols-outlined" style={{ fontSize: '22px', color: '#137fec' }}>
+                            {ubicacion.tipoVehiculoNativo === 'MOTO' ? 'two_wheeler' : 'directions_car'}
+                        </span>
                     </div>
                     <div>
-                        <p style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: 0 }}>{ubicacion.nombre}</p>
+                        <p style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: 0, paddingRight: '80px' }}>{ubicacion.nombre}</p>
                         <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
-                            {ubicacion.tipoVehiculoNativo} · Cap. {ubicacion.capacidad} · {ubicacion.estadoNombre ?? '—'}
+                            {ubicacion.tipoVehiculoNativo} · Cap. {ubicacion.capacidad}
                         </p>
                     </div>
                 </div>
@@ -252,9 +259,9 @@ function Toast({ message, type, onClose }: ToastProps) {
     return (
         <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', animation: 'slideDown 0.3s ease-out' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : '#dc2626' }}>
-          {type === 'success' ? 'check_circle' : 'error'}
-        </span>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : '#dc2626' }}>
+                    {type === 'success' ? 'check_circle' : 'error'}
+                </span>
             </div>
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#1e293b', flex: 1 }}>{message}</span>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
@@ -273,24 +280,24 @@ const Ubicaciones: React.FC = () => {
     const { estadoRed } = useApp()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
 
-    const [filtroTipo, setFiltroTipo]         = useState<'TODOS' | 'CARRO' | 'MOTO'>('TODOS')
-    const [filtroEstado, setFiltroEstado]     = useState<'TODOS' | 'DISPONIBLE' | 'OCUPADO'>('TODOS')
-    const [crearModal, setCrearModal]         = useState(false)
+    const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'CARRO' | 'MOTO'>('TODOS')
+    const [filtroEstado, setFiltroEstado] = useState<'TODOS' | 'DISPONIBLE' | 'OCUPADO'>('TODOS')
+    const [crearModal, setCrearModal] = useState(false)
     // opcionesTarget: abre el bottom sheet con las opciones (editar / desactivar)
     const [opcionesTarget, setOpcionesTarget] = useState<UbicacionResponse | null>(null)
     // editFormTarget: abre el formulario de edición con datos precargados
     const [editFormTarget, setEditFormTarget] = useState<UbicacionResponse | null>(null)
-    const [deleteTarget, setDeleteTarget]     = useState<UbicacionResponse | null>(null)
+    const [deleteTarget, setDeleteTarget] = useState<UbicacionResponse | null>(null)
 
     const ubicacionesFiltradas = useMemo(() => {
         return ubicaciones.filter(u => {
-            const pasaTipo   = filtroTipo   === 'TODOS' || u.tipoVehiculoNativo === filtroTipo
+            const pasaTipo = filtroTipo === 'TODOS' || u.tipoVehiculoNativo === filtroTipo
             const pasaEstado = filtroEstado === 'TODOS' || (u.estadoNombre?.toUpperCase() ?? '') === filtroEstado
             return pasaTipo && pasaEstado
         })
     }, [ubicaciones, filtroTipo, filtroEstado])
 
-    const libres   = ubicaciones.filter(u => u.disponible).length
+    const libres = ubicaciones.filter(u => u.disponible).length
     const ocupados = ubicaciones.filter(u => (u.estadoNombre?.toUpperCase() ?? '') === 'OCUPADO').length
 
     return (
@@ -338,13 +345,13 @@ const Ubicaciones: React.FC = () => {
 
                     {/* Filtros */}
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {(['TODOS','CARRO','MOTO'] as const).map(t => (
+                        {(['TODOS', 'CARRO', 'MOTO'] as const).map(t => (
                             <button key={t} onClick={() => setFiltroTipo(t)} style={{ padding: '4px 10px', borderRadius: '9999px', border: `1px solid ${filtroTipo === t ? '#137fec' : '#e2e8f0'}`, background: filtroTipo === t ? '#137fec' : '#fff', color: filtroTipo === t ? '#fff' : '#64748b', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                                 {t === 'TODOS' ? 'Todos' : t.charAt(0) + t.slice(1).toLowerCase()}
                             </button>
                         ))}
                         <div style={{ width: '1px', background: '#e2e8f0', margin: '0 2px' }} />
-                        {(['TODOS','DISPONIBLE','OCUPADO'] as const).map(e => (
+                        {(['TODOS', 'DISPONIBLE', 'OCUPADO'] as const).map(e => (
                             <button key={e} onClick={() => setFiltroEstado(e)} style={{ padding: '4px 10px', borderRadius: '9999px', border: `1px solid ${filtroEstado === e ? '#137fec' : '#e2e8f0'}`, background: filtroEstado === e ? '#137fec' : '#fff', color: filtroEstado === e ? '#fff' : '#64748b', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                                 {e === 'TODOS' ? 'Todos' : e.charAt(0) + e.slice(1).toLowerCase()}
                             </button>
@@ -369,7 +376,7 @@ const Ubicaciones: React.FC = () => {
                         ) : (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                                 {ubicacionesFiltradas.map(ub => {
-                                    const colores  = getEstadoColor(ub.estadoNombre ?? '')
+                                    const colores = getEstadoColor(ub.estadoNombre ?? '')
                                     const tipoIcon = ub.tipoVehiculoNativo === 'MOTO' ? 'two_wheeler' : 'directions_car'
                                     return (
                                         <div
@@ -383,8 +390,8 @@ const Ubicaciones: React.FC = () => {
                                             <span className="material-symbols-outlined" style={{ fontSize: '14px', color: ub.disponible ? '#94a3b8' : '#ef4444' }}>{tipoIcon}</span>
                                             <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, lineHeight: 1 }}>{ub.nombre.charAt(0)}</span>
                                             <span style={{ fontSize: '17px', fontWeight: 900, color: ub.disponible ? '#0f172a' : '#ef4444', lineHeight: 1 }}>
-                        {ub.nombre.slice(1)}
-                      </span>
+                                                {ub.nombre.slice(1)}
+                                            </span>
                                         </div>
                                     )
                                 })}
@@ -427,9 +434,9 @@ const Ubicaciones: React.FC = () => {
                     <UbicacionModal
                         titulo={`Editar — ${editFormTarget.nombre}`}
                         inicial={{
-                            nombre:               editFormTarget.nombre,
+                            nombre: editFormTarget.nombre,
                             idTipoVehiculoNativo: editFormTarget.idTipoVehiculoNativo,
-                            capacidad:            editFormTarget.capacidad,
+                            capacidad: editFormTarget.capacidad,
                         }}
                         isSaving={isSaving}
                         tieneIngresos={!editFormTarget.disponible}

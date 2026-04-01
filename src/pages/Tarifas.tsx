@@ -29,6 +29,102 @@ function colorTipo(nombre: string): { bg: string; accent: string; border: string
         : { bg: '#eff6ff', accent: '#2563eb', border: '#bfdbfe' }
 }
 
+// ─── Modal de creación ────────────────────────────────────────────────────────
+
+interface CrearModalProps {
+    opcionesPermitidas: { id: number; nombre: string }[]
+    isSaving: boolean
+    onGuardar: (idTipoVehiculo: number, valor: number) => Promise<void>
+    onCancelar: () => void
+}
+
+function CrearModal({ opcionesPermitidas, isSaving, onGuardar, onCancelar }: CrearModalProps) {
+    const [idTipo, setIdTipo] = useState(opcionesPermitidas[0]?.id || 1)
+    const [valor, setValor] = useState('')
+    const [error, setError] = useState('')
+
+    const handleGuardar = async () => {
+        setError('')
+        const num = Number(valor.replace(/\./g, '').replace(',', '.'))
+        if (isNaN(num) || num <= 0) {
+            setError('Ingresa un valor válido mayor a cero')
+            return
+        }
+        try { await onGuardar(idTipo, num) } catch { /* toast gestionado en provider */ }
+    }
+
+    return (
+        <div
+            style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+            onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
+        >
+            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 36px', width: '100%', maxWidth: '480px', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}>
+                <div style={{ width: '40px', height: '4px', background: '#e2e8f0', borderRadius: '9999px', margin: '0 auto 20px' }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Nueva tarifa</h3>
+                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                    </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+                    <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>
+                            Tipo de Vehículo
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <select
+                                value={idTipo}
+                                onChange={e => setIdTipo(Number(e.target.value))}
+                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: '14px', color: '#0f172a', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+                                onFocus={e => { e.target.style.borderColor = '#137fec' }}
+                                onBlur={e => { e.target.style.borderColor = '#e2e8f0' }}
+                            >
+                                {opcionesPermitidas.map(op => (
+                                    <option key={op.id} value={op.id}>{op.nombre}</option>
+                                ))}
+                            </select>
+                            <span className="material-symbols-outlined" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: '#94a3b8', pointerEvents: 'none' }}>expand_more</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>
+                            Valor (COP / Hora)
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', fontWeight: 700, color: '#94a3b8' }}>$</span>
+                            <input
+                                type="number"
+                                value={valor}
+                                onChange={e => setValor(e.target.value)}
+                                min="1" step="500" placeholder="Ej: 3000"
+                                style={{ width: '100%', padding: '12px 12px 12px 28px', borderRadius: '10px', border: `1.5px solid ${error ? '#ef4444' : '#e2e8f0'}`, background: '#f8fafc', fontSize: '20px', fontWeight: 700, color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
+                                onFocus={e => { e.target.style.borderColor = '#137fec' }}
+                                onBlur={e => { e.target.style.borderColor = error ? '#ef4444' : '#e2e8f0' }}
+                            />
+                        </div>
+                        {error && <p style={{ fontSize: '12px', color: '#ef4444', margin: '6px 0 0' }}>{error}</p>}
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+                        Cancelar
+                    </button>
+                    <button onClick={handleGuardar} disabled={isSaving} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isSaving ? '#93c5fd' : '#137fec', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        {isSaving
+                            ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Guardando...</>
+                            : <><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>Guardar</>}
+                    </button>
+                </div>
+                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            </div>
+        </div>
+    )
+}
+
 // ─── Modal de edición ─────────────────────────────────────────────────────────
 
 interface EditModalProps {
@@ -39,8 +135,8 @@ interface EditModalProps {
 }
 
 function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) {
-    const [valor, setValor]     = useState(String(tarifa.valor))
-    const [error, setError]     = useState('')
+    const [valor, setValor] = useState(String(tarifa.valor))
+    const [error, setError] = useState('')
 
     const handleGuardar = async () => {
         setError('')
@@ -88,7 +184,7 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
                             step="500"
                             style={{ width: '100%', padding: '12px 12px 12px 28px', borderRadius: '10px', border: `1.5px solid ${error ? '#ef4444' : '#e2e8f0'}`, background: '#f8fafc', fontSize: '20px', fontWeight: 700, color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                             onFocus={e => { e.target.style.borderColor = '#137fec' }}
-                            onBlur={e  => { e.target.style.borderColor = error ? '#ef4444' : '#e2e8f0' }}
+                            onBlur={e => { e.target.style.borderColor = error ? '#ef4444' : '#e2e8f0' }}
                         />
                     </div>
                     {error && <p style={{ fontSize: '12px', color: '#ef4444', margin: '6px 0 0' }}>{error}</p>}
@@ -117,9 +213,9 @@ function Toast({ message, type, onClose }: ToastProps) {
     return (
         <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', animation: 'slideDown 0.3s ease-out' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : '#dc2626' }}>
-          {type === 'success' ? 'check_circle' : 'error'}
-        </span>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : '#dc2626' }}>
+                    {type === 'success' ? 'check_circle' : 'error'}
+                </span>
             </div>
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#1e293b', flex: 1 }}>{message}</span>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
@@ -146,9 +242,9 @@ function TarifaCard({ tarifa, esAdmin, onEditar }: TarifaCardProps) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: colores.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '24px', color: colores.accent }}>
-              {iconoTipo(tarifa.tipoVehiculo)}
-            </span>
+                        <span className="material-symbols-outlined" style={{ fontSize: '24px', color: colores.accent }}>
+                            {iconoTipo(tarifa.tipoVehiculo)}
+                        </span>
                     </div>
                     <div>
                         <p style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
@@ -198,14 +294,29 @@ function TarifaCard({ tarifa, esAdmin, onEditar }: TarifaCardProps) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 const Tarifas: React.FC = () => {
-    const { tarifas, isLoading, editar, isSaving, toast, clearToast } = useTarifas()
+    const { tarifas, isLoading, crear, editar, isSaving, toast, clearToast } = useTarifas()
     const { user } = useAuth()
     const { estadoRed } = useApp()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
 
     const [editTarget, setEditTarget] = useState<TarifaResponse | null>(null)
+    const [crearModal, setCrearModal] = useState(false)
 
-    const handleGuardar = async (valor: number) => {
+    // Solo se debe poder crear tarifa si falta alguna
+    const TIPOS_SISTEMA = [
+        { id: 1, nombre: 'CARRO' },
+        { id: 2, nombre: 'MOTO' }
+    ]
+    const tiposConTarifa = new Set(tarifas.map(t => t.idTipoVehiculo))
+    const opcionesFaltantes = TIPOS_SISTEMA.filter(ts => !tiposConTarifa.has(ts.id))
+    const puedeCrear = esAdmin && opcionesFaltantes.length > 0
+
+    const handleGuardarCrear = async (idTipoVehiculo: number, valor: number) => {
+        await crear({ idTipoVehiculo, idUnidadTarifa: 1, valor }) // idUnidadTarifa 1 asume "HORA"
+        setCrearModal(false)
+    }
+
+    const handleGuardarEditar = async (valor: number) => {
         if (!editTarget) return
         await editar(editTarget.idTarifa, { valor })
         setEditTarget(null)
@@ -244,6 +355,14 @@ const Tarifas: React.FC = () => {
                         }} />
                         {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
+                    {puedeCrear && (
+                        <button
+                            onClick={() => setCrearModal(true)}
+                            style={{ width: '36px', height: '36px', borderRadius: '10px', border: 'none', background: '#137fec', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
+                        </button>
+                    )}
                 </header>
 
                 <IonContent fullscreen style={{ '--background': '#f8fafc' }}>
@@ -302,12 +421,22 @@ const Tarifas: React.FC = () => {
 
                 <BottomNav />
 
+                {/* Modal creación */}
+                {crearModal && (
+                    <CrearModal
+                        opcionesPermitidas={opcionesFaltantes}
+                        isSaving={isSaving}
+                        onGuardar={handleGuardarCrear}
+                        onCancelar={() => setCrearModal(false)}
+                    />
+                )}
+
                 {/* Modal edición */}
                 {editTarget && (
                     <EditModal
                         tarifa={editTarget}
                         isSaving={isSaving}
-                        onGuardar={handleGuardar}
+                        onGuardar={handleGuardarEditar}
                         onCancelar={() => setEditTarget(null)}
                     />
                 )}
