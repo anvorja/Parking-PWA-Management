@@ -21,10 +21,10 @@ const TIPOS_VEHICULO = [
 
 function getEstadoColor(estado: string | undefined): { bg: string; text: string; dot: string } {
     switch ((estado ?? '').toUpperCase()) {
-        case 'DISPONIBLE': return { bg: '#ecfdf5', text: 'var(--color-success-dark)', dot: 'var(--color-success)' }
-        case 'OCUPADO': return { bg: '#fef2f2', text: 'var(--color-danger-dark)', dot: 'var(--color-danger)' }
-        case 'INACTIVO': return { bg: '#f1f5f9', text: '#475569', dot: 'var(--color-text-secondary)' }
-        default: return { bg: '#f1f5f9', text: 'var(--color-text-secondary)', dot: 'var(--color-text-muted)' }
+        case 'DISPONIBLE': return { bg: 'var(--color-success-bg-soft)', text: 'var(--color-success-dark)', dot: 'var(--color-success)' }
+        case 'OCUPADO': return { bg: 'var(--color-danger-bg)', text: 'var(--color-danger-dark)', dot: 'var(--color-danger)' }
+        case 'INACTIVO': return { bg: 'var(--color-surface-subtle)', text: 'var(--color-text-soft)', dot: 'var(--color-text-secondary)' }
+        default: return { bg: 'var(--color-surface-subtle)', text: 'var(--color-text-secondary)', dot: 'var(--color-text-muted)' }
     }
 }
 
@@ -77,13 +77,13 @@ function UbicacionModal({ titulo, inicial, isSaving, tieneIngresos, onGuardar, o
                 <div style={{ width: '40px', height: '4px', background: 'var(--color-border)', borderRadius: '9999px', margin: '0 auto 16px' }} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                     <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>{titulo}</h3>
-                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#f1f5f9', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--color-surface-subtle)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                     </button>
                 </div>
 
                 {error && (
-                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--color-danger-dark)' }}>
+                    <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border-light)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--color-danger-dark)' }}>
                         {error}
                     </div>
                 )}
@@ -137,7 +137,7 @@ function UbicacionModal({ titulo, inicial, isSaving, tieneIngresos, onGuardar, o
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
-                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
                         Cancelar
                     </button>
                     <button onClick={handleGuardar} disabled={isSaving} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isSaving ? '#93c5fd' : 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -194,7 +194,7 @@ function OpcionesModal({ ubicacion, onEditar, onDesactivar, onReactivar, onCerra
                     {ubicacion.estadoNombre === 'INACTIVO' ? (
                         <button
                             onClick={onReactivar}
-                            style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid #bbf7d0', background: '#fff', color: '#16a34a', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                            style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-success-border)', background: '#fff', color: '#16a34a', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
                         >
                             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>settings_backup_restore</span>
                             Reactivar espacio
@@ -210,7 +210,7 @@ function OpcionesModal({ ubicacion, onEditar, onDesactivar, onReactivar, onCerra
                             </button>
                             <button
                                 onClick={onDesactivar}
-                                style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid #fee2e2', background: '#fff', color: 'var(--color-danger)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-danger-border)', background: '#fff', color: 'var(--color-danger)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
                             >
                                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>location_off</span>
                                 Desactivar espacio
@@ -239,7 +239,7 @@ function DesactivarModal({ ubicacion, isSaving, onConfirmar, onCancelar }: Desac
             onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
         >
             <div style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '360px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--color-danger-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '26px', color: 'var(--color-danger)' }}>location_off</span>
                 </div>
                 <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', textAlign: 'center', margin: '0 0 8px' }}>¿Desactivar espacio?</h3>
@@ -251,7 +251,7 @@ function DesactivarModal({ ubicacion, isSaving, onConfirmar, onCancelar }: Desac
                     El espacio quedará inactivo y no aparecerá en el formulario de ingreso.
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
                         Cancelar
                     </button>
                     <button onClick={onConfirmar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: isSaving ? '#fca5a5' : 'var(--color-danger)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -282,7 +282,7 @@ function ReactivarModal({ ubicacion, isSaving, onConfirmar, onCancelar }: Reacti
             onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
         >
             <div style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '360px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--color-success-bg-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '26px', color: 'var(--color-success)' }}>settings_backup_restore</span>
                 </div>
                 <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', textAlign: 'center', margin: '0 0 8px' }}>¿Reactivar espacio?</h3>
@@ -294,7 +294,7 @@ function ReactivarModal({ ubicacion, isSaving, onConfirmar, onCancelar }: Reacti
                     El espacio volverá a estar disponible para el ingreso de vehículos.
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
                         Cancelar
                     </button>
                     <button onClick={onConfirmar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: isSaving ? '#6ee7b7' : 'var(--color-success)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -314,9 +314,9 @@ function ReactivarModal({ ubicacion, isSaving, onConfirmar, onCancelar }: Reacti
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
 function Toast({ message, type, onClose }: ToastProps) {
     return (
-        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', animation: 'slideDown 0.3s ease-out' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : 'var(--color-danger-dark)' }}>
+        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>
                     {type === 'success' ? 'check_circle' : 'error'}
                 </span>
             </div>
@@ -383,11 +383,11 @@ const Ubicaciones: React.FC = () => {
                         <div style={{
                             display: 'flex', alignItems: 'center', gap: '5px',
                             fontSize: '11px', fontWeight: 600,
-                            color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
+                            color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                         }}>
                             <div style={{
                                 width: '7px', height: '7px', borderRadius: '50%',
-                                background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
+                                background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                             }} />
                             {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                         </div>
@@ -422,7 +422,7 @@ const Ubicaciones: React.FC = () => {
                         {isLoading ? (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                                 {Array.from({ length: 12 }).map((_, i) => (
-                                    <div key={i} style={{ aspectRatio: '1', background: '#f1f5f9', borderRadius: '10px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                                    <div key={i} style={{ aspectRatio: '1', background: 'var(--color-surface-subtle)', borderRadius: '10px', animation: 'pulse 1.5s ease-in-out infinite' }} />
                                 ))}
                                 <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
                             </div>
@@ -439,10 +439,10 @@ const Ubicaciones: React.FC = () => {
                                     return (
                                         <div
                                             key={ub.id}
-                                            style={{ background: '#fff', borderRadius: '10px', border: `1.5px solid ${ub.estadoNombre === 'INACTIVO' ? '#f1f5f9' : (ub.disponible ? 'var(--color-border)' : '#fecaca')}`, padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: esAdmin ? 'pointer' : 'default', transition: 'all 0.15s', position: 'relative', opacity: ub.estadoNombre === 'INACTIVO' ? 0.6 : 1 }}
+                                            style={{ background: '#fff', borderRadius: '10px', border: `1.5px solid ${ub.estadoNombre === 'INACTIVO' ? 'var(--color-surface-subtle)' : (ub.disponible ? 'var(--color-border)' : 'var(--color-danger-border-light)')}`, padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: esAdmin ? 'pointer' : 'default', transition: 'all 0.15s', position: 'relative', opacity: ub.estadoNombre === 'INACTIVO' ? 0.6 : 1 }}
                                             onClick={() => { if (esAdmin) setOpcionesTarget(ub) }}
                                             onMouseEnter={e => { if (esAdmin) e.currentTarget.style.borderColor = 'var(--color-primary)' }}
-                                            onMouseLeave={e => { e.currentTarget.style.borderColor = ub.estadoNombre === 'INACTIVO' ? '#f1f5f9' : (ub.disponible ? 'var(--color-border)' : '#fecaca') }}
+                                            onMouseLeave={e => { e.currentTarget.style.borderColor = ub.estadoNombre === 'INACTIVO' ? 'var(--color-surface-subtle)' : (ub.disponible ? 'var(--color-border)' : 'var(--color-danger-border-light)') }}
                                         >
                                             <div style={{ position: 'absolute', top: '5px', right: '5px', width: '7px', height: '7px', borderRadius: '50%', background: colores.dot }} />
                                             {ub.estadoNombre === 'INACTIVO' ? (

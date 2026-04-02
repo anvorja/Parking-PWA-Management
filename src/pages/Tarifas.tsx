@@ -25,7 +25,7 @@ function iconoTipo(nombre: string): string {
 
 function colorTipo(nombre: string): { bg: string; accent: string; border: string } {
     return nombre.toUpperCase() === 'MOTO'
-        ? { bg: '#f0fdf4', accent: '#16a34a', border: '#bbf7d0' }
+        ? { bg: '#f0fdf4', accent: 'var(--color-success-text)', border: 'var(--color-success-border)' }
         : { bg: '#eff6ff', accent: '#2563eb', border: '#bfdbfe' }
 }
 
@@ -63,7 +63,7 @@ function CrearModal({ opcionesPermitidas, isSaving, onGuardar, onCancelar }: Cre
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                     <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Nueva tarifa</h3>
-                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#f1f5f9', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--color-surface-subtle)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                     </button>
                 </div>
@@ -110,7 +110,7 @@ function CrearModal({ opcionesPermitidas, isSaving, onGuardar, onCancelar }: Cre
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
                         Cancelar
                     </button>
                     <button onClick={handleGuardar} disabled={isSaving} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isSaving ? '#93c5fd' : 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -165,7 +165,7 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
                             Valor actual: {formatCOP(tarifa.valor)} / {tarifa.unidadTarifa.toLowerCase()}
                         </p>
                     </div>
-                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#f1f5f9', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--color-surface-subtle)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                     </button>
                 </div>
@@ -191,7 +191,7 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
                         Cancelar
                     </button>
                     <button onClick={handleGuardar} disabled={isSaving} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isSaving ? '#93c5fd' : 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -211,9 +211,9 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
 function Toast({ message, type, onClose }: ToastProps) {
     return (
-        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', animation: 'slideDown 0.3s ease-out' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : 'var(--color-danger-dark)' }}>
+        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>
                     {type === 'success' ? 'check_circle' : 'error'}
                 </span>
             </div>
@@ -256,7 +256,7 @@ function TarifaCard({ tarifa, esAdmin, onEditar }: TarifaCardProps) {
                     </div>
                 </div>
                 {/* Badge activa */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#ecfdf5', borderRadius: '9999px', padding: '3px 10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--color-success-bg-soft)', borderRadius: '9999px', padding: '3px 10px' }}>
                     <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-success)' }} />
                     <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-success-dark)' }}>Activa</span>
                 </div>
@@ -347,11 +347,11 @@ const Tarifas: React.FC = () => {
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         fontSize: '11px', fontWeight: 600,
-                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
+                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                     }}>
                         <div style={{
                             width: '7px', height: '7px', borderRadius: '50%',
-                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
+                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                         }} />
                         {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
@@ -381,9 +381,9 @@ const Tarifas: React.FC = () => {
                         {/* Skeleton */}
                         {isLoading ? (
                             [1, 2].map(n => (
-                                <div key={n} style={{ background: '#fff', borderRadius: '16px', border: '1.5px solid #f1f5f9', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                <div key={n} style={{ background: '#fff', borderRadius: '16px', border: '1.5px solid var(--color-surface-subtle)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                     {[['40%', '30%'], ['100%', '50px'], ['100%', '40px']].map(([w, h], i) => (
-                                        <div key={i} style={{ width: w, height: h, background: '#f1f5f9', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                                        <div key={i} style={{ width: w, height: h, background: 'var(--color-surface-subtle)', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
                                     ))}
                                     <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
                                 </div>

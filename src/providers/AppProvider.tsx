@@ -213,13 +213,13 @@ const NetworkBanner: React.FC<NetworkBannerProps> = ({
         sincronizando: {
             bg:    '#eff6ff',
             borde: '#93c5fd',
-            color: '#1e40af',
+            color: 'var(--color-info)',
             icono: 'sync',
             texto: `Sincronizando ${pendientes} operación${pendientes !== 1 ? 'es' : ''}...`,
         },
         error_sync: {
-            bg:    '#fef2f2',
-            borde: '#fecaca',
+            bg:    'var(--color-danger-bg)',
+            borde: 'var(--color-danger-border-light)',
             color: '#991b1b',
             icono: 'sync_problem',
             texto: `${muertas} operación${muertas !== 1 ? 'es' : ''} no pudo${muertas !== 1 ? 'ieron' : ''} sincronizarse`,

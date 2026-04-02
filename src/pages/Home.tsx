@@ -30,11 +30,11 @@ const Home: React.FC = () => {
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         fontSize: '11px', fontWeight: 600,
-                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
+                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                     }}>
                         <div style={{
                             width: '7px', height: '7px', borderRadius: '50%',
-                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
+                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                         }} />
                         {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
@@ -71,7 +71,7 @@ const Home: React.FC = () => {
                         <div className="px-4 mb-8">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                                 <span className="material-symbols-outlined" style={{ color: 'var(--color-text-secondary)', fontSize: '20px' }}>info</span>
-                                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#475569', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-soft)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                     Guía Rápida de Operación
                                 </h3>
                             </div>
@@ -142,7 +142,7 @@ const Home: React.FC = () => {
                             <div className="px-4 mb-8">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                                     <span className="material-symbols-outlined" style={{ color: 'var(--color-text-secondary)', fontSize: '20px' }}>settings</span>
-                                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#475569', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-soft)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                         Panel de Administración
                                     </h3>
                                 </div>

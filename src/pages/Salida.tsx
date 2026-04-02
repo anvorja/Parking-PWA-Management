@@ -37,9 +37,9 @@ function getTipoIcon(tipo: string): string {
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
 function Toast({ message, type, onClose }: ToastProps) {
     return (
-        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', animation: 'slideDown 0.3s ease-out' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : 'var(--color-danger-dark)' }}>{type === 'success' ? 'check_circle' : 'error'}</span>
+        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>{type === 'success' ? 'check_circle' : 'error'}</span>
             </div>
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#1e293b', flex: 1 }}>{message}</span>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 0, display: 'flex' }}>
@@ -112,11 +112,11 @@ const Salida: React.FC = () => {
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         fontSize: '11px', fontWeight: 600,
-                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
+                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                     }}>
                         <div style={{
                             width: '7px', height: '7px', borderRadius: '50%',
-                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
+                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                         }} />
                         {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
@@ -131,8 +131,8 @@ const Salida: React.FC = () => {
 
                                 {/* Check de éxito */}
                                 <div style={{ textAlign: 'center', padding: '24px 0 8px' }}>
-                                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '36px', color: '#16a34a' }}>check_circle</span>
+                                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-success-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '36px', color: 'var(--color-success-text)' }}>check_circle</span>
                                     </div>
                                     <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 4px' }}>Salida registrada</h2>
                                     <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: 0 }}>El vehículo ha salido del parqueadero</p>
@@ -188,7 +188,7 @@ const Salida: React.FC = () => {
                                             <p style={{ fontSize: '22px', fontWeight: 900, color: 'var(--color-text-primary)', margin: 0, letterSpacing: '1px' }}>{ingresoEncontrado.placa}</p>
                                             <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0 }}>{ingresoEncontrado.tipoVehiculo} · Espacio {ingresoEncontrado.ubicacion}</p>
                                         </div>
-                                        <div style={{ marginLeft: 'auto', background: '#ecfdf5', borderRadius: '9999px', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <div style={{ marginLeft: 'auto', background: 'var(--color-success-bg-soft)', borderRadius: '9999px', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-success)' }} />
                                             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-success-dark)' }}>ACTIVO</span>
                                         </div>
@@ -213,7 +213,7 @@ const Salida: React.FC = () => {
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <button
                                         onClick={resetear}
-                                        style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+                                        style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
                                     >
                                         Cancelar
                                     </button>
@@ -235,7 +235,7 @@ const Salida: React.FC = () => {
                             /* ── Formulario de búsqueda ───────────────────────────────────── */
                             <>
                                 {/* Tabs QR / Manual */}
-                                <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '12px', padding: '4px', gap: '4px' }}>
+                                <div style={{ display: 'flex', background: 'var(--color-surface-subtle)', borderRadius: '12px', padding: '4px', gap: '4px' }}>
                                     {([['qr', 'qr_code_scanner', 'Por QR'], ['manual', 'keyboard', 'Por Placa']] as const).map(([modo, icon, label]) => (
                                         <button
                                             key={modo}

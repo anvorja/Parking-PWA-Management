@@ -42,8 +42,8 @@ function isoToLocal(iso: string): string {
 
 function getEstadoStyle(estado: string): { bg: string; text: string; dot: string } {
     switch (estado.toUpperCase()) {
-        case 'INGRESADO': return { bg: '#ecfdf5', text: 'var(--color-success-dark)', dot: 'var(--color-success)' }
-        case 'ENTREGADO': return { bg: '#f1f5f9', text: 'var(--color-text-secondary)', dot: 'var(--color-text-muted)' }
+        case 'INGRESADO': return { bg: 'var(--color-success-bg-soft)', text: 'var(--color-success-dark)', dot: 'var(--color-success)' }
+        case 'ENTREGADO': return { bg: 'var(--color-surface-subtle)', text: 'var(--color-text-secondary)', dot: 'var(--color-text-muted)' }
         default:          return { bg: '#fef9c3', text: '#92400e', dot: 'var(--color-warning)' }
     }
 }
@@ -67,11 +67,11 @@ const inputStyle: React.CSSProperties = {
 
 function SkeletonCard() {
     return (
-        <div style={{ background: '#fff', borderRadius: '14px', border: '1.5px solid #f1f5f9', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ background: '#fff', borderRadius: '14px', border: '1.5px solid var(--color-surface-subtle)', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {[['60%','24%'],['40%','30%'],['50%','18%']].map(([w1,w2], i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ width: w1, height: '14px', background: '#f1f5f9', borderRadius: '6px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-                    <div style={{ width: w2, height: '14px', background: '#f1f5f9', borderRadius: '6px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                    <div style={{ width: w1, height: '14px', background: 'var(--color-surface-subtle)', borderRadius: '6px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                    <div style={{ width: w2, height: '14px', background: 'var(--color-surface-subtle)', borderRadius: '6px', animation: 'pulse 1.5s ease-in-out infinite' }} />
                 </div>
             ))}
             <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
@@ -92,7 +92,7 @@ function DeleteModal({ ingreso, isDeleting, onConfirm, onCancel }: DeleteModalPr
     return (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
             <div style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '360px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--color-danger-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '26px', color: 'var(--color-danger)' }}>delete_forever</span>
                 </div>
                 <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', textAlign: 'center', margin: '0 0 8px' }}>¿Eliminar este registro?</h3>
@@ -102,7 +102,7 @@ function DeleteModal({ ingreso, isDeleting, onConfirm, onCancel }: DeleteModalPr
                 </div>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.5 }}>Esta acción es permanente y no se puede deshacer.</p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={onCancel} disabled={isDeleting} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer' }}>Cancelar</button>
+                    <button onClick={onCancel} disabled={isDeleting} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer' }}>Cancelar</button>
                     <button onClick={onConfirm} disabled={isDeleting} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: isDeleting ? '#fca5a5' : 'var(--color-danger)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isDeleting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         {isDeleting
                             ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Eliminando...</>
@@ -167,13 +167,13 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
                             {esAdmin ? 'Administrador — todos los campos' : 'Auxiliar — placa y ubicación'}
                         </p>
                     </div>
-                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: '#f1f5f9', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--color-surface-subtle)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                     </button>
                 </div>
 
                 {errorLocal && (
-                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--color-danger-dark)' }}>
+                    <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border-light)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--color-danger-dark)' }}>
                         {errorLocal}
                     </div>
                 )}
@@ -244,7 +244,7 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
-                    <button onClick={onCancelar} disabled={isEditing} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isEditing ? 'not-allowed' : 'pointer' }}>Cancelar</button>
+                    <button onClick={onCancelar} disabled={isEditing} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isEditing ? 'not-allowed' : 'pointer' }}>Cancelar</button>
                     <button onClick={handleGuardar} disabled={isEditing} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isEditing ? '#93c5fd' : 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isEditing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                         {isEditing
                             ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Guardando...</>
@@ -262,9 +262,9 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
 function Toast({ message, type, onClose }: ToastProps) {
     return (
-        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', animation: 'slideDown 0.3s ease-out' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? '#16a34a' : 'var(--color-danger-dark)' }}>{type === 'success' ? 'check_circle' : 'error'}</span>
+        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>{type === 'success' ? 'check_circle' : 'error'}</span>
             </div>
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#1e293b', flex: 1 }}>{message}</span>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 0, display: 'flex' }}>
@@ -380,11 +380,11 @@ const Ingresos: React.FC = () => {
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         fontSize: '11px', fontWeight: 600,
-                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
+                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                     }}>
                         <div style={{
                             width: '7px', height: '7px', borderRadius: '50%',
-                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
+                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                         }} />
                         {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
@@ -394,7 +394,7 @@ const Ingresos: React.FC = () => {
                     <div style={{ paddingBottom: '88px' }}>
 
                         {/* Buscador */}
-                        <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '10px' }}>
+                        <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid var(--color-surface-subtle)', display: 'flex', gap: '10px' }}>
                             <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
                                 <span className="material-symbols-outlined" style={{ position: 'absolute', left: '10px', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>search</span>
                                 <input type="text" defaultValue={filtroPlaca} onChange={handleFiltroChange} placeholder="Buscar placa..."
@@ -451,7 +451,7 @@ const Ingresos: React.FC = () => {
                                                     // Borde naranja discreto cuando la salida está pendiente de sync
                                                     border: salidaPendiente
                                                         ? '1.5px solid #fb923c'
-                                                        : '1.5px solid #f1f5f9',
+                                                        : '1.5px solid var(--color-surface-subtle)',
                                                     padding: '14px',
                                                     display: 'flex',
                                                     flexDirection: 'column',
@@ -492,7 +492,7 @@ const Ingresos: React.FC = () => {
                                                         {/* Editar — todos los roles */}
                                                         <button
                                                             onClick={() => setEditTarget(ingreso)}
-                                                            style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #dbeafe', background: '#fff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
+                                                            style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #dbeafe', background: '#fff', color: 'var(--color-info-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
                                                             onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff' }}
                                                             onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
                                                             title="Editar registro"
@@ -503,8 +503,8 @@ const Ingresos: React.FC = () => {
                                                         {esAdmin && (
                                                             <button
                                                                 onClick={() => setDeleteTarget(ingreso)}
-                                                                style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #fee2e2', background: '#fff', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
-                                                                onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2' }}
+                                                                style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid var(--color-danger-border)', background: '#fff', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
+                                                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-danger-bg)' }}
                                                                 onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
                                                                 title="Eliminar registro"
                                                             >
@@ -518,7 +518,7 @@ const Ingresos: React.FC = () => {
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>location_on</span>
-                                                        <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>{ingreso.ubicacion}</span>
+                                                        <span style={{ fontSize: '12px', color: 'var(--color-text-soft)', fontWeight: 600 }}>{ingreso.ubicacion}</span>
                                                         <span style={{ fontSize: '11px', color: '#cbd5e1' }}>•</span>
                                                         <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{ingreso.tipoVehiculo}</span>
                                                     </div>

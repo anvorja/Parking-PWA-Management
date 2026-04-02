@@ -188,11 +188,11 @@ const Users: React.FC = () => {
                         <div style={{
                             display: 'flex', alignItems: 'center', gap: '5px',
                             fontSize: '11px', fontWeight: 600,
-                            color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
+                            color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                         }}>
                             <div style={{
                                 width: '7px', height: '7px', borderRadius: '50%',
-                                background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
+                                background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                             }} />
                             {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                         </div>
@@ -336,7 +336,7 @@ const Users: React.FC = () => {
                                         justifyContent: 'center', transition: 'all 0.2s',
                                         outline: 'none', padding: 0, margin: 0,
                                     }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569' }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-subtle)'; e.currentTarget.style.color = 'var(--color-text-soft)' }}
                                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
                                 >
                                     <span className="material-symbols-outlined">close</span>
@@ -441,7 +441,7 @@ const Users: React.FC = () => {
                                         style={{
                                             minHeight: '48px', borderRadius: '14px',
                                             border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)',
-                                            color: '#475569', fontSize: '14px', fontWeight: 600,
+                                            color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600,
                                             cursor: 'pointer', flex: 1, display: 'flex',
                                             alignItems: 'center', justifyContent: 'center',
                                             transition: 'all 0.2s', outline: 'none',
@@ -459,7 +459,7 @@ const Users: React.FC = () => {
                                         style={{
                                             minHeight: '48px', borderRadius: '14px',
                                             border: 'none',
-                                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                            background: 'linear-gradient(135deg, var(--color-info-light) 0%, #2563eb 100%)',
                                             color: '#fff', fontSize: '14px', fontWeight: 600,
                                             cursor: isSubmitting ? 'not-allowed' : 'pointer',
                                             flex: 1, display: 'flex', alignItems: 'center',
@@ -470,7 +470,7 @@ const Users: React.FC = () => {
                                         }}
                                         className="active:scale-[0.97]"
                                         onMouseEnter={e => { if (!isSubmitting) { e.currentTarget.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.45)' } }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.35)' }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-info-light) 0%, #2563eb 100%)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.35)' }}
                                     >
                                         {isSubmitting ? (
                                             <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -509,7 +509,7 @@ const Users: React.FC = () => {
                                     style={{
                                         minHeight: '48px', borderRadius: '14px',
                                         border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)',
-                                        color: '#475569', fontSize: '14px', fontWeight: 600,
+                                        color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600,
                                         cursor: isDeleting ? 'not-allowed' : 'pointer',
                                         flex: 1, display: 'flex', alignItems: 'center',
                                         justifyContent: 'center', transition: 'all 0.2s',
@@ -560,16 +560,16 @@ const Users: React.FC = () => {
                             background: '#fff', borderRadius: '14px',
                             boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
                             padding: '14px 20px', minWidth: '260px', maxWidth: '380px',
-                            border: toast.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca',
+                            border: toast.type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)',
                             animation: 'slideInRight 0.35s ease-out',
                         }}
                     >
                         <div style={{
                             width: '32px', height: '32px', borderRadius: '50%',
-                            background: toast.type === 'success' ? '#dcfce7' : '#fee2e2',
+                            background: toast.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                         }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: toast.type === 'success' ? '#16a34a' : 'var(--color-danger-dark)' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: toast.type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>
                                 {toast.type === 'success' ? 'check_circle' : 'error'}
                             </span>
                         </div>
@@ -583,7 +583,7 @@ const Users: React.FC = () => {
                                 borderRadius: '50%', width: '28px', height: '28px', justifyContent: 'center',
                                 transition: 'all 0.2s',
                             }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-subtle)'; e.currentTarget.style.color = 'var(--color-text-soft)' }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
                         >
                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>

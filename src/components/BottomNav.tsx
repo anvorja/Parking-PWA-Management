@@ -28,7 +28,7 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isLoggingOut, onConfirm, onCa
             {/* Icono */}
             <div style={{
                 width: '52px', height: '52px', borderRadius: '14px',
-                background: '#fef2f2', display: 'flex', alignItems: 'center',
+                background: 'var(--color-danger-bg)', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', margin: '0 auto 16px',
             }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '26px', color: 'var(--color-danger)' }}>
@@ -50,7 +50,7 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isLoggingOut, onConfirm, onCa
                     style={{
                         flex: 1, padding: '12px', borderRadius: '12px',
                         border: '1.5px solid var(--color-border)', background: '#fff',
-                        color: '#475569', fontSize: '14px', fontWeight: 600,
+                        color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600,
                         cursor: isLoggingOut ? 'not-allowed' : 'pointer',
                     }}
                 >

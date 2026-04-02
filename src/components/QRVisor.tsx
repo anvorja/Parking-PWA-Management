@@ -44,7 +44,7 @@ const QRVisor: React.FC<QRVisorProps> = ({
                     style={{
                         width: '100%', padding: '22px', borderRadius: '14px',
                         border: '2px dashed #cbd5e1', background: '#f8fafc',
-                        color: '#475569', fontSize: '14px', fontWeight: 600,
+                        color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600,
                         cursor: isLoading ? 'not-allowed' : 'pointer',
                         display: 'flex', flexDirection: 'column',
                         alignItems: 'center', gap: '8px', transition: 'all 0.2s',
@@ -138,7 +138,7 @@ const QRVisor: React.FC<QRVisorProps> = ({
             {estadoCamara === 'error' && errorMsg && (
                 <div style={{
                     marginTop: '8px', padding: '10px 12px', borderRadius: '10px',
-                    background: '#fef2f2', border: '1px solid #fecaca',
+                    background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border-light)',
                     display: 'flex', alignItems: 'flex-start', gap: '8px',
                 }}>
                     <span className="material-symbols-outlined" style={{

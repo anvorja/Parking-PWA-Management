@@ -15,6 +15,17 @@ http://ionicframework.com/docs/theming/ */
     --color-text-secondary: #64748b;
     --color-text-muted: #94a3b8;
     --color-border: #e2e8f0;
+    --color-info: #1e40af;
+    --color-info-light: #3b82f6;
+    --color-text-soft: #475569;
+    --color-success-text: #16a34a;
+    --color-danger-bg: #fef2f2;
+    --color-danger-border: #fee2e2;
+    --color-danger-border-light: #fecaca;
+    --color-success-bg: #dcfce7;
+    --color-success-border: #bbf7d0;
+    --color-success-bg-soft: #ecfdf5;
+    --color-surface-subtle: #f1f5f9;
     --color-surface-alt: #f8fafc;
     --color-background-light: #f6f7f8;
     --color-background-dark: #101922;

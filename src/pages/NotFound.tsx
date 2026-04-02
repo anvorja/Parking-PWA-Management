@@ -160,7 +160,7 @@ const NotFound: React.FC = () => {
                             maxWidth: '280px',
                             justifyContent: 'center',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-subtle)' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                     >
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>

@@ -306,11 +306,11 @@ const Entrada: React.FC = () => {
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         fontSize: '11px', fontWeight: 600,
-                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
+                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                     }}>
                         <div style={{
                             width: '7px', height: '7px', borderRadius: '50%',
-                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
+                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                         }} />
                         {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
@@ -384,9 +384,9 @@ const Entrada: React.FC = () => {
                                                             style={{ 
                                                                 padding: '6px 14px', 
                                                                 borderRadius: '20px', 
-                                                                border: isActive ? '1px solid #3b82f6' : '1px solid var(--color-border)', 
-                                                                background: isActive ? '#3b82f6' : '#fff', 
-                                                                color: isActive ? '#fff' : '#1e40af', 
+                                                                border: isActive ? '1px solid var(--color-info-light)' : '1px solid var(--color-border)', 
+                                                                background: isActive ? 'var(--color-info-light)' : '#fff', 
+                                                                color: isActive ? '#fff' : 'var(--color-info)', 
                                                                 fontSize: '12px', 
                                                                 fontWeight: 600, 
                                                                 cursor: 'pointer', 
@@ -414,9 +414,9 @@ const Entrada: React.FC = () => {
                                                     style={{ 
                                                         padding: '6px 14px', 
                                                         borderRadius: '20px', 
-                                                        border: isActive ? '1px solid #3b82f6' : '1px solid var(--color-border)', 
-                                                        background: isActive ? '#3b82f6' : '#fff', 
-                                                        color: isActive ? '#fff' : '#1e40af', 
+                                                        border: isActive ? '1px solid var(--color-info-light)' : '1px solid var(--color-border)', 
+                                                        background: isActive ? 'var(--color-info-light)' : '#fff', 
+                                                        color: isActive ? '#fff' : 'var(--color-info)', 
                                                         fontSize: '12px', 
                                                         fontWeight: 600, 
                                                         cursor: 'pointer', 
@@ -448,7 +448,7 @@ const Entrada: React.FC = () => {
                                             const isDisabled = !ub.disponible
                                             return (
                                                 <button key={ub.id} disabled={isDisabled} onClick={() => setSelectedUbicacion(ub.id)}
-                                                        style={{ padding: '10px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', border: isSelected ? '2px solid var(--color-primary)' : isDisabled ? '2px solid var(--color-border)' : '2px solid var(--color-border)', background: isSelected ? 'var(--color-primary)' : isDisabled ? '#f1f5f9' : '#fff', color: isSelected ? '#fff' : isDisabled ? 'var(--color-text-secondary)' : '#334155', cursor: isDisabled ? 'not-allowed' : 'pointer', fontWeight: 700, transition: 'all 0.15s', outline: 'none', margin: 0, boxShadow: isSelected ? '0 4px 14px rgba(19,127,236,0.3)' : 'none', opacity: isDisabled ? 0.45 : 1 }}>
+                                                        style={{ padding: '10px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', border: isSelected ? '2px solid var(--color-primary)' : isDisabled ? '2px solid var(--color-border)' : '2px solid var(--color-border)', background: isSelected ? 'var(--color-primary)' : isDisabled ? 'var(--color-surface-subtle)' : '#fff', color: isSelected ? '#fff' : isDisabled ? 'var(--color-text-secondary)' : '#334155', cursor: isDisabled ? 'not-allowed' : 'pointer', fontWeight: 700, transition: 'all 0.15s', outline: 'none', margin: 0, boxShadow: isSelected ? '0 4px 14px rgba(19,127,236,0.3)' : 'none', opacity: isDisabled ? 0.45 : 1 }}>
                                                     <span style={{ fontSize: '10px', opacity: isSelected ? 0.8 : 0.6 }}>{ub.nombre.charAt(0)}</span>
                                                     <span style={{ fontSize: '18px', textDecoration: isDisabled ? 'line-through' : 'none' }}>{ub.nombre.slice(1)}</span>
                                                 </button>
@@ -496,7 +496,7 @@ const Entrada: React.FC = () => {
                                 <div id="ticket-print-card" style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
 
                                     {/* Cabecera del tiquete */}
-                                    <div style={{ textAlign: 'center', padding: '20px 20px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                                    <div style={{ textAlign: 'center', padding: '20px 20px 16px', borderBottom: '1px solid var(--color-surface-subtle)' }}>
                                         <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#e0ecff', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontWeight: 800, fontSize: '22px' }}>P</div>
                                         <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--color-text-primary)' }}>Estacionamiento Central</div>
                                         <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px' }}>Parqueadero Universitario</div>
@@ -518,11 +518,11 @@ const Entrada: React.FC = () => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px 14px' }}>
                                         <div>
                                             <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>Tipo</div>
-                                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>{ticketData.tipoVehiculo}</div>
+                                            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-soft)' }}>{ticketData.tipoVehiculo}</div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>Operador</div>
-                                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>{ticketData.usuarioRegistro}</div>
+                                            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-soft)' }}>{ticketData.usuarioRegistro}</div>
                                         </div>
                                     </div>
 
@@ -586,7 +586,7 @@ const Entrada: React.FC = () => {
                                 onClick={handleImprimir}
                                 disabled={isPrinting}
                                 style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: '#334155', fontSize: '14px', fontWeight: 700, cursor: isPrinting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', outline: 'none', transition: 'all 0.2s' }}
-                                onMouseEnter={e => { if (!isPrinting) e.currentTarget.style.background = '#f1f5f9' }}
+                                onMouseEnter={e => { if (!isPrinting) e.currentTarget.style.background = 'var(--color-surface-subtle)' }}
                                 onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
                             >
                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span>Imprimir
@@ -597,16 +597,16 @@ const Entrada: React.FC = () => {
 
                 {/* Toast */}
                 {toast && (
-                    <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 20px', minWidth: '260px', maxWidth: '380px', border: toast.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca', animation: 'slideInRight 0.35s ease-out' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: toast.type === 'success' ? '#dcfce7' : '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: toast.type === 'success' ? '#16a34a' : 'var(--color-danger-dark)' }}>
+                    <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 20px', minWidth: '260px', maxWidth: '380px', border: toast.type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideInRight 0.35s ease-out' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: toast.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: toast.type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>
                                 {toast.type === 'success' ? 'check_circle' : 'error'}
                             </span>
                         </div>
                         <span style={{ fontSize: '13px', fontWeight: 500, color: '#1e293b' }}>{toast.message}</span>
                         <button onClick={() => setToast(null)}
                                 style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: '2px', display: 'flex', alignItems: 'center', outline: 'none', borderRadius: '50%', width: '28px', height: '28px', justifyContent: 'center', transition: 'all 0.2s' }}
-                                onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569' }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-subtle)'; e.currentTarget.style.color = 'var(--color-text-soft)' }}
                                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
                         </button>
