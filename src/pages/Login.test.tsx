@@ -4,7 +4,9 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Login from './Login';
 import * as AuthHookModule from '../hooks/useAuth';
+import * as AppHookModule  from '../hooks/useApp';
 import { IonReactRouter } from '@ionic/react-router';
+import { makeAppContextValue } from '../test/renderWithProviders';
 
 // Mockeamos la navegación de Ionic
 const mockPush = vi.fn();
@@ -33,6 +35,9 @@ describe('Pruebas Unitarias del Componente Login', () => {
             checkAuth: vi.fn(),
             isLoggingOut: false,
         });
+
+        // Login usa useApp() para mostrar el estado real de red en el banner
+        vi.spyOn(AppHookModule, 'useApp').mockReturnValue(makeAppContextValue());
     });
 
     it('1. Debe renderizar los elementos del formulario correctamente', () => {

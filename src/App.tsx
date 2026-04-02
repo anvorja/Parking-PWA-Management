@@ -19,6 +19,7 @@ import { SalidaProvider } from './providers/SalidaProvider'
 import Salida from './pages/Salida'
 import { UbicacionProvider } from './providers/UbicacionProvider'
 import Ubicaciones from './pages/Ubicaciones'
+import {UsuarioProvider} from "./providers/UsuarioProvider";
 
 import '@ionic/react/css/core.css'
 import '@ionic/react/css/normalize.css'
@@ -75,6 +76,9 @@ const UbicacionesConProvider: React.FC<RouteComponentProps> = () => (
 const TarifasConProvider: React.FC<RouteComponentProps> = () => (
     <TarifaProvider><Tarifas /></TarifaProvider>
 )
+const UsersConProvider: React.FC<RouteComponentProps> = () => (
+    <UsuarioProvider><Users /></UsuarioProvider>
+)
 
 const App: React.FC = () => (
     <IonApp>
@@ -93,7 +97,7 @@ const App: React.FC = () => (
                         <PrivateRoute exact path="/salida"      component={SalidaConProvider} />
                         <PrivateRoute exact path="/ingresos"    component={IngresosConProvider} />
                         <PrivateRoute exact path="/ubicaciones" component={UbicacionesConProvider} />
-                        <PrivateRoute exact path="/users"       component={Users} />
+                        <PrivateRoute exact path="/users"       component={UsersConProvider} />
                         <PrivateRoute exact path="/tarifas"     component={TarifasConProvider} />
                         <Route exact path="/"><Redirect to="/entrada" /></Route>
                         <Route><NotFound /></Route>

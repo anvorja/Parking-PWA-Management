@@ -7,9 +7,56 @@ import {
 } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useApp } from '../hooks/useApp';
+import { EstadoRed } from '../contexts/AppContext';
+
+// ─── Subcomponente: banner de estado de red ──────────────────────────────────
+// Reutiliza la misma lógica visual que el Home y el resto de páginas,
+// pero adaptada al contexto del Login (sin sesión activa todavía).
+
+interface LoginNetworkBannerProps {
+    estadoRed: EstadoRed
+}
+
+const LoginNetworkBanner: React.FC<LoginNetworkBannerProps> = ({ estadoRed }) => {
+    if (estadoRed === 'online') {
+        return (
+            <div className="w-full bg-surface-light border-b border-slate-200 px-4 py-2 flex items-center justify-center text-xs font-medium text-emerald-600">
+                <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span>Conectado (Online)</span>
+                </div>
+            </div>
+        )
+    }
+
+    if (estadoRed === 'offline') {
+        return (
+            <div className="w-full border-b border-yellow-300 bg-yellow-50 px-4 py-2 flex items-center justify-center gap-2 text-xs font-semibold text-yellow-800">
+                <span className="material-symbols-outlined text-[16px]">wifi_off</span>
+                <span>Sin conexión — revisa tu red</span>
+            </div>
+        )
+    }
+
+    // sincronizando | error_sync — estados que no aplican en el login,
+    // pero se muestran de forma neutra para no confundir al usuario
+    return (
+        <div className="w-full border-b border-blue-200 bg-blue-50 px-4 py-2 flex items-center justify-center gap-2 text-xs font-semibold text-blue-800">
+            <span className="material-symbols-outlined text-[16px]">sync</span>
+            <span>Verificando conexión...</span>
+        </div>
+    )
+}
+
+// ─── Página de Login ──────────────────────────────────────────────────────────
 
 const Login: React.FC = () => {
     const { login, token, isLoading: authLoading } = useAuth();
+    const { estadoRed } = useApp();
     const router = useIonRouter();
 
     const [username, setUsername]         = useState('');
@@ -57,15 +104,7 @@ const Login: React.FC = () => {
         <IonPage>
             <IonContent fullscreen className="ion-padding" style={{ '--background': 'transparent', '--padding-bottom': '0', '--padding-end': '0', '--padding-start': '0', '--padding-top': '0' }}>
                 <div className="bg-background-light text-slate-900 font-display antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-primary/20">
-                    <div className="w-full bg-surface-light border-b border-slate-200 px-4 py-2 flex items-center justify-center text-xs font-medium text-emerald-600">
-                        <div className="flex items-center gap-2">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span>Conectado (Online)</span>
-                        </div>
-                    </div>
+                    <LoginNetworkBanner estadoRed={estadoRed} />
                     <div className="flex-1 flex flex-col w-full max-w-md mx-auto bg-surface-light shadow-sm min-h-screen sm:min-h-0 sm:h-auto sm:my-8 sm:rounded-xl">
                         <div className="flex-1 overflow-y-auto px-6 pb-8 pt-10 sm:pt-12">
                             <div className="w-full flex flex-col items-center justify-center mb-8">
