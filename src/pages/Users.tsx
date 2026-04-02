@@ -171,15 +171,15 @@ const Users: React.FC = () => {
                     position: 'sticky',
                     top: 'var(--network-banner-height, 0px)',
                     zIndex: 20,
-                    borderBottom: '1px solid #e2e8f0', background: '#fff', padding: '12px 16px',
+                    borderBottom: '1px solid var(--color-border)', background: '#fff', padding: '12px 16px',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#137fec', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>group</span>
                         </div>
                         <div style={{ flex: 1 }}>
-                            <h1 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Gestión de Usuarios</h1>
-                            <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>
+                            <h1 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Gestión de Usuarios</h1>
+                            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: 0 }}>
                                 {isLoading ? 'Cargando...' : `${countAdmin} admin · ${countAuxiliar} auxiliar · ${countTodos} total`}
                             </p>
                         </div>
@@ -188,18 +188,18 @@ const Users: React.FC = () => {
                         <div style={{
                             display: 'flex', alignItems: 'center', gap: '5px',
                             fontSize: '11px', fontWeight: 600,
-                            color: estadoRed === 'online' ? '#059669' : estadoRed === 'offline' ? '#dc2626' : '#1e40af',
+                            color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : '#1e40af',
                         }}>
                             <div style={{
                                 width: '7px', height: '7px', borderRadius: '50%',
-                                background: estadoRed === 'online' ? '#10b981' : estadoRed === 'offline' ? '#ef4444' : '#3b82f6',
+                                background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : '#3b82f6',
                             }} />
                             {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                         </div>
 
                         <button
                             onClick={handleOpenModal}
-                            style={{ width: '36px', height: '36px', borderRadius: '10px', border: 'none', background: '#137fec', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                            style={{ width: '36px', height: '36px', borderRadius: '10px', border: 'none', background: 'var(--color-primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                         >
                             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
                         </button>
@@ -214,9 +214,9 @@ const Users: React.FC = () => {
                                 style={{
                                     padding: '4px 10px',
                                     borderRadius: '9999px',
-                                    border: `1px solid ${selectedRole === rol ? '#137fec' : '#e2e8f0'}`,
-                                    background: selectedRole === rol ? '#137fec' : '#fff',
-                                    color: selectedRole === rol ? '#fff' : '#64748b',
+                                    border: `1px solid ${selectedRole === rol ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                    background: selectedRole === rol ? 'var(--color-primary)' : '#fff',
+                                    color: selectedRole === rol ? '#fff' : 'var(--color-text-secondary)',
                                     fontSize: '11px',
                                     fontWeight: 600,
                                     cursor: 'pointer',
@@ -331,13 +331,13 @@ const Users: React.FC = () => {
                                     onClick={handleCloseModal}
                                     style={{
                                         width: '36px', height: '36px', borderRadius: '50%',
-                                        border: 'none', background: 'transparent', color: '#94a3b8',
+                                        border: 'none', background: 'transparent', color: 'var(--color-text-muted)',
                                         cursor: 'pointer', display: 'flex', alignItems: 'center',
                                         justifyContent: 'center', transition: 'all 0.2s',
                                         outline: 'none', padding: 0, margin: 0,
                                     }}
                                     onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569' }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8' }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
                                 >
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
@@ -359,7 +359,7 @@ const Users: React.FC = () => {
                                             required
                                             value={formData.nombreCompleto}
                                             onChange={handleInputChange}
-                                            style={{ color: '#0f172a' }}
+                                            style={{ color: 'var(--color-text-primary)' }}
                                             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                             placeholder="Ej. Juan Pérez"
                                         />
@@ -373,7 +373,7 @@ const Users: React.FC = () => {
                                             required
                                             value={formData.nombreUsuario}
                                             onChange={handleInputChange}
-                                            style={{ color: '#0f172a' }}
+                                            style={{ color: 'var(--color-text-primary)' }}
                                             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                             placeholder="Ej. jperez"
                                         />
@@ -387,7 +387,7 @@ const Users: React.FC = () => {
                                                 required
                                                 value={formData.rol}
                                                 onChange={handleInputChange}
-                                                style={{ color: '#0f172a' }}
+                                                style={{ color: 'var(--color-text-primary)' }}
                                                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors appearance-none"
                                             >
                                                 <option value="AUXILIAR">Auxiliar</option>
@@ -409,7 +409,7 @@ const Users: React.FC = () => {
                                             minLength={6}
                                             value={formData.contrasena}
                                             onChange={handleInputChange}
-                                            style={{ color: '#0f172a' }}
+                                            style={{ color: 'var(--color-text-primary)' }}
                                             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                             placeholder={editTarget ? 'Nueva contraseña (opcional)' : 'Mínimo 6 caracteres'}
                                         />
@@ -427,7 +427,7 @@ const Users: React.FC = () => {
                                             minLength={6}
                                             value={formData.confirmacionContrasena}
                                             onChange={handleInputChange}
-                                            style={{ color: '#0f172a' }}
+                                            style={{ color: 'var(--color-text-primary)' }}
                                             className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                             placeholder={editTarget ? 'Confirmar nueva contraseña' : 'Confirma la contraseña'}
                                         />
@@ -440,7 +440,7 @@ const Users: React.FC = () => {
                                         onClick={handleCloseModal}
                                         style={{
                                             minHeight: '48px', borderRadius: '14px',
-                                            border: '1px solid #e2e8f0', background: '#f8fafc',
+                                            border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)',
                                             color: '#475569', fontSize: '14px', fontWeight: 600,
                                             cursor: 'pointer', flex: 1, display: 'flex',
                                             alignItems: 'center', justifyContent: 'center',
@@ -448,8 +448,8 @@ const Users: React.FC = () => {
                                             margin: 0, padding: '0 16px',
                                         }}
                                         className="active:scale-[0.97]"
-                                        onMouseEnter={e => { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.borderColor = '#cbd5e1' }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#e2e8f0' }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-border)'; e.currentTarget.style.borderColor = '#cbd5e1' }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-surface-alt)'; e.currentTarget.style.borderColor = 'var(--color-border)' }}
                                     >
                                         Cancelar
                                     </button>
@@ -508,7 +508,7 @@ const Users: React.FC = () => {
                                     disabled={isDeleting}
                                     style={{
                                         minHeight: '48px', borderRadius: '14px',
-                                        border: '1px solid #e2e8f0', background: '#f8fafc',
+                                        border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)',
                                         color: '#475569', fontSize: '14px', fontWeight: 600,
                                         cursor: isDeleting ? 'not-allowed' : 'pointer',
                                         flex: 1, display: 'flex', alignItems: 'center',
@@ -516,8 +516,8 @@ const Users: React.FC = () => {
                                         outline: 'none', margin: 0, padding: '0 16px',
                                     }}
                                     className="active:scale-[0.97]"
-                                    onMouseEnter={e => { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.borderColor = '#cbd5e1' }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.borderColor = '#e2e8f0' }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-border)'; e.currentTarget.style.borderColor = '#cbd5e1' }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-surface-alt)'; e.currentTarget.style.borderColor = 'var(--color-border)' }}
                                 >
                                     Cancelar
                                 </button>
@@ -527,7 +527,7 @@ const Users: React.FC = () => {
                                     style={{
                                         minHeight: '48px', borderRadius: '14px',
                                         border: 'none',
-                                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                        background: 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)',
                                         color: '#fff', fontSize: '14px', fontWeight: 600,
                                         cursor: isDeleting ? 'not-allowed' : 'pointer',
                                         flex: 1, display: 'flex', alignItems: 'center',
@@ -537,8 +537,8 @@ const Users: React.FC = () => {
                                         opacity: isDeleting ? 0.7 : 1,
                                     }}
                                     className="active:scale-[0.97]"
-                                    onMouseEnter={e => { if (!isDeleting) { e.currentTarget.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.45)' } }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.35)' }}
+                                    onMouseEnter={e => { if (!isDeleting) { e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-danger-dark) 0%, #b91c1c 100%)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.45)' } }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.35)' }}
                                 >
                                     {isDeleting ? (
                                         <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -569,7 +569,7 @@ const Users: React.FC = () => {
                             background: toast.type === 'success' ? '#dcfce7' : '#fee2e2',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                         }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: toast.type === 'success' ? '#16a34a' : '#dc2626' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: toast.type === 'success' ? '#16a34a' : 'var(--color-danger-dark)' }}>
                                 {toast.type === 'success' ? 'check_circle' : 'error'}
                             </span>
                         </div>
@@ -578,13 +578,13 @@ const Users: React.FC = () => {
                             onClick={clearToast}
                             style={{
                                 marginLeft: 'auto', background: 'transparent', border: 'none',
-                                cursor: 'pointer', color: '#94a3b8', padding: '2px',
+                                cursor: 'pointer', color: 'var(--color-text-muted)', padding: '2px',
                                 display: 'flex', alignItems: 'center', outline: 'none',
                                 borderRadius: '50%', width: '28px', height: '28px', justifyContent: 'center',
                                 transition: 'all 0.2s',
                             }}
                             onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
                         >
                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
                         </button>

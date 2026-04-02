@@ -31,15 +31,15 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isLoggingOut, onConfirm, onCa
                 background: '#fef2f2', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', margin: '0 auto 16px',
             }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '26px', color: '#ef4444' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '26px', color: 'var(--color-danger)' }}>
                     logout
                 </span>
             </div>
 
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', textAlign: 'center', margin: '0 0 8px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', textAlign: 'center', margin: '0 0 8px' }}>
                 ¿Cerrar sesión?
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748b', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
                 Se cerrará tu sesión en este dispositivo. Las operaciones pendientes de sincronización se perderán.
             </p>
 
@@ -49,7 +49,7 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isLoggingOut, onConfirm, onCa
                     disabled={isLoggingOut}
                     style={{
                         flex: 1, padding: '12px', borderRadius: '12px',
-                        border: '1.5px solid #e2e8f0', background: '#fff',
+                        border: '1.5px solid var(--color-border)', background: '#fff',
                         color: '#475569', fontSize: '14px', fontWeight: 600,
                         cursor: isLoggingOut ? 'not-allowed' : 'pointer',
                     }}
@@ -62,7 +62,7 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ isLoggingOut, onConfirm, onCa
                     style={{
                         flex: 1, padding: '12px', borderRadius: '12px',
                         border: 'none',
-                        background: isLoggingOut ? '#fca5a5' : '#ef4444',
+                        background: isLoggingOut ? '#fca5a5' : 'var(--color-danger)',
                         color: '#fff', fontSize: '14px', fontWeight: 700,
                         cursor: isLoggingOut ? 'not-allowed' : 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
@@ -116,7 +116,7 @@ const BottomNav: React.FC = () => {
         <>
             <nav style={{
                 position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30,
-                background: '#fff', borderTop: '1px solid #e2e8f0',
+                background: '#fff', borderTop: '1px solid var(--color-border)',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}>
                 <div style={{
@@ -136,7 +136,7 @@ const BottomNav: React.FC = () => {
                                     gap: '2px', background: 'none', border: 'none',
                                     outline: 'none', cursor: 'pointer',
                                     padding: '4px 6px', margin: 0,
-                                    color: isActive ? '#137fec' : '#94a3b8',
+                                    color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)',
                                     transition: 'color 0.2s', flex: 1,
                                 }}
                             >
@@ -170,7 +170,7 @@ const BottomNav: React.FC = () => {
                             outline: 'none',
                             cursor: isLoggingOut ? 'not-allowed' : 'pointer',
                             padding: '4px 6px', margin: 0,
-                            color: '#ef4444',
+                            color: 'var(--color-danger)',
                             opacity: isLoggingOut ? 0.5 : 1,
                             transition: 'opacity 0.2s', flex: 1,
                         }}

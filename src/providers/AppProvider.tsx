@@ -253,7 +253,7 @@ const NetworkBanner: React.FC<NetworkBannerProps> = ({
                     onClick={onReintentar}
                     style={{
                         padding: '4px 10px', borderRadius: '6px', border: 'none',
-                        background: '#ef4444', color: '#fff',
+                        background: 'var(--color-danger)', color: '#fff',
                         fontSize: '11px', fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                     }}
                 >
