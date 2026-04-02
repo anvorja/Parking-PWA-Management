@@ -49,7 +49,7 @@ export const UbicacionProvider: React.FC<{ children: ReactNode }> = ({ children 
                 if (cachedValido && cached && cached.length > 0) setUbicaciones(cached)
 
                 if (isOnline) {
-                    const frescas = await ubicacionService.listarActivas()
+                    const frescas = await ubicacionService.listar(true)
                     setUbicaciones(frescas)
                     await set(IDB_KEY_UBICACIONES, frescas)
                 }
@@ -119,16 +119,16 @@ export const UbicacionProvider: React.FC<{ children: ReactNode }> = ({ children 
         try {
             if (isOnline) {
                 await ubicacionService.desactivar(id)
-                setUbicaciones(prev => prev.filter(u => u.id !== id))
-                const actualizadas = ubicaciones.filter(u => u.id !== id)
+                setUbicaciones(prev => prev.map(u => u.id === id ? { ...u, estadoNombre: 'INACTIVO', disponible: false } : u))
+                const actualizadas = ubicaciones.map(u => u.id === id ? { ...u, estadoNombre: 'INACTIVO', disponible: false } : u)
                 await set(IDB_KEY_UBICACIONES, actualizadas)
                 setToast({ message: 'Ubicación desactivada correctamente', type: 'success' })
             } else {
-                // Optimistic update local: la sacamos del estado y del caché IDB
-                // para que la UI no la muestre. Al sincronizar, el DELETE se aplica en el backend.
+                // Optimistic update local: la marcamos como inactiva para que la UI la pase a esa pestaña
+                // Al sincronizar, el DELETE se aplica en el backend.
                 await outboxService.enqueue('UBICACION_BORRAR', { id })
-                setUbicaciones(prev => prev.filter(u => u.id !== id))
-                const actualizadas = ubicaciones.filter(u => u.id !== id)
+                setUbicaciones(prev => prev.map(u => u.id === id ? { ...u, estadoNombre: 'INACTIVO', disponible: false } : u))
+                const actualizadas = ubicaciones.map(u => u.id === id ? { ...u, estadoNombre: 'INACTIVO', disponible: false } : u)
                 await set(IDB_KEY_UBICACIONES, actualizadas)
                 setToast({ message: 'Sin conexión — la desactivación se aplicará al recuperar la red', type: 'success' })
             }
@@ -141,12 +141,40 @@ export const UbicacionProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
     }, [isOnline, ubicaciones])
 
+    // ── Reactivar ─────────────────────────────────────────────────────────────
+
+    const reactivar = useCallback(async (id: number) => {
+        setIsSaving(true)
+        try {
+            if (isOnline) {
+                await ubicacionService.reactivar(id)
+                setUbicaciones(prev => prev.map(u => u.id === id ? { ...u, estadoNombre: 'DISPONIBLE', disponible: true } : u))
+                const actualizadas = ubicaciones.map(u => u.id === id ? { ...u, estadoNombre: 'DISPONIBLE', disponible: true } : u)
+                await set(IDB_KEY_UBICACIONES, actualizadas)
+                setToast({ message: 'Ubicación reactivada correctamente', type: 'success' })
+            } else {
+                await outboxService.enqueue('UBICACION_REACTIVAR', { id })
+                setUbicaciones(prev => prev.map(u => u.id === id ? { ...u, estadoNombre: 'DISPONIBLE', disponible: true } : u))
+                const actualizadas = ubicaciones.map(u => u.id === id ? { ...u, estadoNombre: 'DISPONIBLE', disponible: true } : u)
+                await set(IDB_KEY_UBICACIONES, actualizadas)
+                setToast({ message: 'Sin conexión — la reactivación se aplicará al recuperar la red', type: 'success' })
+            }
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Error al reactivar la ubicación'
+            setToast({ message: msg, type: 'error' })
+            throw err
+        } finally {
+            setIsSaving(false)
+        }
+    }, [isOnline, ubicaciones])
+
     return (
         <UbicacionContext.Provider value={{
             ubicaciones, isLoading,
-            crear, editar, desactivar,
+            crear, editar, desactivar, reactivar,
             isSaving, toast, clearToast,
         }}>
+
             {children}
         </UbicacionContext.Provider>
     )

@@ -184,13 +184,14 @@ const Users: React.FC = () => {
             await usuarioService.eliminarUsuario(deleteTarget.id);
             await loadUsuarios();
             setToast({ message: 'Usuario eliminado exitosamente', type: 'success' });
+            setDeleteTarget(null);
         } catch (error: unknown) {
             console.error('Error al eliminar usuario:', error);
             const msg = error instanceof Error ? error.message : 'Error al eliminar el usuario.';
-            alert(msg);
+            setToast({ message: msg, type: 'error' });
+            setDeleteTarget(null);
         } finally {
             setIsDeleting(false);
-            setDeleteTarget(null);
         }
     };
 

@@ -48,6 +48,7 @@ export interface IngresoPageResponse {
 export interface ListarIngresosParams {
     placa?: string
     estado?: string
+    fecha?: string
     page?: number
     size?: number
 }
@@ -104,10 +105,11 @@ export const ingresoService = {
     // ── Listar ingresos — HU-018 ───────────────────────────────────────────────
 
     async listarIngresos(params: ListarIngresosParams = {}): Promise<IngresoPageResponse> {
-        const { placa = '', estado = '', page = 0, size = 20 } = params
+        const { placa = '', estado = '', fecha = '', page = 0, size = 20 } = params
         const query = new URLSearchParams()
         if (placa)  query.set('placa',  placa)
         if (estado) query.set('estado', estado)
+        if (fecha)  query.set('fecha', fecha)
         query.set('page', String(page))
         query.set('size', String(size))
 

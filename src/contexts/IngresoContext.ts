@@ -24,6 +24,9 @@ export interface IngresoContextType {
     /** Filtro activo por placa */
     filtroPlaca: string
     setFiltroPlaca: (placa: string) => void
+    /** Filtro activo por fecha */
+    filtroFecha: string
+    setFiltroFecha: (fecha: string) => void
     /** Carga la siguiente página y la acumula */
     cargarMas: () => void
     /** Fuerza recarga completa desde página 0 */

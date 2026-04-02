@@ -33,6 +33,32 @@ export interface CrearUsuarioResponse {
     usuario: UsuarioListItemResponse;
 }
 
+async function handleResponseError(response: Response, defaultMessage: string) {
+    let errorMessage = defaultMessage;
+    try {
+        const text = await response.text();
+        if (text) {
+            try {
+                const json = JSON.parse(text);
+                if (json.error && json.error.message) {
+                    errorMessage = json.error.message;
+                } else if (json.mensaje) {
+                    errorMessage = json.mensaje;
+                } else if (json.message) {
+                    errorMessage = json.message;
+                } else {
+                    errorMessage = text;
+                }
+            } catch {
+                errorMessage = text;
+            }
+        }
+    } catch {
+        // Ignorar fallo al leer cuerpo
+    }
+    throw new Error(errorMessage);
+}
+
 export const usuarioService = {
     getUsuarios: async (): Promise<UsuarioListItemResponse[]> => {
         try {
@@ -46,7 +72,7 @@ export const usuarioService = {
             });
 
             if (!response.ok) {
-                throw new Error('Error al obtener la lista de usuarios');
+                await handleResponseError(response, 'Error al obtener la lista de usuarios');
             }
 
             const data: UsuarioListItemResponse[] = await response.json();
@@ -78,8 +104,7 @@ export const usuarioService = {
         });
 
         if (!response.ok) {
-            const errBody = await response.text();
-            throw new Error(`Error al crear el usuario: ${errBody}`);
+            await handleResponseError(response, 'Error al crear el usuario');
         }
 
         return await response.json();
@@ -97,8 +122,7 @@ export const usuarioService = {
         });
 
         if (!response.ok) {
-            const errBody = await response.text();
-            throw new Error(`Error al editar el usuario: ${errBody}`);
+            await handleResponseError(response, 'Error al editar el usuario');
         }
 
         return await response.json();
@@ -114,8 +138,7 @@ export const usuarioService = {
         });
 
         if (!response.ok) {
-            const errBody = await response.text();
-            throw new Error(`Error al eliminar el usuario: ${errBody}`);
+            await handleResponseError(response, 'Error al eliminar el usuario');
         }
     }
 };

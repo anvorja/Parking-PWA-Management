@@ -30,18 +30,21 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [totalElements, setTotalElements]   = useState(0)
     const [currentPage, setCurrentPage]       = useState(0)
     const [filtroPlaca, setFiltroPlacaState]  = useState('')
+    const [filtroFecha, setFiltroFechaState]  = useState('')
     const [isDeleting, setIsDeleting]         = useState(false)
     const [isEditing, setIsEditing]           = useState(false)
     const [toast, setToast]                   = useState<ToastState | null>(null)
     const [salidasPendientes, setSalidasPendientes] = useState<Set<number>>(new Set())
 
     const filtroPlacaRef = useRef(filtroPlaca)
+    const filtroFechaRef = useRef(filtroFecha)
     const currentPageRef = useRef(currentPage)
     const isOnlineRef    = useRef(isOnline)
     const wasOfflineRef  = useRef(!isOnline)
     const isLoadingRef   = useRef(false)
 
     useEffect(() => { filtroPlacaRef.current = filtroPlaca }, [filtroPlaca])
+    useEffect(() => { filtroFechaRef.current = filtroFecha }, [filtroFecha])
     useEffect(() => { currentPageRef.current = currentPage }, [currentPage])
     useEffect(() => { isOnlineRef.current    = isOnline    }, [isOnline])
 
@@ -116,6 +119,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     const cargarPaginaBackend = useCallback(async (
         page: number,
         placa: string,
+        fecha: string,
         append: boolean
     ) => {
         if (!append && page === 0) {
@@ -134,13 +138,13 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
 
         try {
-            const data = await ingresoService.listarIngresos({ placa, page, size: PAGE_SIZE })
+            const data = await ingresoService.listarIngresos({ placa, fecha, page, size: PAGE_SIZE })
             setIngresos(prev => append ? [...prev, ...data.content] : data.content)
             setTotalElements(data.totalElements)
             setCurrentPage(data.page)
             setHasMore(data.page < data.totalPages - 1)
 
-            if (page === 0 && !placa) {
+            if (page === 0 && !placa && !fecha) {
                 const activos = data.content
                     .filter(i => i.estadoIngreso === 'INGRESADO')
                     .slice(0, CACHE_MAX)
@@ -163,7 +167,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             if (wasOfflineRef.current) {
                 wasOfflineRef.current = false
             }
-            void cargarPaginaBackend(0, filtroPlacaRef.current, false)
+            void cargarPaginaBackend(0, filtroPlacaRef.current, filtroFechaRef.current, false)
         } else {
             wasOfflineRef.current = true
             void cargarDesdeCache()
@@ -177,7 +181,7 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             const customEvent = event as CustomEvent<SyncResult>
             const { exitosas } = customEvent.detail
             if (exitosas > 0 && isOnlineRef.current) {
-                void cargarPaginaBackend(0, filtroPlacaRef.current, false)
+                void cargarPaginaBackend(0, filtroPlacaRef.current, filtroFechaRef.current, false)
                 void actualizarSalidasPendientes()
             }
         }
@@ -192,15 +196,39 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
     const setFiltroPlaca = useCallback((placa: string) => {
         setFiltroPlacaState(placa)
         if (isOnlineRef.current) {
-            void cargarPaginaBackend(0, placa, false)
+            void cargarPaginaBackend(0, placa, filtroFechaRef.current, false)
         } else {
             void get<IngresoVehiculoResponse[]>(IDB_KEY_INGRESOS).then(cached => {
                 if (!cached) return
-                const filtrados = placa.trim()
-                    ? cached.filter(i => i.placa.toUpperCase().includes(placa.toUpperCase()))
-                    : cached
-                setIngresos(filtrados)
-                setTotalElements(filtrados.length)
+                // Aplicar ambos filtros offline
+                const filtered = cached.filter(i => {
+                    const matchPlaca = placa.trim() ? i.placa.toUpperCase().includes(placa.toUpperCase()) : true
+                    const matchFecha = filtroFechaRef.current ? i.fechaHoraIngreso.startsWith(filtroFechaRef.current) : true
+                    return matchPlaca && matchFecha
+                })
+                setIngresos(filtered)
+                setTotalElements(filtered.length)
+                setHasMore(false)
+                setCurrentPage(0)
+            })
+        }
+    }, [cargarPaginaBackend])
+
+    const setFiltroFecha = useCallback((fecha: string) => {
+        setFiltroFechaState(fecha)
+        if (isOnlineRef.current) {
+            void cargarPaginaBackend(0, filtroPlacaRef.current, fecha, false)
+        } else {
+            void get<IngresoVehiculoResponse[]>(IDB_KEY_INGRESOS).then(cached => {
+                if (!cached) return
+                // Aplicar ambos filtros offline
+                const filtered = cached.filter(i => {
+                    const matchPlaca = filtroPlacaRef.current.trim() ? i.placa.toUpperCase().includes(filtroPlacaRef.current.toUpperCase()) : true
+                    const matchFecha = fecha ? i.fechaHoraIngreso.startsWith(fecha) : true
+                    return matchPlaca && matchFecha
+                })
+                setIngresos(filtered)
+                setTotalElements(filtered.length)
                 setHasMore(false)
                 setCurrentPage(0)
             })
@@ -209,12 +237,12 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     const cargarMas = useCallback(() => {
         if (!isOnlineRef.current || !hasMore || isLoadingRef.current) return
-        void cargarPaginaBackend(currentPageRef.current + 1, filtroPlacaRef.current, true)
+        void cargarPaginaBackend(currentPageRef.current + 1, filtroPlacaRef.current, filtroFechaRef.current, true)
     }, [hasMore, cargarPaginaBackend])
 
     const refrescar = useCallback(() => {
         if (isOnlineRef.current) {
-            void cargarPaginaBackend(0, filtroPlacaRef.current, false)
+            void cargarPaginaBackend(0, filtroPlacaRef.current, filtroFechaRef.current, false)
         }
     }, [cargarPaginaBackend])
 
@@ -314,6 +342,8 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
             isOnline,
             filtroPlaca,
             setFiltroPlaca,
+            filtroFecha,
+            setFiltroFecha,
             cargarMas,
             refrescar,
             eliminarIngreso,

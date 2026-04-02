@@ -50,8 +50,9 @@ async function fetchConAuth(path: string, options: RequestInit = {}): Promise<Re
 
 export const ubicacionService = {
 
-    async listarActivas(): Promise<UbicacionResponse[]> {
-        const response = await fetchConAuth('/api/v1/ubicaciones')
+    async listar(incluirInactivas: boolean = false): Promise<UbicacionResponse[]> {
+        const url = incluirInactivas ? '/api/v1/ubicaciones?incluirInactivas=true' : '/api/v1/ubicaciones'
+        const response = await fetchConAuth(url)
         if (!response.ok) {
             const err = await response.json().catch(() => null)
             throw new Error(err?.error?.message || err?.message || `Error al obtener ubicaciones (${response.status})`)
@@ -88,6 +89,14 @@ export const ubicacionService = {
         if (!response.ok) {
             const err = await response.json().catch(() => null)
             throw new Error(err?.error?.message || err?.message || `Error al desactivar la ubicación (${response.status})`)
+        }
+    },
+
+    async reactivar(id: number): Promise<void> {
+        const response = await fetchConAuth(`/api/v1/ubicaciones/${id}/reactivar`, { method: 'PUT' })
+        if (!response.ok) {
+            const err = await response.json().catch(() => null)
+            throw new Error(err?.error?.message || err?.message || `Error al reactivar la ubicación (${response.status})`)
         }
     },
 }

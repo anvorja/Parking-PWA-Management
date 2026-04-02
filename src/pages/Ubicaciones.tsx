@@ -23,6 +23,7 @@ function getEstadoColor(estado: string | undefined): { bg: string; text: string;
     switch ((estado ?? '').toUpperCase()) {
         case 'DISPONIBLE': return { bg: '#ecfdf5', text: '#059669', dot: '#10b981' }
         case 'OCUPADO': return { bg: '#fef2f2', text: '#dc2626', dot: '#ef4444' }
+        case 'INACTIVO': return { bg: '#f1f5f9', text: '#475569', dot: '#64748b' }
         default: return { bg: '#f1f5f9', text: '#64748b', dot: '#94a3b8' }
     }
 }
@@ -157,10 +158,11 @@ interface OpcionesModalProps {
     ubicacion: UbicacionResponse
     onEditar: () => void
     onDesactivar: () => void
+    onReactivar: () => void
     onCerrar: () => void
 }
 
-function OpcionesModal({ ubicacion, onEditar, onDesactivar, onCerrar }: OpcionesModalProps) {
+function OpcionesModal({ ubicacion, onEditar, onDesactivar, onReactivar, onCerrar }: OpcionesModalProps) {
     const colores = getEstadoColor(ubicacion.estadoNombre ?? '')
     
     return (
@@ -189,20 +191,32 @@ function OpcionesModal({ ubicacion, onEditar, onDesactivar, onCerrar }: Opciones
                     </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <button
-                        onClick={onEditar}
-                        style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff', color: '#0f172a', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#137fec' }}>edit</span>
-                        Editar datos
-                    </button>
-                    <button
-                        onClick={onDesactivar}
-                        style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid #fee2e2', background: '#fff', color: '#ef4444', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>location_off</span>
-                        Desactivar espacio
-                    </button>
+                    {ubicacion.estadoNombre === 'INACTIVO' ? (
+                        <button
+                            onClick={onReactivar}
+                            style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid #bbf7d0', background: '#fff', color: '#16a34a', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>settings_backup_restore</span>
+                            Reactivar espacio
+                        </button>
+                    ) : (
+                        <>
+                            <button
+                                onClick={onEditar}
+                                style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff', color: '#0f172a', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#137fec' }}>edit</span>
+                                Editar datos
+                            </button>
+                            <button
+                                onClick={onDesactivar}
+                                style={{ width: '100%', padding: '13px', borderRadius: '12px', border: '1.5px solid #fee2e2', background: '#fff', color: '#ef4444', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>location_off</span>
+                                Desactivar espacio
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
@@ -252,6 +266,49 @@ function DesactivarModal({ ubicacion, isSaving, onConfirmar, onCancelar }: Desac
     )
 }
 
+// ─── Modal confirmación reactivar ──────────────────────────────────────────────
+
+interface ReactivarModalProps {
+    ubicacion: UbicacionResponse
+    isSaving: boolean
+    onConfirmar: () => void
+    onCancelar: () => void
+}
+
+function ReactivarModal({ ubicacion, isSaving, onConfirmar, onCancelar }: ReactivarModalProps) {
+    return (
+        <div
+            style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+            onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
+        >
+            <div style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '360px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '26px', color: '#10b981' }}>settings_backup_restore</span>
+                </div>
+                <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', textAlign: 'center', margin: '0 0 8px' }}>¿Reactivar espacio?</h3>
+                <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '12px', margin: '0 0 16px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: '0 0 4px' }}>{ubicacion.nombre}</p>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>{ubicacion.tipoVehiculoNativo} · Cap. {ubicacion.capacidad}</p>
+                </div>
+                <p style={{ fontSize: '13px', color: '#64748b', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.5 }}>
+                    El espacio volverá a estar disponible para el ingreso de vehículos.
+                </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
+                        Cancelar
+                    </button>
+                    <button onClick={onConfirmar} disabled={isSaving} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: isSaving ? '#6ee7b7' : '#10b981', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        {isSaving
+                            ? <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                            : 'Reactivar'}
+                    </button>
+                </div>
+                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            </div>
+        </div>
+    )
+}
+
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
@@ -275,19 +332,20 @@ function Toast({ message, type, onClose }: ToastProps) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 const Ubicaciones: React.FC = () => {
-    const { ubicaciones, isLoading, crear, editar, desactivar, isSaving, toast, clearToast } = useUbicaciones()
+    const { ubicaciones, isLoading, crear, editar, desactivar, reactivar, isSaving, toast, clearToast } = useUbicaciones()
     const { user } = useAuth()
     const { estadoRed } = useApp()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
 
     const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'CARRO' | 'MOTO'>('TODOS')
-    const [filtroEstado, setFiltroEstado] = useState<'TODOS' | 'DISPONIBLE' | 'OCUPADO'>('TODOS')
+    const [filtroEstado, setFiltroEstado] = useState<'TODOS' | 'DISPONIBLE' | 'OCUPADO' | 'INACTIVO'>('TODOS')
     const [crearModal, setCrearModal] = useState(false)
     // opcionesTarget: abre el bottom sheet con las opciones (editar / desactivar)
     const [opcionesTarget, setOpcionesTarget] = useState<UbicacionResponse | null>(null)
     // editFormTarget: abre el formulario de edición con datos precargados
     const [editFormTarget, setEditFormTarget] = useState<UbicacionResponse | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<UbicacionResponse | null>(null)
+    const [reactivateTarget, setReactivateTarget] = useState<UbicacionResponse | null>(null)
 
     const ubicacionesFiltradas = useMemo(() => {
         return ubicaciones.filter(u => {
@@ -351,7 +409,7 @@ const Ubicaciones: React.FC = () => {
                             </button>
                         ))}
                         <div style={{ width: '1px', background: '#e2e8f0', margin: '0 2px' }} />
-                        {(['TODOS', 'DISPONIBLE', 'OCUPADO'] as const).map(e => (
+                        {(['TODOS', 'DISPONIBLE', 'OCUPADO', 'INACTIVO'] as const).map(e => (
                             <button key={e} onClick={() => setFiltroEstado(e)} style={{ padding: '4px 10px', borderRadius: '9999px', border: `1px solid ${filtroEstado === e ? '#137fec' : '#e2e8f0'}`, background: filtroEstado === e ? '#137fec' : '#fff', color: filtroEstado === e ? '#fff' : '#64748b', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                                 {e === 'TODOS' ? 'Todos' : e.charAt(0) + e.slice(1).toLowerCase()}
                             </button>
@@ -381,15 +439,19 @@ const Ubicaciones: React.FC = () => {
                                     return (
                                         <div
                                             key={ub.id}
-                                            style={{ background: '#fff', borderRadius: '10px', border: `1.5px solid ${ub.disponible ? '#e2e8f0' : '#fecaca'}`, padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: esAdmin ? 'pointer' : 'default', transition: 'all 0.15s', position: 'relative' }}
+                                            style={{ background: '#fff', borderRadius: '10px', border: `1.5px solid ${ub.estadoNombre === 'INACTIVO' ? '#f1f5f9' : (ub.disponible ? '#e2e8f0' : '#fecaca')}`, padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: esAdmin ? 'pointer' : 'default', transition: 'all 0.15s', position: 'relative', opacity: ub.estadoNombre === 'INACTIVO' ? 0.6 : 1 }}
                                             onClick={() => { if (esAdmin) setOpcionesTarget(ub) }}
                                             onMouseEnter={e => { if (esAdmin) e.currentTarget.style.borderColor = '#137fec' }}
-                                            onMouseLeave={e => { e.currentTarget.style.borderColor = ub.disponible ? '#e2e8f0' : '#fecaca' }}
+                                            onMouseLeave={e => { e.currentTarget.style.borderColor = ub.estadoNombre === 'INACTIVO' ? '#f1f5f9' : (ub.disponible ? '#e2e8f0' : '#fecaca') }}
                                         >
                                             <div style={{ position: 'absolute', top: '5px', right: '5px', width: '7px', height: '7px', borderRadius: '50%', background: colores.dot }} />
-                                            <span className="material-symbols-outlined" style={{ fontSize: '14px', color: ub.disponible ? '#94a3b8' : '#ef4444' }}>{tipoIcon}</span>
+                                            {ub.estadoNombre === 'INACTIVO' ? (
+                                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#94a3b8' }}>lock</span>
+                                            ) : (
+                                                <span className="material-symbols-outlined" style={{ fontSize: '14px', color: ub.disponible ? '#94a3b8' : '#ef4444' }}>{tipoIcon}</span>
+                                            )}
                                             <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, lineHeight: 1 }}>{ub.nombre.charAt(0)}</span>
-                                            <span style={{ fontSize: '17px', fontWeight: 900, color: ub.disponible ? '#0f172a' : '#ef4444', lineHeight: 1 }}>
+                                            <span style={{ fontSize: '17px', fontWeight: 900, color: ub.estadoNombre === 'INACTIVO' ? '#64748b' : (ub.disponible ? '#0f172a' : '#ef4444'), lineHeight: 1, textDecoration: ub.estadoNombre === 'INACTIVO' ? 'line-through' : 'none' }}>
                                                 {ub.nombre.slice(1)}
                                             </span>
                                         </div>
@@ -425,6 +487,10 @@ const Ubicaciones: React.FC = () => {
                             setDeleteTarget(opcionesTarget)
                             setOpcionesTarget(null)
                         }}
+                        onReactivar={() => {
+                            setReactivateTarget(opcionesTarget)
+                            setOpcionesTarget(null)
+                        }}
                         onCerrar={() => setOpcionesTarget(null)}
                     />
                 )}
@@ -455,6 +521,16 @@ const Ubicaciones: React.FC = () => {
                         isSaving={isSaving}
                         onConfirmar={async () => { await desactivar(deleteTarget.id); setDeleteTarget(null) }}
                         onCancelar={() => setDeleteTarget(null)}
+                    />
+                )}
+
+                {/* Modal confirmar reactivar */}
+                {reactivateTarget && (
+                    <ReactivarModal
+                        ubicacion={reactivateTarget}
+                        isSaving={isSaving}
+                        onConfirmar={async () => { await reactivar(reactivateTarget.id); setReactivateTarget(null) }}
+                        onCancelar={() => setReactivateTarget(null)}
                     />
                 )}
 

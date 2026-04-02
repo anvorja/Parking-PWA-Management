@@ -281,7 +281,7 @@ const Ingresos: React.FC = () => {
     const {
         ingresos, isLoading, isLoadingMore, hasMore,
         totalElements, isOnline, filtroPlaca,
-        setFiltroPlaca, cargarMas,
+        setFiltroPlaca, filtroFecha, setFiltroFecha, cargarMas,
         eliminarIngreso, isDeleting,
         editarIngreso, isEditing,
         toast, clearToast,
@@ -321,6 +321,12 @@ const Ingresos: React.FC = () => {
     const handleLimpiarFiltro = () => {
         if (debounceRef.current) clearTimeout(debounceRef.current)
         setFiltroPlaca('')
+    }
+    const handleFiltroFechaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFiltroFecha(e.target.value)
+    }
+    const handleLimpiarFiltroFecha = () => {
+        setFiltroFecha('')
     }
     useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
 
@@ -388,15 +394,26 @@ const Ingresos: React.FC = () => {
                     <div style={{ paddingBottom: '88px' }}>
 
                         {/* Buscador */}
-                        <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid #f1f5f9' }}>
-                            <label style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '10px' }}>
+                            <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
                                 <span className="material-symbols-outlined" style={{ position: 'absolute', left: '10px', fontSize: '18px', color: '#94a3b8', pointerEvents: 'none' }}>search</span>
-                                <input type="text" defaultValue={filtroPlaca} onChange={handleFiltroChange} placeholder="Buscar por placa..."
+                                <input type="text" defaultValue={filtroPlaca} onChange={handleFiltroChange} placeholder="Buscar placa..."
                                        style={{ width: '100%', padding: '9px 36px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: '13px', color: '#0f172a', outline: 'none', boxSizing: 'border-box', textTransform: 'uppercase' }}
                                        onFocus={e => { e.target.style.borderColor = '#137fec' }} onBlur={e => { e.target.style.borderColor = '#e2e8f0' }} />
                                 {filtroPlaca && (
                                     <button onClick={handleLimpiarFiltro} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                                    </button>
+                                )}
+                            </label>
+
+                            <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, maxWidth: '140px' }}>
+                                <input type="date" value={filtroFecha} onChange={handleFiltroFechaChange}
+                                       style={{ width: '100%', padding: '8px 12px', paddingRight: filtroFecha ? '30px' : '12px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: '13px', color: '#0f172a', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }}
+                                       onFocus={e => { e.target.style.borderColor = '#137fec' }} onBlur={e => { e.target.style.borderColor = '#e2e8f0' }} />
+                                {filtroFecha && (
+                                    <button onClick={handleLimpiarFiltroFecha} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
+                                        <span className="material-symbols-outlined" style={{ fontSize: '18px', background: '#f8fafc' }}>close</span>
                                     </button>
                                 )}
                             </label>
@@ -411,7 +428,9 @@ const Ingresos: React.FC = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', gap: '12px' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#cbd5e1' }}>inbox</span>
                                 <p style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', margin: 0 }}>
-                                    {filtroPlaca ? `Sin resultados para "${filtroPlaca}"` : 'No hay registros de ingreso'}
+                                    {(filtroPlaca || filtroFecha) 
+                                        ? `Sin resultados para los filtros aplicados` 
+                                        : 'No hay registros de ingreso'}
                                 </p>
                             </div>
                         ) : (

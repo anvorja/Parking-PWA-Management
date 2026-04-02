@@ -87,6 +87,14 @@ async function ejecutarOperacion(entry: OutboxEntry): Promise<Response> {
             })
         }
 
+        // PUT /api/v1/ubicaciones/{id}/reactivar
+        case 'UBICACION_REACTIVAR': {
+            const { id: ubicacionId } = entry.payload as { id: number }
+            return fetchConAuth(`/api/v1/ubicaciones/${ubicacionId}/reactivar`, {
+                method: 'PUT',
+            })
+        }
+
         default:
             throw new Error(`[syncService] Tipo de operación desconocido: ${(entry as OutboxEntry).type}`)
     }
