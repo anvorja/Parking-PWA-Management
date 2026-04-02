@@ -33,7 +33,16 @@ Para correr este proyecto en tu entorno local, sigue estos sencillos pasos:
    ```bash
    npm run test.unit -- --run --reporter=verbose
    ```
-   Revisar *comandos-fases.html*
 
----
-**Nota:** Para que la aplicación funcione primero tiene que estar corriendo el backend.
+   *Para coverage:*
+   ```bash
+   npm run test.unit -- --run --coverage
+   ```  
+
+**Nota:**
+
+Genera el resumen en consola y además el reporte HTML.  
+El HTML queda en coverage/index.html, ábrelo en el navegador para navegar el reporte interactivo.
+
+
+Revisar *comandos-test.md*
