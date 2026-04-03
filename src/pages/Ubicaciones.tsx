@@ -11,6 +11,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useApp } from '../hooks/useApp'
 import { UbicacionResponse, CrearUbicacionRequest, EditarUbicacionRequest } from '../services/ubicacionService'
 import BottomNav from '../components/BottomNav'
+import { useSidebarOffset } from '../hooks/useSidebarOffset'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -335,6 +336,7 @@ const Ubicaciones: React.FC = () => {
     const { ubicaciones, isLoading, crear, editar, desactivar, reactivar, isSaving, toast, clearToast } = useUbicaciones()
     const { user } = useAuth()
     const { estadoRed } = useApp()
+    const sidebarOffset = useSidebarOffset()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
 
     const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'CARRO' | 'MOTO'>('TODOS')
@@ -360,22 +362,20 @@ const Ubicaciones: React.FC = () => {
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-white ${sidebarOffset}`}>
 
                 {/* Header */}
-                <header style={{
-                    position: 'sticky',
-                    top: 'var(--network-banner-height, 0px)',
-                    zIndex: 20,
-                    borderBottom: '1px solid var(--color-border)', background: '#fff', padding: '12px 16px',
-                }}>
+                <header
+                    className="px-4 py-3 md:px-8 md:py-4 border-b border-[color:var(--color-border)] bg-white"
+                    style={{ position: 'sticky', top: 'var(--network-banner-height, 0px)', zIndex: 20 }}
+                >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>grid_view</span>
                         </div>
                         <div style={{ flex: 1 }}>
-                            <h1 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Mapa del Parqueadero</h1>
-                            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: 0 }}>
+                            <h1 className="text-[16px] md:text-[20px] font-bold m-0" style={{ color: 'var(--color-text-primary)' }}>Mapa del Parqueadero</h1>
+                            <p className="text-[11px] md:text-[13px] m-0" style={{ color: 'var(--color-text-muted)' }}>
                                 {isLoading ? 'Cargando...' : `${libres} libres · ${ocupados} ocupados · ${ubicaciones.length} total`}
                             </p>
                         </div>

@@ -9,6 +9,7 @@ import { useSalida } from '../hooks/useSalida'
 import { useApp } from '../hooks/useApp'
 import QRScanner from '../components/QRScanner'
 import BottomNav from '../components/BottomNav'
+import { useSidebarOffset } from '../hooks/useSidebarOffset'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,7 @@ const Salida: React.FC = () => {
     } = useSalida()
 
     const { estadoRed } = useApp()
+    const sidebarOffset = useSidebarOffset()
     const [placa, setPlaca] = useState('')
     const router = useIonRouter()
 
@@ -95,7 +97,7 @@ const Salida: React.FC = () => {
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-white ${sidebarOffset}`}>
 
                 {/* Header */}
                 <header style={{

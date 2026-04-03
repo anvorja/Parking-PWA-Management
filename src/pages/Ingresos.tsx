@@ -14,6 +14,11 @@ import { useApp } from '../hooks/useApp'
 import { EditarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService'
 import { refDataService, UbicacionRef, TipoVehiculoRef } from '../services/refDataService'
 import BottomNav from '../components/BottomNav'
+import { useSidebarOffset } from '../hooks/useSidebarOffset'
+import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 // Estados de ingreso según dbInicialization.sql (id=1 INGRESADO, id=2 ENTREGADO)
 const ESTADOS_INGRESO = [
@@ -39,6 +44,7 @@ function isoToLocal(iso: string): string {
     const pad = (n: number) => String(n).padStart(2,'0')
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
+
 
 function getEstadoStyle(estado: string): { bg: string; text: string; dot: string } {
     switch (estado.toUpperCase()) {
@@ -90,28 +96,33 @@ interface DeleteModalProps {
 
 function DeleteModal({ ingreso, isDeleting, onConfirm, onCancel }: DeleteModalProps) {
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
-            <div style={{ background: '#fff', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '360px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-                <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'var(--color-danger-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '26px', color: 'var(--color-danger)' }}>delete_forever</span>
-                </div>
-                <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', textAlign: 'center', margin: '0 0 8px' }}>¿Eliminar este registro?</h3>
-                <div style={{ background: 'var(--color-surface-alt)', borderRadius: '12px', padding: '12px', margin: '0 0 16px', textAlign: 'center' }}>
+        <Dialog open onOpenChange={val => { if (!val && !isDeleting) onCancel() }}>
+            <DialogContent className="sm:max-w-[360px]" showCloseButton={false}>
+                <DialogHeader className="items-center text-center">
+                    <div className="mx-auto mb-2 flex h-13 w-13 items-center justify-center rounded-[14px]" style={{ background: 'var(--color-danger-bg)' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '26px', color: 'var(--color-danger)' }}>delete_forever</span>
+                    </div>
+                    <DialogTitle className="text-[17px] text-center">¿Eliminar este registro?</DialogTitle>
+                </DialogHeader>
+
+                <div className="rounded-xl px-3 py-3 text-center" style={{ background: 'var(--color-surface-alt)' }}>
                     <p style={{ fontSize: '20px', fontWeight: 900, color: 'var(--color-text-primary)', margin: '0 0 4px', letterSpacing: '1px' }}>{ingreso.placa}</p>
                     <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0 }}>{ingreso.ubicacion} · {ingreso.tipoVehiculo} · {formatFecha(ingreso.fechaHoraIngreso)}</p>
                 </div>
-                <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.5 }}>Esta acción es permanente y no se puede deshacer.</p>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <p className="text-center text-[13px] leading-relaxed -mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+                    Esta acción es permanente y no se puede deshacer.
+                </p>
+
+                <div className="flex gap-2.5">
                     <button onClick={onCancel} disabled={isDeleting} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer' }}>Cancelar</button>
                     <button onClick={onConfirm} disabled={isDeleting} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: isDeleting ? '#fca5a5' : 'var(--color-danger)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isDeleting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         {isDeleting
-                            ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Eliminando...</>
+                            ? <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Eliminando...</>
                             : <><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>Eliminar</>}
                     </button>
                 </div>
-                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     )
 }
 
@@ -152,35 +163,21 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
         try { await onGuardar(data) } catch { /* toast ya gestionado en provider */ }
     }
 
-    const selectStyle: React.CSSProperties = { ...inputStyle, appearance: 'none', cursor: 'pointer' }
-
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) onCancelar() }}>
-            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 32px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}>
-
-                <div style={{ width: '40px', height: '4px', background: 'var(--color-border)', borderRadius: '9999px', margin: '0 auto 16px' }} />
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <div>
-                        <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Editar Registro</h3>
-                        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>
-                            {esAdmin ? 'Administrador — todos los campos' : 'Auxiliar — placa y ubicación'}
-                        </p>
-                    </div>
-                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--color-surface-subtle)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
-                    </button>
-                </div>
+        <Dialog open onOpenChange={val => { if (!val && !isEditing) onCancelar() }}>
+            <DialogContent className="sm:max-w-[500px] max-h-[90dvh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle className="text-[17px]">Editar Registro</DialogTitle>
+                    <DialogDescription>{esAdmin ? 'Administrador — todos los campos' : 'Auxiliar — placa y ubicación'}</DialogDescription>
+                </DialogHeader>
 
                 {errorLocal && (
-                    <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border-light)', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: 'var(--color-danger-dark)' }}>
+                    <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border-light)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: 'var(--color-danger-dark)' }}>
                         {errorLocal}
                     </div>
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-                    {/* Placa — todos */}
                     <div>
                         <label style={labelStyle}>Placa</label>
                         <input type="text" value={placa} onChange={e => setPlaca(e.target.value.toUpperCase())} maxLength={8}
@@ -188,49 +185,47 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
                                onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }} onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }} />
                     </div>
 
-                    {/* Ubicación — todos */}
                     <div>
                         <label style={labelStyle}>Espacio</label>
-                        <div style={{ position: 'relative' }}>
-                            <select value={idUbicacion} onChange={e => setIdUbicacion(Number(e.target.value))} style={selectStyle}
-                                    onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }} onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }}>
-                                {ubicaciones.map(u => <option key={u.id} value={u.id}>{u.nombre} ({u.tipoVehiculoNativo})</option>)}
-                            </select>
-                            <span className="material-symbols-outlined" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>expand_more</span>
-                        </div>
+                        <Select value={String(idUbicacion)} onValueChange={val => setIdUbicacion(Number(val))}>
+                            <SelectTrigger className="w-full h-10 rounded-[10px] border-[1.5px] border-[color:var(--color-border)] bg-[color:var(--color-surface-alt)] text-[14px] text-[color:var(--color-text-primary)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ubicaciones.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.nombre} ({u.tipoVehiculoNativo})</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {/* Solo ADMINISTRADOR */}
                     {esAdmin && (
                         <>
                             <div>
                                 <label style={labelStyle}>Tipo de Vehículo</label>
-                                <div style={{ position: 'relative' }}>
-                                    <select value={idTipoVehiculo} onChange={e => setIdTipoVehiculo(Number(e.target.value))} style={selectStyle}
-                                            onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }} onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }}>
-                                        {tipos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-                                    </select>
-                                    <span className="material-symbols-outlined" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>expand_more</span>
-                                </div>
+                                <Select value={String(idTipoVehiculo)} onValueChange={val => setIdTipoVehiculo(Number(val))}>
+                                    <SelectTrigger className="w-full h-10 rounded-[10px] border-[1.5px] border-[color:var(--color-border)] bg-[color:var(--color-surface-alt)] text-[14px] text-[color:var(--color-text-primary)]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {tipos.map(t => <SelectItem key={t.id} value={String(t.id)}>{t.nombre}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
-
                             <div>
                                 <label style={labelStyle}>Estado</label>
-                                <div style={{ position: 'relative' }}>
-                                    <select value={idEstadoIngreso} onChange={e => setIdEstadoIngreso(Number(e.target.value))} style={selectStyle}
-                                            onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }} onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }}>
-                                        {ESTADOS_INGRESO.map(est => <option key={est.id} value={est.id}>{est.nombre}</option>)}
-                                    </select>
-                                    <span className="material-symbols-outlined" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>expand_more</span>
-                                </div>
+                                <Select value={String(idEstadoIngreso)} onValueChange={val => setIdEstadoIngreso(Number(val))}>
+                                    <SelectTrigger className="w-full h-10 rounded-[10px] border-[1.5px] border-[color:var(--color-border)] bg-[color:var(--color-surface-alt)] text-[14px] text-[color:var(--color-text-primary)]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {ESTADOS_INGRESO.map(est => <SelectItem key={est.id} value={String(est.id)}>{est.nombre}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
-
                             <div>
                                 <label style={labelStyle}>Fecha y hora de ingreso</label>
                                 <input type="datetime-local" value={fechaIngreso} onChange={e => setFechaIngreso(e.target.value)} style={inputStyle}
                                        onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }} onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }} />
                             </div>
-
                             <div>
                                 <label style={labelStyle}>
                                     Fecha y hora de salida{' '}
@@ -243,17 +238,16 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
                     )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
+                <div className="flex gap-2.5 pt-2">
                     <button onClick={onCancelar} disabled={isEditing} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isEditing ? 'not-allowed' : 'pointer' }}>Cancelar</button>
                     <button onClick={handleGuardar} disabled={isEditing} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isEditing ? '#93c5fd' : 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isEditing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                         {isEditing
-                            ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Guardando...</>
+                            ? <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Guardando...</>
                             : <><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>Guardar cambios</>}
                     </button>
                 </div>
-                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     )
 }
 
@@ -262,7 +256,10 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
 function Toast({ message, type, onClose }: ToastProps) {
     return (
-        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}>
+        <div
+            className="fixed top-4 left-4 right-4 md:left-auto md:right-5 md:min-w-[280px] md:max-w-[380px] z-[100] flex items-center gap-2.5"
+            style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}
+        >
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>{type === 'success' ? 'check_circle' : 'error'}</span>
             </div>
@@ -290,6 +287,7 @@ const Ingresos: React.FC = () => {
 
     const { user } = useAuth()
     const { estadoRed } = useApp()
+    const sidebarOffset = useSidebarOffset()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
     const router  = useIonRouter()
 
@@ -357,16 +355,17 @@ const Ingresos: React.FC = () => {
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-white ${sidebarOffset}`}>
 
                 {/* Header */}
-                <header style={{
-                    position: 'sticky',
-                    top: 'var(--network-banner-height, 0px)',
-                    zIndex: 20,
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    borderBottom: '1px solid var(--color-border)', background: '#fff', padding: '12px 16px',
-                }}>
+                <header
+                    className="flex items-center gap-3 px-4 py-3 md:px-8 md:py-4 border-b border-[color:var(--color-border)] bg-white"
+                    style={{
+                        position: 'sticky',
+                        top: 'var(--network-banner-height, 0px)',
+                        zIndex: 20,
+                    }}
+                >
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>format_list_bulleted</span>
                     </div>
@@ -391,10 +390,10 @@ const Ingresos: React.FC = () => {
                 </header>
 
                 <IonContent fullscreen style={{ '--background': 'var(--color-surface-alt)' }}>
-                    <div style={{ paddingBottom: '88px' }}>
+                    <div className="pb-24 md:pb-8">
 
                         {/* Buscador */}
-                        <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid var(--color-surface-subtle)', display: 'flex', gap: '10px' }}>
+                        <div className="flex gap-2.5 px-4 py-3 md:px-8 md:py-4 bg-white border-b border-slate-100">
                             <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
                                 <span className="material-symbols-outlined" style={{ position: 'absolute', left: '10px', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>search</span>
                                 <input type="text" defaultValue={filtroPlaca} onChange={handleFiltroChange} placeholder="Buscar placa..."
@@ -421,7 +420,7 @@ const Ingresos: React.FC = () => {
 
                         {/* Lista */}
                         {isLoading ? (
-                            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div className="p-3 md:p-4 md:px-8 flex flex-col gap-2.5">
                                 {[1,2,3,4].map(n => <SkeletonCard key={n} />)}
                             </div>
                         ) : ingresos.length === 0 ? (
@@ -435,50 +434,28 @@ const Ingresos: React.FC = () => {
                             </div>
                         ) : (
                             <>
-                                <ul style={{ listStyle: 'none', margin: 0, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {/* ── Mobile: lista de cards ─────────────────────── */}
+                                <ul className="md:hidden list-none m-0 p-3 flex flex-col gap-2.5">
                                     {ingresos.map(ingreso => {
-                                        const estadoStyle    = getEstadoStyle(ingreso.estadoIngreso)
-                                        const esIngresado    = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
-                                        // Gap 3: ¿tiene una salida pendiente de sincronizar?
+                                        const esIngresado     = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
                                         const salidaPendiente = salidasPendientes.has(ingreso.idIngreso)
-
+                                        const estadoStyle     = getEstadoStyle(ingreso.estadoIngreso)
                                         return (
                                             <li
                                                 key={ingreso.idIngreso}
+                                                className="p-[14px] flex flex-col gap-2.5"
                                                 style={{
-                                                    background: '#fff',
-                                                    borderRadius: '14px',
-                                                    // Borde naranja discreto cuando la salida está pendiente de sync
-                                                    border: salidaPendiente
-                                                        ? '1.5px solid #fb923c'
-                                                        : '1.5px solid var(--color-surface-subtle)',
-                                                    padding: '14px',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: '10px',
+                                                    background: '#fff', borderRadius: '14px',
+                                                    border: salidaPendiente ? '1.5px solid #fb923c' : '1.5px solid var(--color-surface-subtle)',
                                                     boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
                                                 }}
                                             >
-                                                {/* Gap 3: badge "Salida pendiente de sincronización" */}
                                                 {salidaPendiente && (
-                                                    <div style={{
-                                                        display: 'flex', alignItems: 'center', gap: '6px',
-                                                        background: '#fff7ed', borderRadius: '8px',
-                                                        padding: '5px 10px',
-                                                    }}>
-                                                        <span
-                                                            className="material-symbols-outlined"
-                                                            style={{ fontSize: '14px', color: '#ea580c' }}
-                                                        >
-                                                            cloud_off
-                                                        </span>
-                                                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#ea580c' }}>
-                                                            Salida pendiente de sincronización
-                                                        </span>
-                                                    </div>
+                                                    <Badge variant="warning" className="h-auto px-2.5 py-1.5 rounded-lg gap-1.5 text-[11px] font-bold w-full justify-start">
+                                                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>cloud_off</span>
+                                                        Salida pendiente de sincronización
+                                                    </Badge>
                                                 )}
-
-                                                {/* Placa + estado + acciones */}
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span className="material-symbols-outlined" style={{ fontSize: '20px', color: 'var(--color-primary)' }}>{getTipoIcon(ingreso.tipoVehiculo)}</span>
@@ -489,32 +466,22 @@ const Ingresos: React.FC = () => {
                                                             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: estadoStyle.dot }} />
                                                             {ingreso.estadoIngreso}
                                                         </div>
-                                                        {/* Editar — todos los roles */}
-                                                        <button
-                                                            onClick={() => setEditTarget(ingreso)}
-                                                            style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #dbeafe', background: '#fff', color: 'var(--color-info-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
+                                                        <button onClick={() => setEditTarget(ingreso)} title="Editar"
+                                                            style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #dbeafe', background: '#fff', color: 'var(--color-info-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                                                             onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff' }}
-                                                            onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
-                                                            title="Editar registro"
-                                                        >
+                                                            onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}>
                                                             <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
                                                         </button>
-                                                        {/* Eliminar — solo ADMIN */}
                                                         {esAdmin && (
-                                                            <button
-                                                                onClick={() => setDeleteTarget(ingreso)}
-                                                                style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid var(--color-danger-border)', background: '#fff', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
+                                                            <button onClick={() => setDeleteTarget(ingreso)} title="Eliminar"
+                                                                style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid var(--color-danger-border)', background: '#fff', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                                                                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-danger-bg)' }}
-                                                                onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
-                                                                title="Eliminar registro"
-                                                            >
+                                                                onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}>
                                                                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
                                                             </button>
                                                         )}
                                                     </div>
                                                 </div>
-
-                                                {/* Ubicación + fecha */}
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>location_on</span>
@@ -524,43 +491,127 @@ const Ingresos: React.FC = () => {
                                                     </div>
                                                     <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{formatFecha(ingreso.fechaHoraIngreso)}</span>
                                                 </div>
-
-                                                {/* Operador + ID */}
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                     <span className="material-symbols-outlined" style={{ fontSize: '13px', color: '#cbd5e1' }}>person</span>
                                                     <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{ingreso.usuarioRegistro}</span>
                                                     <span style={{ fontSize: '11px', color: '#cbd5e1' }}>·</span>
                                                     <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>#{ingreso.idIngreso}</span>
                                                 </div>
-
-                                                {/* Botón salida */}
                                                 {esIngresado && (
                                                     <button
                                                         disabled={!isOnline || salidaPendiente}
                                                         onClick={() => router.push(`/salida?placa=${encodeURIComponent(ingreso.placa)}`, 'forward', 'push')}
-                                                        style={{
-                                                            width: '100%', padding: '9px', borderRadius: '10px',
-                                                            border: 'none',
-                                                            background: (!isOnline || salidaPendiente) ? 'var(--color-border)' : 'var(--color-primary)',
-                                                            color: (!isOnline || salidaPendiente) ? 'var(--color-text-muted)' : '#fff',
-                                                            fontSize: '13px', fontWeight: 700,
-                                                            cursor: (!isOnline || salidaPendiente) ? 'not-allowed' : 'pointer',
-                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                                                            transition: 'background 0.2s',
-                                                        }}
+                                                        style={{ width: '100%', padding: '9px', borderRadius: '10px', border: 'none', background: (!isOnline || salidaPendiente) ? 'var(--color-border)' : 'var(--color-primary)', color: (!isOnline || salidaPendiente) ? 'var(--color-text-muted)' : '#fff', fontSize: '13px', fontWeight: 700, cursor: (!isOnline || salidaPendiente) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                                     >
                                                         <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-                                                        {salidaPendiente
-                                                            ? 'Salida pendiente de sincronización'
-                                                            : isOnline
-                                                                ? 'Registrar Salida'
-                                                                : 'No disponible sin conexión'}
+                                                        {salidaPendiente ? 'Salida pendiente de sincronización' : isOnline ? 'Registrar Salida' : 'No disponible sin conexión'}
                                                     </button>
                                                 )}
                                             </li>
                                         )
                                     })}
                                 </ul>
+
+                                {/* ── Desktop: tabla ─────────────────────────────── */}
+                                <div className="hidden md:block px-6 pb-4">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-slate-100">
+                                                <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--color-text-secondary)] pl-0">Placa</TableHead>
+                                                <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--color-text-secondary)]">Estado</TableHead>
+                                                <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--color-text-secondary)]">Espacio</TableHead>
+                                                <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--color-text-secondary)]">Ingreso</TableHead>
+                                                <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--color-text-secondary)]">Operador</TableHead>
+                                                <TableHead className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--color-text-secondary)] text-right pr-0">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {ingresos.map(ingreso => {
+                                                const esIngresado     = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
+                                                const salidaPendiente = salidasPendientes.has(ingreso.idIngreso)
+                                                const estadoStyle     = getEstadoStyle(ingreso.estadoIngreso)
+                                                return (
+                                                    <TableRow key={ingreso.idIngreso} className="border-slate-100 hover:bg-slate-50/70">
+                                                        {/* Placa */}
+                                                        <TableCell className="pl-0 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-[18px]" style={{ color: 'var(--color-primary)' }}>{getTipoIcon(ingreso.tipoVehiculo)}</span>
+                                                                <div>
+                                                                    <p className="text-[15px] font-black tracking-widest leading-tight" style={{ color: 'var(--color-text-primary)' }}>{ingreso.placa}</p>
+                                                                    <p className="text-[11px] leading-tight" style={{ color: 'var(--color-text-muted)' }}>{ingreso.tipoVehiculo} · #{ingreso.idIngreso}</p>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+
+                                                        {/* Estado */}
+                                                        <TableCell className="py-3">
+                                                            <div className="flex flex-col gap-1 items-start">
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: estadoStyle.bg, color: estadoStyle.text, borderRadius: '9999px', padding: '3px 10px', fontSize: '11px', fontWeight: 700 }}>
+                                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: estadoStyle.dot }} />
+                                                                    {ingreso.estadoIngreso}
+                                                                </div>
+                                                                {salidaPendiente && (
+                                                                    <Badge variant="warning" className="text-[10px] gap-1">
+                                                                        <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>cloud_off</span>
+                                                                        Sync pendiente
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+
+                                                        {/* Espacio */}
+                                                        <TableCell className="text-[13px] font-medium py-3" style={{ color: 'var(--color-text-soft)' }}>
+                                                            {ingreso.ubicacion}
+                                                        </TableCell>
+
+                                                        {/* Ingreso */}
+                                                        <TableCell className="text-[12px] py-3" style={{ color: 'var(--color-text-muted)' }}>
+                                                            {formatFecha(ingreso.fechaHoraIngreso)}
+                                                        </TableCell>
+
+                                                        {/* Operador */}
+                                                        <TableCell className="text-[12px] py-3" style={{ color: 'var(--color-text-muted)' }}>
+                                                            {ingreso.usuarioRegistro}
+                                                        </TableCell>
+
+                                                        {/* Acciones */}
+                                                        <TableCell className="py-3 pr-0">
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                {esIngresado && (
+                                                                    <button
+                                                                        disabled={!isOnline || salidaPendiente}
+                                                                        onClick={() => router.push(`/salida?placa=${encodeURIComponent(ingreso.placa)}`, 'forward', 'push')}
+                                                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-bold transition-colors"
+                                                                        style={{ border: 'none', background: (!isOnline || salidaPendiente) ? 'var(--color-border)' : 'var(--color-primary)', color: (!isOnline || salidaPendiente) ? 'var(--color-text-muted)' : '#fff', cursor: (!isOnline || salidaPendiente) ? 'not-allowed' : 'pointer' }}
+                                                                    >
+                                                                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>logout</span>
+                                                                        Salida
+                                                                    </button>
+                                                                )}
+                                                                <button onClick={() => setEditTarget(ingreso)} title="Editar registro"
+                                                                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+                                                                    style={{ border: '1px solid #dbeafe', background: '#fff', color: 'var(--color-info-light)' }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff' }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}>
+                                                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                                                                </button>
+                                                                {esAdmin && (
+                                                                    <button onClick={() => setDeleteTarget(ingreso)} title="Eliminar registro"
+                                                                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+                                                                        style={{ border: '1px solid var(--color-danger-border)', background: '#fff', color: 'var(--color-danger)' }}
+                                                                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-danger-bg)' }}
+                                                                        onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}>
+                                                                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
 
                                 <div ref={sentinelRef} style={{ height: '1px' }} />
 

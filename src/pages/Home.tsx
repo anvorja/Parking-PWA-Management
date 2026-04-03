@@ -2,6 +2,7 @@
 import React from 'react';
 import { IonContent, IonPage, useIonRouter } from '@ionic/react';
 import BottomNav from '../components/BottomNav';
+import { useSidebarOffset } from '../hooks/useSidebarOffset';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
 import './Home.css';
@@ -10,11 +11,12 @@ const Home: React.FC = () => {
     const { user } = useAuth();
     const { estadoRed } = useApp();
     const router = useIonRouter();
+    const sidebarOffset = useSidebarOffset();
     const esAdmin = user?.rol === 'ADMINISTRADOR';
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-[var(--color-surface-alt)] selection:bg-primary/20">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-[var(--color-surface-alt)] selection:bg-primary/20 ${sidebarOffset}`}>
                 {/* Header estático simple */}
                 <header
                     className="sticky z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 py-3"

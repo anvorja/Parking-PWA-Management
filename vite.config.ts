@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 
+import path from 'path'
 import legacy from '@vitejs/plugin-legacy'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
@@ -107,6 +108,12 @@ export default defineConfig(({ mode }) => {
         provider: 'v8',
         reporter: ['text', 'html'],
         reportsDirectory: './coverage',
+      },
+    },
+
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
       },
     },
 
