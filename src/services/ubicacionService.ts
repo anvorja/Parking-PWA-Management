@@ -4,9 +4,7 @@
 // HU-015: editar ubicación
 // HU-016: desactivar ubicación (soft delete)
 
-import { authService } from './authService'
-
-const API_URL = import.meta.env.VITE_API_URL || ''
+import { fetchConAuth } from './authService'
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -30,20 +28,6 @@ export interface EditarUbicacionRequest {
     nombre?:               string
     idTipoVehiculoNativo?: number
     capacidad?:            number
-}
-
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-async function fetchConAuth(path: string, options: RequestInit = {}): Promise<Response> {
-    const token = await authService.getToken()
-    return fetch(`${API_URL}${path}`, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
-        },
-    })
 }
 
 // ─── Servicio ─────────────────────────────────────────────────────────────────

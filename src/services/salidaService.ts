@@ -3,9 +3,7 @@
 // HU-010: salida manual — buscar ingreso activo por placa
 // HU-011: confirmar salida — cálculo de costo en el backend
 
-import { authService } from './authService'
-
-const API_URL = import.meta.env.VITE_API_URL || ''
+import { fetchConAuth } from './authService'
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -36,20 +34,6 @@ export interface SalidaResponse {
 
 export interface RegistrarSalidaRequest {
     fechaHoraSalida?: string // ISO — si no se envía, el backend usa now()
-}
-
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-async function fetchConAuth(path: string, options: RequestInit = {}): Promise<Response> {
-    const token = await authService.getToken()
-    return fetch(`${API_URL}${path}`, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
-        },
-    })
 }
 
 // ─── Servicio ─────────────────────────────────────────────────────────────────

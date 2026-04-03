@@ -5,10 +5,8 @@
 // Orden: INGRESO → INGRESO_EDITAR → SALIDA → UBICACION → UBICACION_EDITAR → UBICACION_BORRAR
 // Se invoca desde AppProvider cuando isOnline cambia a true.
 
-import { authService } from './authService'
+import { fetchConAuth } from './authService'
 import { outboxService, OutboxEntry, MAX_RETRIES } from './outboxService'
-
-const API_URL = import.meta.env.VITE_API_URL || ''
 
 // ─── Tipos de resultado ───────────────────────────────────────────────────────
 
@@ -17,20 +15,6 @@ export interface SyncResult {
     exitosas:   number
     fallidas:   number
     muertas:    number
-}
-
-// ─── Helper fetch autenticado ─────────────────────────────────────────────────
-
-async function fetchConAuth(path: string, options: RequestInit = {}): Promise<Response> {
-    const token = await authService.getToken()
-    return fetch(`${API_URL}${path}`, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
-        },
-    })
 }
 
 // ─── Endpoints por tipo de operación ─────────────────────────────────────────

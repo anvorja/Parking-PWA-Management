@@ -1,8 +1,6 @@
 // src/services/usuarioService.ts
 import { get, set } from 'idb-keyval';
-import { authService } from './authService';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { fetchConAuth } from './authService';
 const USUARIOS_CACHE_KEY = 'usuarios_cache';
 
 export interface UsuarioListItemResponse {
@@ -62,14 +60,7 @@ async function handleResponseError(response: Response, defaultMessage: string) {
 export const usuarioService = {
     getUsuarios: async (): Promise<UsuarioListItemResponse[]> => {
         try {
-            const token = await authService.getToken();
-
-            const response = await fetch(`${API_URL}/api/v1/usuarios`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await fetchConAuth('/api/v1/usuarios');
 
             if (!response.ok) {
                 await handleResponseError(response, 'Error al obtener la lista de usuarios');
@@ -93,13 +84,8 @@ export const usuarioService = {
     },
 
     crearUsuario: async (request: CrearUsuarioRequest): Promise<CrearUsuarioResponse> => {
-        const token = await authService.getToken();
-        const response = await fetch(`${API_URL}/api/v1/usuarios`, {
+        const response = await fetchConAuth('/api/v1/usuarios', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(request),
         });
 
@@ -111,13 +97,8 @@ export const usuarioService = {
     },
 
     editarUsuario: async (id: number, request: EditarUsuarioRequest): Promise<UsuarioListItemResponse> => {
-        const token = await authService.getToken();
-        const response = await fetch(`${API_URL}/api/v1/usuarios/${id}`, {
+        const response = await fetchConAuth(`/api/v1/usuarios/${id}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(request),
         });
 
@@ -129,12 +110,8 @@ export const usuarioService = {
     },
 
     eliminarUsuario: async (id: number): Promise<void> => {
-        const token = await authService.getToken();
-        const response = await fetch(`${API_URL}/api/v1/usuarios/${id}`, {
+        const response = await fetchConAuth(`/api/v1/usuarios/${id}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
         });
 
         if (!response.ok) {
