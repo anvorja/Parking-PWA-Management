@@ -3,7 +3,7 @@
 // Vista de tarjetas: una por tipo de vehículo con la tarifa activa por hora.
 // Permite editar el valor directamente desde la tarjeta.
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { IonPage, IonContent } from '@ionic/react'
 import { useTarifas } from '../hooks/useTarifas'
 import { useAuth } from '../hooks/useAuth'
@@ -11,10 +11,6 @@ import { useApp } from '../hooks/useApp'
 import { TarifaResponse } from '../services/tarifaService'
 import BottomNav from '../components/BottomNav'
 import { useSidebarOffset } from '../hooks/useSidebarOffset'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,51 +33,65 @@ function colorTipo(nombre: string): { bg: string; accent: string; border: string
 // ─── Modal de creación ────────────────────────────────────────────────────────
 
 interface CrearModalProps {
-    open: boolean
     opcionesPermitidas: { id: number; nombre: string }[]
     isSaving: boolean
     onGuardar: (idTipoVehiculo: number, valor: number) => Promise<void>
     onCancelar: () => void
 }
 
-function CrearModal({ open, opcionesPermitidas, isSaving, onGuardar, onCancelar }: CrearModalProps) {
+function CrearModal({ opcionesPermitidas, isSaving, onGuardar, onCancelar }: CrearModalProps) {
     const [idTipo, setIdTipo] = useState(opcionesPermitidas[0]?.id || 1)
-    const [valor, setValor]   = useState('')
-    const [error, setError]   = useState('')
-
-    useEffect(() => {
-        if (open) { setIdTipo(opcionesPermitidas[0]?.id || 1); setValor(''); setError('') }
-    }, [open])
+    const [valor, setValor] = useState('')
+    const [error, setError] = useState('')
 
     const handleGuardar = async () => {
         setError('')
         const num = Number(valor.replace(/\./g, '').replace(',', '.'))
-        if (isNaN(num) || num <= 0) { setError('Ingresa un valor válido mayor a cero'); return }
+        if (isNaN(num) || num <= 0) {
+            setError('Ingresa un valor válido mayor a cero')
+            return
+        }
         try { await onGuardar(idTipo, num) } catch { /* toast gestionado en provider */ }
     }
 
     return (
-        <Dialog open={open} onOpenChange={val => { if (!val && !isSaving) onCancelar() }}>
-            <DialogContent className="sm:max-w-[480px]">
-                <DialogHeader>
-                    <DialogTitle className="text-[17px]">Nueva tarifa</DialogTitle>
-                </DialogHeader>
+        <div
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
+            onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
+        >
+            <div
+                className="w-full max-w-[480px] rounded-t-[20px] md:rounded-2xl px-5 pt-5 pb-9 md:pb-5"
+                style={{ background: '#fff', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
+            >
+                <div style={{ width: '40px', height: '4px', background: 'var(--color-border)', borderRadius: '9999px', margin: '0 auto 20px' }} />
 
-                <div className="flex flex-col gap-3.5">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Nueva tarifa</h3>
+                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--color-surface-subtle)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                    </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
                     <div>
                         <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>
                             Tipo de Vehículo
                         </label>
-                        <Select value={String(idTipo)} onValueChange={val => setIdTipo(Number(val))}>
-                            <SelectTrigger className="w-full h-[46px] rounded-[10px] border-[1.5px] border-[color:var(--color-border)] bg-[color:var(--color-surface-alt)] text-[14px] text-[color:var(--color-text-primary)]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
+                        <div style={{ position: 'relative' }}>
+                            <select
+                                value={idTipo}
+                                onChange={e => setIdTipo(Number(e.target.value))}
+                                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1.5px solid var(--color-border)', background: 'var(--color-surface-alt)', fontSize: '14px', color: 'var(--color-text-primary)', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+                                onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }}
+                                onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }}
+                            >
                                 {opcionesPermitidas.map(op => (
-                                    <SelectItem key={op.id} value={String(op.id)}>{op.nombre}</SelectItem>
+                                    <option key={op.id} value={op.id}>{op.nombre}</option>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </select>
+                            <span className="material-symbols-outlined" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>expand_more</span>
+                        </div>
                     </div>
 
                     <div>
@@ -91,7 +101,9 @@ function CrearModal({ open, opcionesPermitidas, isSaving, onGuardar, onCancelar 
                         <div style={{ position: 'relative' }}>
                             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', fontWeight: 700, color: 'var(--color-text-muted)' }}>$</span>
                             <input
-                                type="number" value={valor} onChange={e => setValor(e.target.value)}
+                                type="number"
+                                value={valor}
+                                onChange={e => setValor(e.target.value)}
                                 min="1" step="500" placeholder="Ej: 3000"
                                 style={{ width: '100%', padding: '12px 12px 12px 28px', borderRadius: '10px', border: `1.5px solid ${error ? 'var(--color-danger)' : 'var(--color-border)'}`, background: 'var(--color-surface-alt)', fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)', outline: 'none', boxSizing: 'border-box' }}
                                 onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }}
@@ -102,18 +114,19 @@ function CrearModal({ open, opcionesPermitidas, isSaving, onGuardar, onCancelar 
                     </div>
                 </div>
 
-                <div className="flex gap-2.5 pt-1">
+                <div style={{ display: 'flex', gap: '10px' }}>
                     <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
                         Cancelar
                     </button>
                     <button onClick={handleGuardar} disabled={isSaving} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isSaving ? '#93c5fd' : 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                         {isSaving
-                            ? <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Guardando...</>
+                            ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Guardando...</>
                             : <><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>Guardar</>}
                     </button>
                 </div>
-            </DialogContent>
-        </Dialog>
+                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            </div>
+        </div>
     )
 }
 
@@ -133,26 +146,51 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
     const handleGuardar = async () => {
         setError('')
         const num = Number(valor.replace(/\./g, '').replace(',', '.'))
-        if (isNaN(num) || num <= 0) { setError('Ingresa un valor válido mayor a cero'); return }
+        if (isNaN(num) || num <= 0) {
+            setError('Ingresa un valor válido mayor a cero')
+            return
+        }
         try { await onGuardar(num) } catch { /* toast ya gestionado en provider */ }
     }
 
     return (
-        <Dialog open onOpenChange={val => { if (!val && !isSaving) onCancelar() }}>
-            <DialogContent className="sm:max-w-[480px]">
-                <DialogHeader>
-                    <DialogTitle className="text-[17px]">Editar tarifa — {tarifa.tipoVehiculo}</DialogTitle>
-                    <DialogDescription>Valor actual: {formatCOP(tarifa.valor)} / {tarifa.unidadTarifa.toLowerCase()}</DialogDescription>
-                </DialogHeader>
+        <div
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
+            onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
+        >
+            <div
+                className="w-full max-w-[480px] rounded-t-[20px] md:rounded-2xl px-5 pt-5 pb-9 md:pb-5"
+                style={{ background: '#fff', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
+            >
+                <div style={{ width: '40px', height: '4px', background: 'var(--color-border)', borderRadius: '9999px', margin: '0 auto 20px' }} />
 
-                <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <div>
+                        <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
+                            Editar tarifa — {tarifa.tipoVehiculo}
+                        </h3>
+                        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>
+                            Valor actual: {formatCOP(tarifa.valor)} / {tarifa.unidadTarifa.toLowerCase()}
+                        </p>
+                    </div>
+                    <button onClick={onCancelar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'var(--color-surface-subtle)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                    </button>
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>
                         Nuevo valor (COP / hora)
                     </label>
                     <div style={{ position: 'relative' }}>
                         <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', fontWeight: 700, color: 'var(--color-text-muted)' }}>$</span>
                         <input
-                            type="number" value={valor} onChange={e => setValor(e.target.value)} min="1" step="500"
+                            type="number"
+                            value={valor}
+                            onChange={e => setValor(e.target.value)}
+                            min="1"
+                            step="500"
                             style={{ width: '100%', padding: '12px 12px 12px 28px', borderRadius: '10px', border: `1.5px solid ${error ? 'var(--color-danger)' : 'var(--color-border)'}`, background: 'var(--color-surface-alt)', fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)', outline: 'none', boxSizing: 'border-box' }}
                             onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }}
                             onBlur={e => { e.target.style.borderColor = error ? 'var(--color-danger)' : 'var(--color-border)' }}
@@ -161,18 +199,19 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
                     {error && <p style={{ fontSize: '12px', color: 'var(--color-danger)', margin: '6px 0 0' }}>{error}</p>}
                 </div>
 
-                <div className="flex gap-2.5 pt-1">
+                <div style={{ display: 'flex', gap: '10px' }}>
                     <button onClick={onCancelar} disabled={isSaving} style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isSaving ? 'not-allowed' : 'pointer' }}>
                         Cancelar
                     </button>
                     <button onClick={handleGuardar} disabled={isSaving} style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: isSaving ? '#93c5fd' : 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: isSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                         {isSaving
-                            ? <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Guardando...</>
+                            ? <><div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Guardando...</>
                             : <><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>Guardar</>}
                     </button>
                 </div>
-            </DialogContent>
-        </Dialog>
+                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+            </div>
+        </div>
     )
 }
 
@@ -210,68 +249,57 @@ interface TarifaCardProps {
 function TarifaCard({ tarifa, esAdmin, onEditar }: TarifaCardProps) {
     const colores = colorTipo(tarifa.tipoVehiculo)
     return (
-        <Card
-            className="shadow-sm hover:shadow-md transition-shadow duration-200"
-            style={{ border: `1.5px solid ${colores.border}` }}
-        >
-            {/* Cabecera: icono + nombre + badge Activa */}
-            <CardHeader className="border-b pb-4 flex-row items-center gap-3">
-                <div
-                    className="flex items-center justify-center rounded-xl shrink-0"
-                    style={{ width: '44px', height: '44px', background: colores.bg }}
-                >
-                    <span className="material-symbols-outlined" style={{ fontSize: '24px', color: colores.accent }}>
-                        {iconoTipo(tarifa.tipoVehiculo)}
-                    </span>
+        <div style={{ background: '#fff', borderRadius: '16px', border: `1.5px solid ${colores.border}`, padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            {/* Cabecera */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: colores.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '24px', color: colores.accent }}>
+                            {iconoTipo(tarifa.tipoVehiculo)}
+                        </span>
+                    </div>
+                    <div>
+                        <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
+                            {tarifa.tipoVehiculo.charAt(0) + tarifa.tipoVehiculo.slice(1).toLowerCase()}
+                        </p>
+                        <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: 0 }}>
+                            por {tarifa.unidadTarifa.toLowerCase()}
+                        </p>
+                    </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                    <CardTitle className="text-[13px]">
-                        {tarifa.tipoVehiculo.charAt(0) + tarifa.tipoVehiculo.slice(1).toLowerCase()}
-                    </CardTitle>
-                    <CardDescription className="text-[11px]">
-                        por {tarifa.unidadTarifa.toLowerCase()}
-                    </CardDescription>
+                {/* Badge activa */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--color-success-bg-soft)', borderRadius: '9999px', padding: '3px 10px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-success)' }} />
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-success-dark)' }}>Activa</span>
                 </div>
-                <CardAction>
-                    <Badge variant="success">
-                        <span className="size-1.5 rounded-full bg-current opacity-80 shrink-0" />
-                        Activa
-                    </Badge>
-                </CardAction>
-            </CardHeader>
+            </div>
 
-            {/* Valor vigente */}
-            <CardContent className="flex flex-col gap-3">
-                <div
-                    className="text-center rounded-xl py-4"
-                    style={{ background: colores.bg }}
-                >
-                    <p className="text-[11px] font-bold uppercase tracking-wide m-0 mb-1" style={{ color: colores.accent }}>
-                        Tarifa vigente
-                    </p>
-                    <p className="text-[32px] font-black m-0" style={{ color: 'var(--color-text-primary)', letterSpacing: '-0.5px' }}>
-                        {formatCOP(tarifa.valor)}
-                    </p>
-                    <p className="text-[12px] m-0 mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                        por hora
-                    </p>
-                </div>
+            {/* Valor */}
+            <div style={{ textAlign: 'center', padding: '16px 0', background: colores.bg, borderRadius: '12px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: colores.accent, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>
+                    Tarifa vigente
+                </p>
+                <p style={{ fontSize: '32px', fontWeight: 900, color: 'var(--color-text-primary)', margin: 0, letterSpacing: '-0.5px' }}>
+                    {formatCOP(tarifa.valor)}
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: '4px 0 0' }}>
+                    por hora
+                </p>
+            </div>
 
-                {/* Botón editar — solo ADMIN */}
-                {esAdmin && (
-                    <button
-                        onClick={() => onEditar(tarifa)}
-                        className="w-full py-[11px] rounded-[10px] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors duration-150 cursor-pointer"
-                        style={{ border: `1.5px solid ${colores.border}`, background: '#fff', color: colores.accent }}
-                        onMouseEnter={e => { e.currentTarget.style.background = colores.bg }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
-                        Cambiar tarifa
-                    </button>
-                )}
-            </CardContent>
-        </Card>
+            {/* Botón editar — solo ADMIN */}
+            {esAdmin && (
+                <button
+                    onClick={() => onEditar(tarifa)}
+                    style={{ width: '100%', padding: '11px', borderRadius: '10px', border: `1.5px solid ${colores.border}`, background: '#fff', color: colores.accent, fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = colores.bg }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fff' }}
+                >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+                    Cambiar tarifa
+                </button>
+            )}
+        </div>
     )
 }
 
@@ -409,14 +437,15 @@ const Tarifas: React.FC = () => {
 
                 <BottomNav />
 
-                {/* Modal creación — siempre montado, Dialog controla visibilidad */}
-                <CrearModal
-                    open={crearModal}
-                    opcionesPermitidas={opcionesFaltantes}
-                    isSaving={isSaving}
-                    onGuardar={handleGuardarCrear}
-                    onCancelar={() => setCrearModal(false)}
-                />
+                {/* Modal creación */}
+                {crearModal && (
+                    <CrearModal
+                        opcionesPermitidas={opcionesFaltantes}
+                        isSaving={isSaving}
+                        onGuardar={handleGuardarCrear}
+                        onCancelar={() => setCrearModal(false)}
+                    />
+                )}
 
                 {/* Modal edición */}
                 {editTarget && (

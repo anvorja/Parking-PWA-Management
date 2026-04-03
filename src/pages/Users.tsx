@@ -14,8 +14,6 @@ import { useApp } from '../hooks/useApp';
 import { UsuarioListItemResponse, CrearUsuarioRequest } from '../services/usuarioService';
 import BottomNav from '../components/BottomNav';
 import { useSidebarOffset } from '../hooks/useSidebarOffset';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -30,6 +28,11 @@ const FORM_VACIO: CrearUsuarioRequest = {
 }
 
 // ─── Helpers de presentación (sin lógica de negocio) ─────────────────────────
+
+function getRoleClasses(rol: string): string {
+    if (rol === 'ADMINISTRADOR') return 'bg-purple-50 text-purple-700 ring-purple-700/10'
+    return 'bg-blue-50 text-blue-700 ring-blue-700/10'
+}
 
 function getRoleDisplayName(rol: string): string {
     if (rol === 'ADMINISTRADOR') return 'Administrador'
@@ -260,25 +263,20 @@ const Users: React.FC = () => {
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                             </div>
                         ) : (
-                            <div className="bg-white divide-y divide-slate-100
-                                           md:divide-y-0 md:grid md:grid-cols-2 lg:grid-cols-3
-                                           md:gap-3 md:bg-transparent md:p-4 md:px-8">
+                            <ul className="divide-y divide-slate-100 bg-white
+                                          md:divide-y-0 md:grid md:grid-cols-2 lg:grid-cols-3
+                                          md:gap-3 md:bg-transparent md:p-4 md:px-8">
                                 {usuariosFiltrados.length === 0 ? (
-                                    <p className="p-8 text-center text-slate-500 text-sm md:col-span-2 lg:col-span-3">
+                                    <li className="p-8 text-center text-slate-500 text-sm md:col-span-2 lg:col-span-3">
                                         No se encontraron usuarios
-                                    </p>
+                                    </li>
                                 ) : (
                                     usuariosFiltrados.map(usuario => (
-                                        <Card
-                                            key={usuario.id}
-                                            className="flex-row items-center justify-between gap-0 py-0
-                                                       rounded-none ring-0 shadow-none border-0
-                                                       px-4 py-3 hover:bg-slate-50
-                                                       md:rounded-2xl md:ring-1 md:shadow-sm md:p-4 md:py-4 md:hover:shadow-md md:hover:bg-white
-                                                       transition-all duration-150 cursor-pointer"
-                                        >
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <div className="relative shrink-0">
+                                        <li key={usuario.id} className="group relative flex items-center justify-between p-3 px-4 hover:bg-slate-50 transition-colors cursor-pointer
+                                                                         md:bg-white md:rounded-2xl md:border md:border-slate-100 md:shadow-sm md:p-4
+                                                                         md:hover:shadow-md md:hover:border-slate-200">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative">
                                                     <img
                                                         src={getAvatarSrc(usuario.nombreCompleto)}
                                                         alt={usuario.nombreCompleto}
@@ -286,17 +284,17 @@ const Users: React.FC = () => {
                                                     />
                                                     <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-[1.5px] ring-white"></span>
                                                 </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <p className="text-[13px] font-semibold text-slate-900 leading-tight truncate">{usuario.nombreCompleto}</p>
+                                                <div className="flex flex-col">
+                                                    <p className="text-[13px] font-semibold text-slate-900 leading-tight">{usuario.nombreCompleto}</p>
                                                     <div className="flex items-center gap-2 mt-0.5">
-                                                        <Badge variant={usuario.rol === 'ADMINISTRADOR' ? 'default' : 'muted'}>
+                                                        <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${getRoleClasses(usuario.rol)}`}>
                                                             {getRoleDisplayName(usuario.rol)}
-                                                        </Badge>
+                                                        </span>
                                                         <span className="text-[11px] text-slate-400 font-medium">• ID: {usuario.id}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-1 shrink-0">
+                                            <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={() => handleEditClick(usuario)}
                                                     className="p-2 text-slate-400 hover:text-blue-500 transition-all duration-200 rounded-full hover:bg-blue-50/80 active:scale-95"
@@ -310,10 +308,10 @@ const Users: React.FC = () => {
                                                     <span className="material-symbols-outlined text-[20px]">delete</span>
                                                 </button>
                                             </div>
-                                        </Card>
+                                        </li>
                                     ))
                                 )}
-                            </div>
+                            </ul>
                         )}
 
                         {/* Estado vacío cuando no hay usuarios en absoluto */}

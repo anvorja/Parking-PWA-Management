@@ -46,6 +46,14 @@ function isoToLocal(iso: string): string {
 }
 
 
+function getEstadoStyle(estado: string): { bg: string; text: string; dot: string } {
+    switch (estado.toUpperCase()) {
+        case 'INGRESADO': return { bg: 'var(--color-success-bg-soft)', text: 'var(--color-success-dark)', dot: 'var(--color-success)' }
+        case 'ENTREGADO': return { bg: 'var(--color-surface-subtle)', text: 'var(--color-text-secondary)', dot: 'var(--color-text-muted)' }
+        default:          return { bg: '#fef9c3', text: '#92400e', dot: 'var(--color-warning)' }
+    }
+}
+
 function getTipoIcon(tipo: string): string {
     return tipo.toUpperCase() === 'MOTO' ? 'two_wheeler' : 'directions_car'
 }
@@ -431,6 +439,7 @@ const Ingresos: React.FC = () => {
                                     {ingresos.map(ingreso => {
                                         const esIngresado     = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
                                         const salidaPendiente = salidasPendientes.has(ingreso.idIngreso)
+                                        const estadoStyle     = getEstadoStyle(ingreso.estadoIngreso)
                                         return (
                                             <li
                                                 key={ingreso.idIngreso}
@@ -453,10 +462,10 @@ const Ingresos: React.FC = () => {
                                                         <span style={{ fontSize: '18px', fontWeight: 900, color: 'var(--color-text-primary)', letterSpacing: '1px' }}>{ingreso.placa}</span>
                                                     </div>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                        <Badge variant={esIngresado ? 'success' : 'muted'}>
-                                                            <span className="size-1.5 rounded-full bg-current opacity-80 shrink-0" />
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: estadoStyle.bg, color: estadoStyle.text, borderRadius: '9999px', padding: '3px 10px', fontSize: '11px', fontWeight: 700 }}>
+                                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: estadoStyle.dot }} />
                                                             {ingreso.estadoIngreso}
-                                                        </Badge>
+                                                        </div>
                                                         <button onClick={() => setEditTarget(ingreso)} title="Editar"
                                                             style={{ width: '30px', height: '30px', borderRadius: '8px', border: '1px solid #dbeafe', background: '#fff', color: 'var(--color-info-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                                                             onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff' }}
@@ -520,6 +529,7 @@ const Ingresos: React.FC = () => {
                                             {ingresos.map(ingreso => {
                                                 const esIngresado     = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
                                                 const salidaPendiente = salidasPendientes.has(ingreso.idIngreso)
+                                                const estadoStyle     = getEstadoStyle(ingreso.estadoIngreso)
                                                 return (
                                                     <TableRow key={ingreso.idIngreso} className="border-slate-100 hover:bg-slate-50/70">
                                                         {/* Placa */}
@@ -536,10 +546,10 @@ const Ingresos: React.FC = () => {
                                                         {/* Estado */}
                                                         <TableCell className="py-3">
                                                             <div className="flex flex-col gap-1 items-start">
-                                                                <Badge variant={esIngresado ? 'success' : 'muted'}>
-                                                                    <span className="size-1.5 rounded-full bg-current opacity-80 shrink-0" />
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: estadoStyle.bg, color: estadoStyle.text, borderRadius: '9999px', padding: '3px 10px', fontSize: '11px', fontWeight: 700 }}>
+                                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: estadoStyle.dot }} />
                                                                     {ingreso.estadoIngreso}
-                                                                </Badge>
+                                                                </div>
                                                                 {salidaPendiente && (
                                                                     <Badge variant="warning" className="text-[10px] gap-1">
                                                                         <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>cloud_off</span>
