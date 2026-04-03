@@ -14,6 +14,10 @@ import { useApp } from '../hooks/useApp';
 import { UsuarioListItemResponse, CrearUsuarioRequest } from '../services/usuarioService';
 import BottomNav from '../components/BottomNav';
 import { useSidebarOffset } from '../hooks/useSidebarOffset';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ─── Valores iniciales del formulario ─────────────────────────────────────────
 
@@ -31,11 +35,6 @@ function getRoleDisplayName(rol: string): string {
     if (rol === 'ADMINISTRADOR') return 'Administrador'
     if (rol === 'AUXILIAR') return 'Auxiliar'
     return rol.charAt(0).toUpperCase() + rol.slice(1).toLowerCase()
-}
-
-function getRoleClasses(rol: string): string {
-    if (rol === 'ADMINISTRADOR') return 'bg-purple-50 text-purple-700 ring-purple-700/10'
-    return 'bg-blue-50 text-blue-700 ring-blue-700/10'
 }
 
 function getAvatarSrc(name: string): string {
@@ -261,20 +260,25 @@ const Users: React.FC = () => {
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                             </div>
                         ) : (
-                            <ul className="divide-y divide-slate-100 bg-white
-                                          md:divide-y-0 md:grid md:grid-cols-2 lg:grid-cols-3
-                                          md:gap-3 md:bg-transparent md:p-4 md:px-8">
+                            <div className="bg-white divide-y divide-slate-100
+                                           md:divide-y-0 md:grid md:grid-cols-2 lg:grid-cols-3
+                                           md:gap-3 md:bg-transparent md:p-4 md:px-8">
                                 {usuariosFiltrados.length === 0 ? (
-                                    <li className="p-8 text-center text-slate-500 text-sm md:col-span-2 lg:col-span-3">
+                                    <p className="p-8 text-center text-slate-500 text-sm md:col-span-2 lg:col-span-3">
                                         No se encontraron usuarios
-                                    </li>
+                                    </p>
                                 ) : (
                                     usuariosFiltrados.map(usuario => (
-                                        <li key={usuario.id} className="group relative flex items-center justify-between p-3 px-4 hover:bg-slate-50 transition-colors cursor-pointer
-                                                                         md:bg-white md:rounded-2xl md:border md:border-slate-100 md:shadow-sm md:p-4
-                                                                         md:hover:shadow-md md:hover:border-slate-200">
-                                            <div className="flex items-center gap-3">
-                                                <div className="relative">
+                                        <Card
+                                            key={usuario.id}
+                                            className="flex-row items-center justify-between gap-0 py-0
+                                                       rounded-none ring-0 shadow-none border-0
+                                                       px-4 py-3 hover:bg-slate-50
+                                                       md:rounded-2xl md:ring-1 md:shadow-sm md:p-4 md:py-4 md:hover:shadow-md md:hover:bg-white
+                                                       transition-all duration-150 cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="relative shrink-0">
                                                     <img
                                                         src={getAvatarSrc(usuario.nombreCompleto)}
                                                         alt={usuario.nombreCompleto}
@@ -282,17 +286,17 @@ const Users: React.FC = () => {
                                                     />
                                                     <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-[1.5px] ring-white"></span>
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <p className="text-[13px] font-semibold text-slate-900 leading-tight">{usuario.nombreCompleto}</p>
+                                                <div className="flex flex-col min-w-0">
+                                                    <p className="text-[13px] font-semibold text-slate-900 leading-tight truncate">{usuario.nombreCompleto}</p>
                                                     <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${getRoleClasses(usuario.rol)}`}>
+                                                        <Badge variant={usuario.rol === 'ADMINISTRADOR' ? 'default' : 'muted'}>
                                                             {getRoleDisplayName(usuario.rol)}
-                                                        </span>
+                                                        </Badge>
                                                         <span className="text-[11px] text-slate-400 font-medium">• ID: {usuario.id}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 shrink-0">
                                                 <button
                                                     onClick={() => handleEditClick(usuario)}
                                                     className="p-2 text-slate-400 hover:text-blue-500 transition-all duration-200 rounded-full hover:bg-blue-50/80 active:scale-95"
@@ -306,10 +310,10 @@ const Users: React.FC = () => {
                                                     <span className="material-symbols-outlined text-[20px]">delete</span>
                                                 </button>
                                             </div>
-                                        </li>
+                                        </Card>
                                     ))
                                 )}
-                            </ul>
+                            </div>
                         )}
 
                         {/* Estado vacío cuando no hay usuarios en absoluto */}
@@ -328,30 +332,13 @@ const Users: React.FC = () => {
                 <BottomNav />
 
                 {/* ── Modal Crear / Editar Usuario ─────────────────────────────── */}
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                                <h3 className="text-lg font-semibold text-slate-800">
-                                    {editTarget ? 'Editar Usuario' : 'Nuevo Usuario'}
-                                </h3>
-                                <button
-                                    onClick={handleCloseModal}
-                                    style={{
-                                        width: '36px', height: '36px', borderRadius: '50%',
-                                        border: 'none', background: 'transparent', color: 'var(--color-text-muted)',
-                                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', transition: 'all 0.2s',
-                                        outline: 'none', padding: 0, margin: 0,
-                                    }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-subtle)'; e.currentTarget.style.color = 'var(--color-text-soft)' }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
-                                >
-                                    <span className="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
+                <Dialog open={isModalOpen} onOpenChange={val => { if (!val && !isSubmitting) handleCloseModal() }}>
+                    <DialogContent className="sm:max-w-sm max-h-[90dvh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>{editTarget ? 'Editar Usuario' : 'Nuevo Usuario'}</DialogTitle>
+                        </DialogHeader>
 
-                            <form onSubmit={handleSubmit} className="px-5 py-4 overflow-y-auto max-h-[70vh]">
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-1">
                                 {errorMsg && (
                                     <div className="mb-4 bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg border border-red-100">
                                         {errorMsg}
@@ -389,20 +376,15 @@ const Users: React.FC = () => {
 
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-600 mb-1">Rol</label>
-                                        <div className="relative">
-                                            <select
-                                                name="rol"
-                                                required
-                                                value={formData.rol}
-                                                onChange={handleInputChange}
-                                                style={{ color: 'var(--color-text-primary)' }}
-                                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors appearance-none"
-                                            >
-                                                <option value="AUXILIAR">Auxiliar</option>
-                                                <option value="ADMINISTRADOR">Administrador</option>
-                                            </select>
-                                            <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
-                                        </div>
+                                        <Select value={formData.rol} onValueChange={val => setFormData(prev => ({ ...prev, rol: val as 'AUXILIAR' | 'ADMINISTRADOR' }))}>
+                                            <SelectTrigger className="w-full h-9 rounded-lg border border-slate-200 bg-slate-50 text-sm text-[color:var(--color-text-primary)]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="AUXILIAR">Auxiliar</SelectItem>
+                                                <SelectItem value="ADMINISTRADOR">Administrador</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
 
                                     <div>
@@ -488,75 +470,46 @@ const Users: React.FC = () => {
                                     </button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
-                )}
+                    </DialogContent>
+                </Dialog>
 
                 {/* ── Modal Confirmar Eliminación ──────────────────────────────── */}
                 {deleteTarget && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-                        onClick={e => { if (e.target === e.currentTarget && !isDeleting) setDeleteTarget(null) }}
-                    >
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs overflow-hidden">
-                            <div className="px-5 pt-6 pb-2 text-center">
-                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                    <Dialog open onOpenChange={val => { if (!val && !isDeleting) setDeleteTarget(null) }}>
+                        <DialogContent className="sm:max-w-xs" showCloseButton={false}>
+                            <DialogHeader className="items-center text-center">
+                                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
                                     <span className="material-symbols-outlined text-red-500 text-[28px]">warning</span>
                                 </div>
-                                <h3 className="text-[16px] font-semibold text-slate-800">Eliminar Usuario</h3>
-                                <p className="mt-2 text-[13px] text-slate-500 leading-relaxed">
+                                <DialogTitle>Eliminar Usuario</DialogTitle>
+                                <DialogDescription className="text-center">
                                     ¿Estás seguro de eliminar a{' '}
                                     <strong className="text-slate-700">{deleteTarget.nombreCompleto}</strong>?
                                     {' '}Esta acción no se puede deshacer.
-                                </p>
-                            </div>
-                            <div className="px-5 pb-5 pt-3 flex gap-3">
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex gap-3 pt-1">
                                 <button
                                     onClick={() => setDeleteTarget(null)}
                                     disabled={isDeleting}
-                                    style={{
-                                        minHeight: '48px', borderRadius: '14px',
-                                        border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)',
-                                        color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600,
-                                        cursor: isDeleting ? 'not-allowed' : 'pointer',
-                                        flex: 1, display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', transition: 'all 0.2s',
-                                        outline: 'none', margin: 0, padding: '0 16px',
-                                    }}
-                                    className="active:scale-[0.97]"
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-border)'; e.currentTarget.style.borderColor = '#cbd5e1' }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-surface-alt)'; e.currentTarget.style.borderColor = 'var(--color-border)' }}
+                                    style={{ minHeight: '48px', borderRadius: '14px', border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    className="active:scale-[0.97] transition-colors hover:bg-[color:var(--color-border)]"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleConfirmDelete}
                                     disabled={isDeleting}
-                                    style={{
-                                        minHeight: '48px', borderRadius: '14px',
-                                        border: 'none',
-                                        background: 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)',
-                                        color: '#fff', fontSize: '14px', fontWeight: 600,
-                                        cursor: isDeleting ? 'not-allowed' : 'pointer',
-                                        flex: 1, display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', transition: 'all 0.2s',
-                                        outline: 'none', margin: 0, padding: '0 16px',
-                                        boxShadow: '0 4px 14px rgba(239, 68, 68, 0.35)',
-                                        opacity: isDeleting ? 0.7 : 1,
-                                    }}
+                                    style={{ minHeight: '48px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(239,68,68,0.35)', opacity: isDeleting ? 0.7 : 1 }}
                                     className="active:scale-[0.97]"
-                                    onMouseEnter={e => { if (!isDeleting) { e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-danger-dark) 0%, #b91c1c 100%)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.45)' } }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.35)' }}
                                 >
-                                    {isDeleting ? (
-                                        <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    ) : (
-                                        'Eliminar'
-                                    )}
+                                    {isDeleting
+                                        ? <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        : 'Eliminar'}
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </DialogContent>
+                    </Dialog>
                 )}
 
                 {/* ── Toast de feedback ────────────────────────────────────────── */}
