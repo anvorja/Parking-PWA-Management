@@ -14,6 +14,8 @@ import { useApp } from '../hooks/useApp';
 import { UsuarioListItemResponse, CrearUsuarioRequest } from '../services/usuarioService';
 import BottomNav from '../components/BottomNav';
 import { useSidebarOffset } from '../hooks/useSidebarOffset';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ─── Valores iniciales del formulario ─────────────────────────────────────────
 
@@ -27,15 +29,15 @@ const FORM_VACIO: CrearUsuarioRequest = {
 
 // ─── Helpers de presentación (sin lógica de negocio) ─────────────────────────
 
+function getRoleClasses(rol: string): string {
+    if (rol === 'ADMINISTRADOR') return 'bg-purple-50 text-purple-700 ring-purple-700/10'
+    return 'bg-blue-50 text-blue-700 ring-blue-700/10'
+}
+
 function getRoleDisplayName(rol: string): string {
     if (rol === 'ADMINISTRADOR') return 'Administrador'
     if (rol === 'AUXILIAR') return 'Auxiliar'
     return rol.charAt(0).toUpperCase() + rol.slice(1).toLowerCase()
-}
-
-function getRoleClasses(rol: string): string {
-    if (rol === 'ADMINISTRADOR') return 'bg-purple-50 text-purple-700 ring-purple-700/10'
-    return 'bg-blue-50 text-blue-700 ring-blue-700/10'
 }
 
 function getAvatarSrc(name: string): string {
@@ -328,30 +330,13 @@ const Users: React.FC = () => {
                 <BottomNav />
 
                 {/* ── Modal Crear / Editar Usuario ─────────────────────────────── */}
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                                <h3 className="text-lg font-semibold text-slate-800">
-                                    {editTarget ? 'Editar Usuario' : 'Nuevo Usuario'}
-                                </h3>
-                                <button
-                                    onClick={handleCloseModal}
-                                    style={{
-                                        width: '36px', height: '36px', borderRadius: '50%',
-                                        border: 'none', background: 'transparent', color: 'var(--color-text-muted)',
-                                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', transition: 'all 0.2s',
-                                        outline: 'none', padding: 0, margin: 0,
-                                    }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-subtle)'; e.currentTarget.style.color = 'var(--color-text-soft)' }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
-                                >
-                                    <span className="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
+                <Dialog open={isModalOpen} onOpenChange={val => { if (!val && !isSubmitting) handleCloseModal() }}>
+                    <DialogContent className="sm:max-w-sm max-h-[90dvh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>{editTarget ? 'Editar Usuario' : 'Nuevo Usuario'}</DialogTitle>
+                        </DialogHeader>
 
-                            <form onSubmit={handleSubmit} className="px-5 py-4 overflow-y-auto max-h-[70vh]">
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-1">
                                 {errorMsg && (
                                     <div className="mb-4 bg-red-50 text-red-600 text-sm px-3 py-2 rounded-lg border border-red-100">
                                         {errorMsg}
@@ -389,20 +374,15 @@ const Users: React.FC = () => {
 
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-600 mb-1">Rol</label>
-                                        <div className="relative">
-                                            <select
-                                                name="rol"
-                                                required
-                                                value={formData.rol}
-                                                onChange={handleInputChange}
-                                                style={{ color: 'var(--color-text-primary)' }}
-                                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors appearance-none"
-                                            >
-                                                <option value="AUXILIAR">Auxiliar</option>
-                                                <option value="ADMINISTRADOR">Administrador</option>
-                                            </select>
-                                            <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
-                                        </div>
+                                        <Select value={formData.rol} onValueChange={val => setFormData(prev => ({ ...prev, rol: val as 'AUXILIAR' | 'ADMINISTRADOR' }))}>
+                                            <SelectTrigger className="w-full h-9 rounded-lg border border-slate-200 bg-slate-50 text-sm text-[color:var(--color-text-primary)]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="AUXILIAR">Auxiliar</SelectItem>
+                                                <SelectItem value="ADMINISTRADOR">Administrador</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
 
                                     <div>
@@ -488,75 +468,46 @@ const Users: React.FC = () => {
                                     </button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
-                )}
+                    </DialogContent>
+                </Dialog>
 
                 {/* ── Modal Confirmar Eliminación ──────────────────────────────── */}
                 {deleteTarget && (
-                    <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-                        onClick={e => { if (e.target === e.currentTarget && !isDeleting) setDeleteTarget(null) }}
-                    >
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs overflow-hidden">
-                            <div className="px-5 pt-6 pb-2 text-center">
-                                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+                    <Dialog open onOpenChange={val => { if (!val && !isDeleting) setDeleteTarget(null) }}>
+                        <DialogContent className="sm:max-w-xs" showCloseButton={false}>
+                            <DialogHeader className="items-center text-center">
+                                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
                                     <span className="material-symbols-outlined text-red-500 text-[28px]">warning</span>
                                 </div>
-                                <h3 className="text-[16px] font-semibold text-slate-800">Eliminar Usuario</h3>
-                                <p className="mt-2 text-[13px] text-slate-500 leading-relaxed">
+                                <DialogTitle>Eliminar Usuario</DialogTitle>
+                                <DialogDescription className="text-center">
                                     ¿Estás seguro de eliminar a{' '}
                                     <strong className="text-slate-700">{deleteTarget.nombreCompleto}</strong>?
                                     {' '}Esta acción no se puede deshacer.
-                                </p>
-                            </div>
-                            <div className="px-5 pb-5 pt-3 flex gap-3">
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex gap-3 pt-1">
                                 <button
                                     onClick={() => setDeleteTarget(null)}
                                     disabled={isDeleting}
-                                    style={{
-                                        minHeight: '48px', borderRadius: '14px',
-                                        border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)',
-                                        color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600,
-                                        cursor: isDeleting ? 'not-allowed' : 'pointer',
-                                        flex: 1, display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', transition: 'all 0.2s',
-                                        outline: 'none', margin: 0, padding: '0 16px',
-                                    }}
-                                    className="active:scale-[0.97]"
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-border)'; e.currentTarget.style.borderColor = '#cbd5e1' }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-surface-alt)'; e.currentTarget.style.borderColor = 'var(--color-border)' }}
+                                    style={{ minHeight: '48px', borderRadius: '14px', border: '1px solid var(--color-border)', background: 'var(--color-surface-alt)', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    className="active:scale-[0.97] transition-colors hover:bg-[color:var(--color-border)]"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleConfirmDelete}
                                     disabled={isDeleting}
-                                    style={{
-                                        minHeight: '48px', borderRadius: '14px',
-                                        border: 'none',
-                                        background: 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)',
-                                        color: '#fff', fontSize: '14px', fontWeight: 600,
-                                        cursor: isDeleting ? 'not-allowed' : 'pointer',
-                                        flex: 1, display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', transition: 'all 0.2s',
-                                        outline: 'none', margin: 0, padding: '0 16px',
-                                        boxShadow: '0 4px 14px rgba(239, 68, 68, 0.35)',
-                                        opacity: isDeleting ? 0.7 : 1,
-                                    }}
+                                    style={{ minHeight: '48px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: isDeleting ? 'not-allowed' : 'pointer', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(239,68,68,0.35)', opacity: isDeleting ? 0.7 : 1 }}
                                     className="active:scale-[0.97]"
-                                    onMouseEnter={e => { if (!isDeleting) { e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-danger-dark) 0%, #b91c1c 100%)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.45)' } }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-danger) 0%, var(--color-danger-dark) 100%)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.35)' }}
                                 >
-                                    {isDeleting ? (
-                                        <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    ) : (
-                                        'Eliminar'
-                                    )}
+                                    {isDeleting
+                                        ? <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        : 'Eliminar'}
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </DialogContent>
+                    </Dialog>
                 )}
 
                 {/* ── Toast de feedback ────────────────────────────────────────── */}
