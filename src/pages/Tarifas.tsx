@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useApp } from '../hooks/useApp'
 import { TarifaResponse } from '../services/tarifaService'
 import BottomNav from '../components/BottomNav'
+import { useSidebarOffset } from '../hooks/useSidebarOffset'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,10 +56,14 @@ function CrearModal({ opcionesPermitidas, isSaving, onGuardar, onCancelar }: Cre
 
     return (
         <div
-            style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
             onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
         >
-            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 36px', width: '100%', maxWidth: '480px', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}>
+            <div
+                className="w-full max-w-[480px] rounded-t-[20px] md:rounded-2xl px-5 pt-5 pb-9 md:pb-5"
+                style={{ background: '#fff', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
+            >
                 <div style={{ width: '40px', height: '4px', background: 'var(--color-border)', borderRadius: '9999px', margin: '0 auto 20px' }} />
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -150,10 +155,14 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
 
     return (
         <div
-            style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
             onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
         >
-            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 36px', width: '100%', maxWidth: '480px', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}>
+            <div
+                className="w-full max-w-[480px] rounded-t-[20px] md:rounded-2xl px-5 pt-5 pb-9 md:pb-5"
+                style={{ background: '#fff', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
+            >
                 <div style={{ width: '40px', height: '4px', background: 'var(--color-border)', borderRadius: '9999px', margin: '0 auto 20px' }} />
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -211,7 +220,10 @@ function EditModal({ tarifa, isSaving, onGuardar, onCancelar }: EditModalProps) 
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
 function Toast({ message, type, onClose }: ToastProps) {
     return (
-        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}>
+        <div
+            className="fixed top-4 left-4 right-4 md:left-auto md:right-5 md:min-w-[280px] md:max-w-[380px] z-[100] flex items-center gap-2.5"
+            style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}
+        >
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>
                     {type === 'success' ? 'check_circle' : 'error'}
@@ -297,6 +309,7 @@ const Tarifas: React.FC = () => {
     const { tarifas, isLoading, crear, editar, isSaving, toast, clearToast } = useTarifas()
     const { user } = useAuth()
     const { estadoRed } = useApp()
+    const sidebarOffset = useSidebarOffset()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
 
     const [editTarget, setEditTarget] = useState<TarifaResponse | null>(null)
@@ -324,22 +337,23 @@ const Tarifas: React.FC = () => {
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-white ${sidebarOffset}`}>
 
                 {/* Header */}
-                <header style={{
-                    position: 'sticky',
-                    top: 'var(--network-banner-height, 0px)',
-                    zIndex: 20,
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    borderBottom: '1px solid var(--color-border)', background: '#fff', padding: '12px 16px',
-                }}>
+                <header
+                    className="flex items-center gap-3 px-4 py-3 md:px-8 md:py-4 border-b border-[color:var(--color-border)] bg-white"
+                    style={{
+                        position: 'sticky',
+                        top: 'var(--network-banner-height, 0px)',
+                        zIndex: 20,
+                    }}
+                >
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>payments</span>
                     </div>
                     <div style={{ flex: 1 }}>
-                        <h1 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Configuración de Tarifas</h1>
-                        <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: 0 }}>
+                        <h1 className="text-[16px] md:text-[20px] font-bold m-0" style={{ color: 'var(--color-text-primary)' }}>Configuración de Tarifas</h1>
+                        <p className="text-[11px] md:text-[13px] m-0" style={{ color: 'var(--color-text-muted)' }}>
                             {esAdmin ? 'Administrador — puedes editar las tarifas' : 'Solo lectura'}
                         </p>
                     </div>
@@ -366,7 +380,7 @@ const Tarifas: React.FC = () => {
                 </header>
 
                 <IonContent fullscreen style={{ '--background': 'var(--color-surface-alt)' }}>
-                    <div style={{ padding: '16px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div className="p-4 pb-24 md:p-8 md:pb-8 flex flex-col gap-4">
 
                         {/* Aviso para AUXILIAR */}
                         {!esAdmin && (
@@ -396,14 +410,16 @@ const Tarifas: React.FC = () => {
                                 </p>
                             </div>
                         ) : (
-                            tarifas.map(tarifa => (
-                                <TarifaCard
-                                    key={tarifa.idTarifa}
-                                    tarifa={tarifa}
-                                    esAdmin={esAdmin}
-                                    onEditar={setEditTarget}
-                                />
-                            ))
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {tarifas.map(tarifa => (
+                                    <TarifaCard
+                                        key={tarifa.idTarifa}
+                                        tarifa={tarifa}
+                                        esAdmin={esAdmin}
+                                        onEditar={setEditTarget}
+                                    />
+                                ))}
+                            </div>
                         )}
 
                         {/* Nota informativa */}

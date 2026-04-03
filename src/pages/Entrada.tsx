@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IonPage, IonContent } from '@ionic/react';
 import QRCode from 'react-qr-code';
 import BottomNav from '../components/BottomNav';
+import { useSidebarOffset } from '../hooks/useSidebarOffset';
 import { ingresoService, RegistrarIngresoRequest, IngresoVehiculoResponse, TipoVehiculo } from '../services/ingresoService';
 import { refDataService, UbicacionRef, TipoVehiculoRef, iconoParaTipo } from '../services/refDataService';
 import { useIngresos } from '../hooks/useIngresos';
@@ -67,6 +68,7 @@ const PRINT_STYLES = `
 const Entrada: React.FC = () => {
     const { registrarIngresoConOutbox } = useIngresos()
     const { estadoRed } = useApp()
+    const sidebarOffset = useSidebarOffset()
 
     const [tipos, setTipos]             = useState<TipoVehiculoRef[]>(TIPOS_FALLBACK)
     const [ubicaciones, setUbicaciones] = useState<UbicacionRef[]>([])
@@ -289,7 +291,7 @@ const Entrada: React.FC = () => {
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white selection:bg-primary/20">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-white selection:bg-primary/20 ${sidebarOffset}`}>
 
                 {/* Header */}
                 <header style={{

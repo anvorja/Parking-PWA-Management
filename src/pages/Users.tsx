@@ -13,6 +13,7 @@ import { useUsuarios } from '../hooks/useUsuarios';
 import { useApp } from '../hooks/useApp';
 import { UsuarioListItemResponse, CrearUsuarioRequest } from '../services/usuarioService';
 import BottomNav from '../components/BottomNav';
+import { useSidebarOffset } from '../hooks/useSidebarOffset';
 
 // ─── Valores iniciales del formulario ─────────────────────────────────────────
 
@@ -62,6 +63,7 @@ const Users: React.FC = () => {
     } = useUsuarios()
 
     const { estadoRed } = useApp()
+    const sidebarOffset = useSidebarOffset()
 
     // ── Estado de UI local (modal, formulario, target de eliminación) ──────────
     // Solo estado de interacción visual — no estado de negocio.
@@ -164,15 +166,17 @@ const Users: React.FC = () => {
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white selection:bg-primary/20">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-white selection:bg-primary/20 ${sidebarOffset}`}>
 
                 {/* Header */}
-                <header style={{
-                    position: 'sticky',
-                    top: 'var(--network-banner-height, 0px)',
-                    zIndex: 20,
-                    borderBottom: '1px solid var(--color-border)', background: '#fff', padding: '12px 16px',
-                }}>
+                <header
+                    className="px-4 py-3 md:px-8 md:py-4 border-b border-[color:var(--color-border)] bg-white"
+                    style={{
+                        position: 'sticky',
+                        top: 'var(--network-banner-height, 0px)',
+                        zIndex: 20,
+                    }}
+                >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>group</span>
@@ -232,7 +236,7 @@ const Users: React.FC = () => {
                     <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
 
                         {/* Buscador */}
-                        <div className="sticky top-0 z-10 bg-white px-4 py-2 shadow-sm border-b border-slate-100">
+                        <div className="sticky top-0 z-10 bg-white px-4 py-2 md:px-8 shadow-sm border-b border-slate-100">
                             <label className="relative flex w-full items-center">
                                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                                     <span className="material-symbols-outlined text-[18px]">search</span>
@@ -247,8 +251,8 @@ const Users: React.FC = () => {
                             </label>
                         </div>
 
-                        <div className="px-4 pt-4 pb-2">
-                            <h3 className="text-xs font-semibold tracking-wider text-slate-500">Lista de Usuarios</h3>
+                        <div className="px-4 pt-4 pb-2 md:px-8">
+                            <h3 className="text-xs font-semibold tracking-wider text-slate-500 md:text-sm">Lista de Usuarios</h3>
                         </div>
 
                         {/* Lista */}
@@ -257,14 +261,18 @@ const Users: React.FC = () => {
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                             </div>
                         ) : (
-                            <ul className="divide-y divide-slate-100 bg-white">
+                            <ul className="divide-y divide-slate-100 bg-white
+                                          md:divide-y-0 md:grid md:grid-cols-2 lg:grid-cols-3
+                                          md:gap-3 md:bg-transparent md:p-4 md:px-8">
                                 {usuariosFiltrados.length === 0 ? (
-                                    <li className="p-8 text-center text-slate-500 text-sm">
+                                    <li className="p-8 text-center text-slate-500 text-sm md:col-span-2 lg:col-span-3">
                                         No se encontraron usuarios
                                     </li>
                                 ) : (
                                     usuariosFiltrados.map(usuario => (
-                                        <li key={usuario.id} className="group relative flex items-center justify-between p-3 px-4 hover:bg-slate-50 transition-colors cursor-pointer">
+                                        <li key={usuario.id} className="group relative flex items-center justify-between p-3 px-4 hover:bg-slate-50 transition-colors cursor-pointer
+                                                                         md:bg-white md:rounded-2xl md:border md:border-slate-100 md:shadow-sm md:p-4
+                                                                         md:hover:shadow-md md:hover:border-slate-200">
                                             <div className="flex items-center gap-3">
                                                 <div className="relative">
                                                     <img
@@ -313,7 +321,7 @@ const Users: React.FC = () => {
                             </div>
                         )}
 
-                        <div className="h-24"></div>
+                        <div className="h-24 md:h-6"></div>
                     </div>
                 </IonContent>
 

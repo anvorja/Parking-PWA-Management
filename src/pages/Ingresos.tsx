@@ -14,6 +14,7 @@ import { useApp } from '../hooks/useApp'
 import { EditarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService'
 import { refDataService, UbicacionRef, TipoVehiculoRef } from '../services/refDataService'
 import BottomNav from '../components/BottomNav'
+import { useSidebarOffset } from '../hooks/useSidebarOffset'
 
 // Estados de ingreso según dbInicialization.sql (id=1 INGRESADO, id=2 ENTREGADO)
 const ESTADOS_INGRESO = [
@@ -155,8 +156,15 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
     const selectStyle: React.CSSProperties = { ...inputStyle, appearance: 'none', cursor: 'pointer' }
 
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) onCancelar() }}>
-            <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 32px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}>
+        <div
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)' }}
+            onClick={e => { if (e.target === e.currentTarget) onCancelar() }}
+        >
+            <div
+                className="w-full max-w-[500px] max-h-[90vh] overflow-y-auto rounded-t-[20px] md:rounded-2xl px-5 pt-5 pb-8 md:pb-5"
+                style={{ background: '#fff', boxShadow: '0 -8px 40px rgba(0,0,0,0.15)' }}
+            >
 
                 <div style={{ width: '40px', height: '4px', background: 'var(--color-border)', borderRadius: '9999px', margin: '0 auto 16px' }} />
 
@@ -262,7 +270,10 @@ function EditModal({ ingreso, esAdmin, isEditing, ubicaciones, tipos, onGuardar,
 interface ToastProps { message: string; type: 'success' | 'error'; onClose: () => void }
 function Toast({ message, type, onClose }: ToastProps) {
     return (
-        <div style={{ position: 'fixed', top: '16px', left: '16px', right: '16px', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}>
+        <div
+            className="fixed top-4 left-4 right-4 md:left-auto md:right-5 md:min-w-[280px] md:max-w-[380px] z-[100] flex items-center gap-2.5"
+            style={{ background: '#fff', borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', padding: '14px 16px', border: type === 'success' ? '1px solid var(--color-success-border)' : '1px solid var(--color-danger-border-light)', animation: 'slideDown 0.3s ease-out' }}
+        >
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '18px', color: type === 'success' ? 'var(--color-success-text)' : 'var(--color-danger-dark)' }}>{type === 'success' ? 'check_circle' : 'error'}</span>
             </div>
@@ -290,6 +301,7 @@ const Ingresos: React.FC = () => {
 
     const { user } = useAuth()
     const { estadoRed } = useApp()
+    const sidebarOffset = useSidebarOffset()
     const esAdmin = user?.rol === 'ADMINISTRADOR'
     const router  = useIonRouter()
 
@@ -357,16 +369,17 @@ const Ingresos: React.FC = () => {
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-white">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-white ${sidebarOffset}`}>
 
                 {/* Header */}
-                <header style={{
-                    position: 'sticky',
-                    top: 'var(--network-banner-height, 0px)',
-                    zIndex: 20,
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    borderBottom: '1px solid var(--color-border)', background: '#fff', padding: '12px 16px',
-                }}>
+                <header
+                    className="flex items-center gap-3 px-4 py-3 md:px-8 md:py-4 border-b border-[color:var(--color-border)] bg-white"
+                    style={{
+                        position: 'sticky',
+                        top: 'var(--network-banner-height, 0px)',
+                        zIndex: 20,
+                    }}
+                >
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>format_list_bulleted</span>
                     </div>
@@ -391,10 +404,10 @@ const Ingresos: React.FC = () => {
                 </header>
 
                 <IonContent fullscreen style={{ '--background': 'var(--color-surface-alt)' }}>
-                    <div style={{ paddingBottom: '88px' }}>
+                    <div className="pb-24 md:pb-8">
 
                         {/* Buscador */}
-                        <div style={{ padding: '12px 16px', background: '#fff', borderBottom: '1px solid var(--color-surface-subtle)', display: 'flex', gap: '10px' }}>
+                        <div className="flex gap-2.5 px-4 py-3 md:px-8 md:py-4 bg-white border-b border-slate-100">
                             <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
                                 <span className="material-symbols-outlined" style={{ position: 'absolute', left: '10px', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>search</span>
                                 <input type="text" defaultValue={filtroPlaca} onChange={handleFiltroChange} placeholder="Buscar placa..."
@@ -421,7 +434,7 @@ const Ingresos: React.FC = () => {
 
                         {/* Lista */}
                         {isLoading ? (
-                            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div className="p-3 md:p-4 md:px-8 flex flex-col gap-2.5">
                                 {[1,2,3,4].map(n => <SkeletonCard key={n} />)}
                             </div>
                         ) : ingresos.length === 0 ? (
@@ -435,7 +448,7 @@ const Ingresos: React.FC = () => {
                             </div>
                         ) : (
                             <>
-                                <ul style={{ listStyle: 'none', margin: 0, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <ul className="list-none m-0 p-3 md:p-6 flex flex-col gap-2.5 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-4">
                                     {ingresos.map(ingreso => {
                                         const estadoStyle    = getEstadoStyle(ingreso.estadoIngreso)
                                         const esIngresado    = ingreso.estadoIngreso.toUpperCase() === 'INGRESADO'
@@ -445,17 +458,13 @@ const Ingresos: React.FC = () => {
                                         return (
                                             <li
                                                 key={ingreso.idIngreso}
+                                                className="p-[14px] md:p-5 flex flex-col gap-2.5 md:gap-3"
                                                 style={{
                                                     background: '#fff',
                                                     borderRadius: '14px',
-                                                    // Borde naranja discreto cuando la salida está pendiente de sync
                                                     border: salidaPendiente
                                                         ? '1.5px solid #fb923c'
                                                         : '1.5px solid var(--color-surface-subtle)',
-                                                    padding: '14px',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: '10px',
                                                     boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
                                                 }}
                                             >
