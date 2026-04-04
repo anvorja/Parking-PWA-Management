@@ -62,7 +62,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             return
         }
 
-        await actualizarContadores()
+        setPendientesOutbox(pendientes.length)
         setIsSincronizando(true)
 
         const result = await syncService.procesarOutbox((parcial: SyncResult) => {
