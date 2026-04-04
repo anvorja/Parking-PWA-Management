@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IonPage, IonContent } from '@ionic/react';
 import QRCode from 'react-qr-code';
 import BottomNav from '../components/BottomNav';
-import { useSidebarOffset } from '../hooks/useSidebarOffset';
+import { useSidebarOffset, useSidebarLeft } from '../hooks/useSidebarOffset';
 import { ingresoService, RegistrarIngresoRequest, IngresoVehiculoResponse, TipoVehiculo } from '../services/ingresoService';
 import { refDataService, UbicacionRef, TipoVehiculoRef, iconoParaTipo } from '../services/refDataService';
 import { useIngresos } from '../hooks/useIngresos';
@@ -69,6 +69,7 @@ const Entrada: React.FC = () => {
     const { registrarIngresoConOutbox } = useIngresos()
     const { estadoRed } = useApp()
     const sidebarOffset = useSidebarOffset()
+    const sidebarLeft   = useSidebarLeft()
 
     const [tipos, setTipos]             = useState<TipoVehiculoRef[]>(TIPOS_FALLBACK)
     const [ubicaciones, setUbicaciones] = useState<UbicacionRef[]>([])
@@ -464,7 +465,7 @@ const Entrada: React.FC = () => {
                 </IonContent>
 
                 {/* Botón Generar Tiquete */}
-                <div style={{ position: 'fixed', bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))', left: 0, right: 0, padding: '12px 16px', background: 'linear-gradient(to top, #fff 80%, transparent)', zIndex: 20 }}>
+                <div style={{ position: 'fixed', bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))', left: sidebarLeft, right: 0, padding: '12px 16px', background: 'linear-gradient(to top, #fff 80%, transparent)', zIndex: 20 }}>
                     <button onClick={handleSubmit} disabled={isSubmitting}
                             style={{ width: '100%', padding: '16px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%)', color: '#fff', fontSize: '16px', fontWeight: 700, cursor: isSubmitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 6px 20px rgba(19,127,236,0.35)', transition: 'all 0.2s', opacity: isSubmitting ? 0.7 : 1, outline: 'none', margin: 0 }}
                             onMouseEnter={e => { if (!isSubmitting) { e.currentTarget.style.boxShadow = '0 8px 28px rgba(19,127,236,0.45)'; e.currentTarget.style.transform = 'translateY(-1px)' } }}

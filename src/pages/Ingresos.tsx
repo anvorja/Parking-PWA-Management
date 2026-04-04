@@ -11,6 +11,7 @@ import { IonPage, IonContent, useIonRouter } from '@ionic/react'
 import { useIngresos } from '../hooks/useIngresos'
 import { useAuth } from '../hooks/useAuth'
 import { useApp } from '../hooks/useApp'
+import { DatePickerFilter } from '../components/DatePickerFilter'
 import { EditarIngresoRequest, IngresoVehiculoResponse } from '../services/ingresoService'
 import { refDataService, UbicacionRef, TipoVehiculoRef } from '../services/refDataService'
 import BottomNav from '../components/BottomNav'
@@ -278,7 +279,7 @@ const Ingresos: React.FC = () => {
     const {
         ingresos, isLoading, isLoadingMore, hasMore,
         totalElements, isOnline, filtroPlaca,
-        setFiltroPlaca, filtroFecha, setFiltroFecha, cargarMas,
+        setFiltroPlaca, filtroEstado, setFiltroEstado, filtroFecha, setFiltroFecha, cargarMas,
         eliminarIngreso, isDeleting,
         editarIngreso, isEditing,
         toast, clearToast,
@@ -392,30 +393,60 @@ const Ingresos: React.FC = () => {
                 <IonContent fullscreen style={{ '--background': 'var(--color-surface-alt)' }}>
                     <div className="pb-24 md:pb-8">
 
-                        {/* Buscador */}
-                        <div className="flex gap-2.5 px-4 py-3 md:px-8 md:py-4 bg-white border-b border-slate-100">
-                            <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
-                                <span className="material-symbols-outlined" style={{ position: 'absolute', left: '10px', fontSize: '18px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>search</span>
-                                <input type="text" defaultValue={filtroPlaca} onChange={handleFiltroChange} placeholder="Buscar placa..."
-                                       style={{ width: '100%', padding: '9px 36px', borderRadius: '10px', border: '1.5px solid var(--color-border)', background: 'var(--color-surface-alt)', fontSize: '13px', color: 'var(--color-text-primary)', outline: 'none', boxSizing: 'border-box', textTransform: 'uppercase' }}
-                                       onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }} onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }} />
-                                {filtroPlaca && (
-                                    <button onClick={handleLimpiarFiltro} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 0, display: 'flex' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
-                                    </button>
-                                )}
-                            </label>
+                        {/* Barra de filtros */}
+                        <div className="px-4 py-3 md:px-8 md:py-4 bg-white border-b border-slate-100 flex flex-col gap-2.5">
 
-                            <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, maxWidth: '140px' }}>
-                                <input type="date" value={filtroFecha} onChange={handleFiltroFechaChange}
-                                       style={{ width: '100%', padding: '8px 12px', paddingRight: filtroFecha ? '30px' : '12px', borderRadius: '10px', border: '1.5px solid var(--color-border)', background: 'var(--color-surface-alt)', fontSize: '13px', color: 'var(--color-text-primary)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', colorScheme: 'light' }}
-                                       onFocus={e => { e.target.style.borderColor = 'var(--color-primary)' }} onBlur={e => { e.target.style.borderColor = 'var(--color-border)' }} />
-                                {filtroFecha && (
-                                    <button onClick={handleLimpiarFiltroFecha} style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 0, display: 'flex' }}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '18px', background: 'var(--color-surface-alt)' }}>close</span>
-                                    </button>
-                                )}
-                            </label>
+                            {/* Fila 1: búsqueda + fecha */}
+                            <div className="flex gap-2">
+                                {/* Búsqueda por placa */}
+                                <label style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
+                                    <span className="material-symbols-outlined" style={{ position: 'absolute', left: '11px', fontSize: '17px', color: 'var(--color-text-muted)', pointerEvents: 'none' }}>search</span>
+                                    <input
+                                        type="text"
+                                        defaultValue={filtroPlaca}
+                                        onChange={handleFiltroChange}
+                                        placeholder="Buscar placa..."
+                                        style={{ width: '100%', padding: '9px 34px', borderRadius: '10px', border: '1.5px solid var(--color-border)', background: 'var(--color-surface-alt)', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)', outline: 'none', boxSizing: 'border-box', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                                        onFocus={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.background = '#fff' }}
+                                        onBlur={e  => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.background = 'var(--color-surface-alt)' }}
+                                    />
+                                    {filtroPlaca && (
+                                        <button onClick={handleLimpiarFiltro} style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 0, display: 'flex' }}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>close</span>
+                                        </button>
+                                    )}
+                                </label>
+
+                                {/* Filtro por fecha — calendario custom */}
+                                <DatePickerFilter
+                                    value={filtroFecha}
+                                    onChange={setFiltroFecha}
+                                    onClear={handleLimpiarFiltroFecha}
+                                />
+                            </div>
+
+                            {/* Fila 2: filtro por estado */}
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', flexShrink: 0 }}>Estado:</span>
+                                {([['', 'Todos'], ['INGRESADO', 'Ingresado'], ['ENTREGADO', 'Entregado']] as const).map(([val, label]) => {
+                                    const active = filtroEstado === val
+                                    const isIngresado = val === 'INGRESADO'
+                                    const isEntregado = val === 'ENTREGADO'
+                                    const activeBg = isIngresado ? 'var(--color-success-bg-soft)' : isEntregado ? 'var(--color-surface-subtle)' : 'var(--color-primary)'
+                                    const activeText = isIngresado ? 'var(--color-success-dark)' : isEntregado ? 'var(--color-text-secondary)' : '#fff'
+                                    const activeBorder = isIngresado ? 'var(--color-success)' : isEntregado ? 'var(--color-text-muted)' : 'var(--color-primary)'
+                                    return (
+                                        <button
+                                            key={val}
+                                            onClick={() => setFiltroEstado(val)}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '9999px', border: `1.5px solid ${active ? activeBorder : 'var(--color-border)'}`, background: active ? activeBg : '#fff', color: active ? activeText : 'var(--color-text-secondary)', fontSize: '12px', fontWeight: active ? 700 : 500, cursor: 'pointer', transition: 'all 0.15s' }}
+                                        >
+                                            {val && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: active ? activeText : 'var(--color-text-muted)', flexShrink: 0 }} />}
+                                            {label}
+                                        </button>
+                                    )
+                                })}
+                            </div>
                         </div>
 
                         {/* Lista */}
@@ -427,8 +458,8 @@ const Ingresos: React.FC = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', gap: '12px' }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#cbd5e1' }}>inbox</span>
                                 <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', textAlign: 'center', margin: 0 }}>
-                                    {(filtroPlaca || filtroFecha) 
-                                        ? `Sin resultados para los filtros aplicados` 
+                                    {(filtroPlaca || filtroEstado || filtroFecha)
+                                        ? 'Sin resultados para los filtros aplicados'
                                         : 'No hay registros de ingreso'}
                                 </p>
                             </div>
@@ -501,10 +532,10 @@ const Ingresos: React.FC = () => {
                                                     <button
                                                         disabled={!isOnline || salidaPendiente}
                                                         onClick={() => router.push(`/salida?placa=${encodeURIComponent(ingreso.placa)}`, 'forward', 'push')}
-                                                        style={{ width: '100%', padding: '9px', borderRadius: '10px', border: 'none', background: (!isOnline || salidaPendiente) ? 'var(--color-border)' : 'var(--color-primary)', color: (!isOnline || salidaPendiente) ? 'var(--color-text-muted)' : '#fff', fontSize: '13px', fontWeight: 700, cursor: (!isOnline || salidaPendiente) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                                                        style={{ width: '100%', padding: '10px', borderRadius: '10px', border: 'none', background: salidaPendiente ? '#fed7aa' : !isOnline ? 'var(--color-border)' : 'var(--color-primary)', color: salidaPendiente ? '#9a3412' : !isOnline ? 'var(--color-text-muted)' : '#fff', fontSize: '13px', fontWeight: 700, cursor: (!isOnline || salidaPendiente) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', boxShadow: (!isOnline || salidaPendiente) ? 'none' : '0 2px 8px rgba(19,127,236,0.25)', letterSpacing: '0.3px' }}
                                                     >
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-                                                        {salidaPendiente ? 'Salida pendiente de sincronización' : isOnline ? 'Registrar Salida' : 'No disponible sin conexión'}
+                                                        <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>{salidaPendiente ? 'cloud_off' : 'logout'}</span>
+                                                        {salidaPendiente ? 'Sync pendiente' : isOnline ? 'Registrar Salida' : 'Sin conexión'}
                                                     </button>
                                                 )}
                                             </li>

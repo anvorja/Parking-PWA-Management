@@ -24,6 +24,9 @@ export interface IngresoContextType {
     /** Filtro activo por placa */
     filtroPlaca: string
     setFiltroPlaca: (placa: string) => void
+    /** Filtro activo por estado (INGRESADO | ENTREGADO | '') */
+    filtroEstado: string
+    setFiltroEstado: (estado: string) => void
     /** Filtro activo por fecha */
     filtroFecha: string
     setFiltroFecha: (fecha: string) => void

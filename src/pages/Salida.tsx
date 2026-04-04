@@ -10,6 +10,7 @@ import { useApp } from '../hooks/useApp'
 import QRScanner from '../components/QRScanner'
 import BottomNav from '../components/BottomNav'
 import { useSidebarOffset } from '../hooks/useSidebarOffset'
+import { RotateCcw, ArrowLeft } from 'lucide-react'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -125,7 +126,7 @@ const Salida: React.FC = () => {
                 </header>
 
                 <IonContent fullscreen style={{ '--background': 'var(--color-surface-alt)' }}>
-                    <div style={{ padding: '16px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ padding: '16px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px', margin: '0 auto', width: '100%' }}>
 
                         {/* ── Resumen de salida confirmada ─────────────────────────────── */}
                         {salidaConfirmada ? (
@@ -170,14 +171,23 @@ const Salida: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Botón nueva salida */}
-                                <button
-                                    onClick={resetear}
-                                    style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: 'var(--color-primary)', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 16px rgba(19,127,236,0.3)' }}
-                                >
-                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-                                    Registrar otra salida
-                                </button>
+                                {/* Acciones post-salida */}
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={() => router.push('/home', 'root', 'replace')}
+                                        style={{ flex: 1, padding: '13px', borderRadius: '12px', border: '1.5px solid var(--color-border)', background: '#fff', color: 'var(--color-text-soft)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                    >
+                                        <ArrowLeft size={18} />
+                                        Regresar
+                                    </button>
+                                    <button
+                                        onClick={resetear}
+                                        style={{ flex: 2, padding: '13px', borderRadius: '12px', border: 'none', background: 'var(--color-primary)', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 16px rgba(19,127,236,0.3)' }}
+                                    >
+                                        <RotateCcw size={18} />
+                                        Registrar otra salida
+                                    </button>
+                                </div>
                             </div>
 
                         ) : ingresoEncontrado ? (
