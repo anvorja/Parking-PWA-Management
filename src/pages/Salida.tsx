@@ -215,8 +215,8 @@ const Salida: React.FC = () => {
                                             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>{ingresoEncontrado.usuarioRegistro}</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>ID tiquete</span>
-                                            <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>#{String(ingresoEncontrado.idIngreso).padStart(9,'0')}</span>
+                                            <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>REF tiquete</span>
+                                            <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>{ingresoEncontrado.uuid.substring(0, 8).toUpperCase()}</span>
                                         </div>
                                     </div>
                                 </div>
