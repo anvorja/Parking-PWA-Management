@@ -62,6 +62,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             return
         }
 
+        await actualizarContadores()
         setIsSincronizando(true)
 
         const result = await syncService.procesarOutbox((parcial: SyncResult) => {
