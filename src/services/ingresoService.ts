@@ -21,6 +21,7 @@ export interface EditarIngresoRequest {
 
 export interface IngresoVehiculoResponse {
     idIngreso: number
+    uuid: string
     placa: string
     idTipoVehiculo: number
     tipoVehiculo: string

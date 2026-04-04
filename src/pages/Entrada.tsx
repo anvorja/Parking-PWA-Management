@@ -541,7 +541,7 @@ const Entrada: React.FC = () => {
                                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                                             <QRCode
                                                 value={JSON.stringify({
-                                                    id:        ticketData.idIngreso,
+                                                    uuid:      ticketData.uuid,
                                                     placa:     ticketData.placa,
                                                     ubicacion: ticketData.ubicacion,
                                                     tipo:      ticketData.tipoVehiculo,
@@ -561,7 +561,7 @@ const Entrada: React.FC = () => {
                                     <div style={{ margin: '0 16px', borderTop: '2px dashed var(--color-border)' }} />
                                     <div style={{ textAlign: 'center', padding: '12px 20px 20px' }}>
                                         <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--color-text-muted)', letterSpacing: '2px' }}>
-                                            ID: #{String(ticketData.idIngreso).padStart(9, '0')}
+                                            REF: {ticketData.uuid.substring(0, 8).toUpperCase()}
                                         </span>
                                     </div>
                                 </div>

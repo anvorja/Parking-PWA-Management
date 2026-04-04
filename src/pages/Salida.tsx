@@ -59,7 +59,7 @@ const Salida: React.FC = () => {
         modoBusqueda, setModoBusqueda,
         ingresoEncontrado, salidaConfirmada,
         isBuscando, isConfirmando,
-        buscarPorId, buscarPorPlaca, confirmarSalida, resetear,
+        buscarPorUuid, buscarPorPlaca, confirmarSalida, resetear,
         toast, clearToast,
     } = useSalida()
 
@@ -262,7 +262,7 @@ const Salida: React.FC = () => {
 
                                 {/* Contenido según modo */}
                                 {modoBusqueda === 'qr' ? (
-                                    <QRScanner onDetected={id => void buscarPorId(id)} isLoading={isBuscando} />
+                                    <QRScanner onDetected={uuid => void buscarPorUuid(uuid)} isLoading={isBuscando} />
                                 ) : (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         <div>

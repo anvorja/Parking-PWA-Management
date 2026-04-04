@@ -9,6 +9,7 @@ import { fetchConAuth } from './authService'
 
 export interface IngresoDetalle {
     idIngreso:        number
+    uuid:             string
     placa:            string
     tipoVehiculo:     string
     idTipoVehiculo:   number
@@ -40,9 +41,19 @@ export interface RegistrarSalidaRequest {
 
 export const salidaService = {
 
-    /** HU-009 — Obtiene el detalle de un ingreso por id (leído del QR) */
+    /** HU-009 — Obtiene el detalle de un ingreso por id interno (uso interno, no QR) */
     async obtenerPorId(id: number): Promise<IngresoDetalle> {
         const response = await fetchConAuth(`/api/ingresos/${id}`)
+        if (!response.ok) {
+            const err = await response.json().catch(() => null)
+            throw new Error(err?.error?.message || err?.message || `Ingreso no encontrado (${response.status})`)
+        }
+        return response.json()
+    },
+
+    /** HU-009 — Obtiene el detalle de un ingreso por UUID público (leído del QR del tiquete) */
+    async obtenerPorUuid(uuid: string): Promise<IngresoDetalle> {
+        const response = await fetchConAuth(`/api/ingresos/qr/${encodeURIComponent(uuid)}`)
         if (!response.ok) {
             const err = await response.json().catch(() => null)
             throw new Error(err?.error?.message || err?.message || `Ingreso no encontrado (${response.status})`)

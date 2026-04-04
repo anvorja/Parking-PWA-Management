@@ -28,7 +28,7 @@ function makeSalidaCtxValue(overrides: Partial<SalidaContextType> = {}): SalidaC
         salidaConfirmada:  null,
         isBuscando:        false,
         isConfirmando:     false,
-        buscarPorId:       vi.fn().mockResolvedValue(undefined),
+        buscarPorUuid:     vi.fn().mockResolvedValue(undefined),
         buscarPorPlaca:    vi.fn().mockResolvedValue(undefined),
         confirmarSalida:   vi.fn().mockResolvedValue(undefined),
         resetear:          vi.fn(),
@@ -66,7 +66,7 @@ describe('Salida — Flujo de salida de vehículo', () => {
 
     // ── 4.3.1 ─────────────────────────────────────────────────────────────────
 
-    it('buscarPorId() offline muestra toast de error', () => {
+    it('buscarPorUuid() offline muestra toast de error', () => {
         renderSalida({
             toast: { message: 'Sin conexión — la búsqueda por QR requiere conexión', type: 'error' },
         }, false)
@@ -76,7 +76,7 @@ describe('Salida — Flujo de salida de vehículo', () => {
 
     // ── 4.3.2 ─────────────────────────────────────────────────────────────────
 
-    it('buscarPorId() online con ingreso ya salido muestra el mensaje correspondiente', () => {
+    it('buscarPorUuid() online con ingreso ya salido muestra el mensaje correspondiente', () => {
         renderSalida({
             toast: { message: 'El vehículo ABC123 ya registró su salida', type: 'error' },
         })
@@ -86,9 +86,10 @@ describe('Salida — Flujo de salida de vehículo', () => {
 
     // ── 4.3.3 ─────────────────────────────────────────────────────────────────
 
-    it('buscarPorId() online con ingreso activo muestra el panel de confirmación', () => {
+    it('buscarPorUuid() online con ingreso activo muestra el panel de confirmación', () => {
         const ingreso = {
             idIngreso:        1,
+            uuid:             '550e8400-e29b-41d4-a716-446655440000',
             placa:            'ABC123',
             tipoVehiculo:     'CARRO',
             idTipoVehiculo:   1,
