@@ -12,6 +12,7 @@ import { get, set } from 'idb-keyval'
 import { IngresoContext, ToastState } from '../contexts/IngresoContext'
 import { EditarIngresoRequest, ingresoService, IngresoVehiculoResponse, RegistrarIngresoRequest } from '../services/ingresoService'
 import { outboxService } from '../services/outboxService'
+import { validarIngresoOffline } from '../services/offlineValidationService'
 import { useApp } from '../hooks/useApp'
 import { SYNC_COMPLETE_EVENT } from './AppProvider'
 import { SyncResult } from '../services/syncService'
@@ -349,6 +350,14 @@ export const IngresoProvider: React.FC<{ children: ReactNode }> = ({ children })
         if (isOnlineRef.current) {
             return 'online'
         }
+
+        // Validar localmente antes de encolar para evitar conflictos al sincronizar
+        const validacion = await validarIngresoOffline(data)
+        if (!validacion.valid) {
+            setToast({ message: validacion.mensaje, type: 'error' })
+            throw new Error(validacion.mensaje)
+        }
+
         await outboxService.enqueue('INGRESO', data as unknown as Record<string, unknown>)
         setToast({
             message: 'Sin conexión — el ingreso se registrará automáticamente al recuperar la red',

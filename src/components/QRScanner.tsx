@@ -13,11 +13,11 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import QRVisor, { EstadoCamara } from './QRVisor'
 import QRInputManual from './QRInputManual'
-import { QR_REGION_ID, parsearIdDeQR } from './qrUtils'
+import { QR_REGION_ID, parsearUuidDeQR } from './qrUtils'
 
 interface QRScannerProps {
-    /** Callback con el id de ingreso leído del QR — dispara búsqueda automática */
-    onDetected: (idIngreso: number) => void
+    /** Callback con el UUID público del ingreso leído del QR — dispara búsqueda automática */
+    onDetected: (uuid: string) => void
     /** true mientras el provider está procesando la búsqueda */
     isLoading:  boolean
 }
@@ -78,8 +78,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
             { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
             (decodedText) => {
                 if (detectadoRef.current || isLoading) return
-                const id = parsearIdDeQR(decodedText)
-                if (id === null) return
+                const uuid = parsearUuidDeQR(decodedText)
+                if (uuid === null) return
 
                 detectadoRef.current = true
                 void scanner.stop()
@@ -87,7 +87,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onDetected, isLoading }) => {
                     .catch(() => null)
                     .finally(() => {
                         setEstadoCamara('inactiva')
-                        onDetected(id)
+                        onDetected(uuid)
                     })
             },
             () => { /* frame sin QR — ignorar */ }

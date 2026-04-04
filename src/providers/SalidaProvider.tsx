@@ -36,9 +36,9 @@ export const SalidaProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setSalidaConfirmada(null)
     }, [])
 
-    // ── HU-009: buscar por id (leído del QR) ─────────────────────────────────
+    // ── HU-009: buscar por UUID público (leído del QR del tiquete) ───────────
 
-    const buscarPorId = useCallback(async (id: number) => {
+    const buscarPorUuid = useCallback(async (uuid: string) => {
         if (!isOnline) {
             setToast({ message: 'Sin conexión — la búsqueda por QR requiere conexión', type: 'error' })
             return
@@ -46,7 +46,7 @@ export const SalidaProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setIsBuscando(true)
         setSalidaConfirmada(null)
         try {
-            const ingreso = await salidaService.obtenerPorId(id)
+            const ingreso = await salidaService.obtenerPorUuid(uuid)
             if (ingreso.estadoIngreso.toUpperCase() !== 'INGRESADO') {
                 setToast({ message: `El vehículo ${ingreso.placa} ya registró su salida`, type: 'error' })
                 return
@@ -132,7 +132,7 @@ export const SalidaProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             salidaConfirmada,
             isBuscando,
             isConfirmando,
-            buscarPorId,
+            buscarPorUuid,
             buscarPorPlaca,
             confirmarSalida,
             resetear,

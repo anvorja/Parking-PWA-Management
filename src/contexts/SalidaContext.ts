@@ -22,8 +22,8 @@ export interface SalidaContextType {
     isBuscando: boolean
     /** true mientras se confirma la salida */
     isConfirmando: boolean
-    /** HU-009: buscar por id (leído del QR) */
-    buscarPorId: (id: number) => Promise<void>
+    /** HU-009: buscar por UUID público (leído del QR del tiquete) */
+    buscarPorUuid: (uuid: string) => Promise<void>
     /** HU-010: buscar por placa (salida manual) */
     buscarPorPlaca: (placa: string) => Promise<void>
     /** HU-011: confirmar la salida del ingreso encontrado */

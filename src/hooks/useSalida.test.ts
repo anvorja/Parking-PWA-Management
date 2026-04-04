@@ -17,7 +17,7 @@ function makeSalidaContextValue(overrides: Partial<SalidaContextType> = {}): Sal
         salidaConfirmada:  null,
         isBuscando:        false,
         isConfirmando:     false,
-        buscarPorId:       vi.fn().mockResolvedValue(undefined),
+        buscarPorUuid:       vi.fn().mockResolvedValue(undefined),
         buscarPorPlaca:    vi.fn().mockResolvedValue(undefined),
         confirmarSalida:   vi.fn().mockResolvedValue(undefined),
         resetear:          vi.fn(),
