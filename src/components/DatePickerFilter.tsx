@@ -204,7 +204,7 @@ function MobilePicker({ value, onChange, onClear }: DatePickerFilterProps) {
                 boxShadow: '0 -8px 40px rgba(0,0,0,0.15)',
                 transform: open ? 'translateY(0)' : 'translateY(100%)',
                 transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
-                paddingBottom: 'env(safe-area-inset-bottom, 16px)',
+                paddingBottom: 'calc(68px + env(safe-area-inset-bottom, 0px))',
             }}>
                 {/* Handle */}
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
