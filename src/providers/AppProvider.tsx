@@ -62,6 +62,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             return
         }
 
+        setPendientesOutbox(pendientes.length)
         setIsSincronizando(true)
 
         const result = await syncService.procesarOutbox((parcial: SyncResult) => {
@@ -213,13 +214,13 @@ const NetworkBanner: React.FC<NetworkBannerProps> = ({
         sincronizando: {
             bg:    '#eff6ff',
             borde: '#93c5fd',
-            color: '#1e40af',
+            color: 'var(--color-info)',
             icono: 'sync',
             texto: `Sincronizando ${pendientes} operación${pendientes !== 1 ? 'es' : ''}...`,
         },
         error_sync: {
-            bg:    '#fef2f2',
-            borde: '#fecaca',
+            bg:    'var(--color-danger-bg)',
+            borde: 'var(--color-danger-border-light)',
             color: '#991b1b',
             icono: 'sync_problem',
             texto: `${muertas} operación${muertas !== 1 ? 'es' : ''} no pudo${muertas !== 1 ? 'ieron' : ''} sincronizarse`,
@@ -253,7 +254,7 @@ const NetworkBanner: React.FC<NetworkBannerProps> = ({
                     onClick={onReintentar}
                     style={{
                         padding: '4px 10px', borderRadius: '6px', border: 'none',
-                        background: '#ef4444', color: '#fff',
+                        background: 'var(--color-danger)', color: '#fff',
                         fontSize: '11px', fontWeight: 700, cursor: 'pointer', flexShrink: 0,
                     }}
                 >

@@ -3,14 +3,13 @@
 // HU-010: salida manual — buscar ingreso activo por placa
 // HU-011: confirmar salida — cálculo de costo en el backend
 
-import { authService } from './authService'
-
-const API_URL = import.meta.env.VITE_API_URL || ''
+import { fetchConAuth } from './authService'
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
 export interface IngresoDetalle {
     idIngreso:        number
+    uuid:             string
     placa:            string
     tipoVehiculo:     string
     idTipoVehiculo:   number
@@ -38,27 +37,23 @@ export interface RegistrarSalidaRequest {
     fechaHoraSalida?: string // ISO — si no se envía, el backend usa now()
 }
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-async function fetchConAuth(path: string, options: RequestInit = {}): Promise<Response> {
-    const token = await authService.getToken()
-    return fetch(`${API_URL}${path}`, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
-        },
-    })
-}
-
 // ─── Servicio ─────────────────────────────────────────────────────────────────
 
 export const salidaService = {
 
-    /** HU-009 — Obtiene el detalle de un ingreso por id (leído del QR) */
+    /** HU-009 — Obtiene el detalle de un ingreso por id interno (uso interno, no QR) */
     async obtenerPorId(id: number): Promise<IngresoDetalle> {
         const response = await fetchConAuth(`/api/ingresos/${id}`)
+        if (!response.ok) {
+            const err = await response.json().catch(() => null)
+            throw new Error(err?.error?.message || err?.message || `Ingreso no encontrado (${response.status})`)
+        }
+        return response.json()
+    },
+
+    /** HU-009 — Obtiene el detalle de un ingreso por UUID público (leído del QR del tiquete) */
+    async obtenerPorUuid(uuid: string): Promise<IngresoDetalle> {
+        const response = await fetchConAuth(`/api/ingresos/qr/${encodeURIComponent(uuid)}`)
         if (!response.ok) {
             const err = await response.json().catch(() => null)
             throw new Error(err?.error?.message || err?.message || `Ingreso no encontrado (${response.status})`)

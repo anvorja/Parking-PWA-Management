@@ -16,6 +16,8 @@ export interface UbicacionContextType {
     editar: (id: number, data: EditarUbicacionRequest) => Promise<void>
     /** HU-016 */
     desactivar: (id: number) => Promise<void>
+    /** Reactivar */
+    reactivar: (id: number) => Promise<void>
     isSaving: boolean
     toast: ToastUbicacionState | null
     clearToast: () => void

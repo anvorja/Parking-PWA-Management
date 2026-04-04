@@ -3,9 +3,7 @@
 // Solo el ADMINISTRADOR puede crear, editar y desactivar.
 // El GET es accesible para cualquier usuario autenticado (para calcular costos).
 
-import { authService } from './authService'
-
-const API_URL = import.meta.env.VITE_API_URL || ''
+import { fetchConAuth } from './authService'
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -28,20 +26,6 @@ export interface CrearTarifaRequest {
 
 export interface EditarTarifaRequest {
     valor: number
-}
-
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-async function fetchConAuth(path: string, options: RequestInit = {}): Promise<Response> {
-    const token = await authService.getToken()
-    return fetch(`${API_URL}${path}`, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
-        },
-    })
 }
 
 // ─── Servicio ─────────────────────────────────────────────────────────────────

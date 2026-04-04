@@ -11,6 +11,7 @@
 //   UBICACION        → POST   /api/v1/ubicaciones  (crear, sin id en payload)
 //   UBICACION_EDITAR → PUT    /api/v1/ubicaciones/{id}  (con id en payload)
 //   UBICACION_BORRAR → DELETE /api/v1/ubicaciones/{id}
+//   UBICACION_REACTIVAR → PUT /api/v1/ubicaciones/{id}/reactivar
 
 import { get, set } from 'idb-keyval'
 
@@ -27,6 +28,7 @@ export type OutboxType =
     | 'UBICACION'
     | 'UBICACION_EDITAR'
     | 'UBICACION_BORRAR'
+    | 'UBICACION_REACTIVAR'
 
 export interface OutboxEntry {
     /** UUID generado localmente — identifica la operación de forma única */
@@ -56,6 +58,7 @@ export const ORDEN_TIPO: Record<OutboxType, number> = {
     UBICACION:        3,
     UBICACION_EDITAR: 4,
     UBICACION_BORRAR: 5,
+    UBICACION_REACTIVAR: 6,
 }
 
 // ─── Helper UUID ──────────────────────────────────────────────────────────────

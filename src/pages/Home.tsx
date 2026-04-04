@@ -2,6 +2,7 @@
 import React from 'react';
 import { IonContent, IonPage, useIonRouter } from '@ionic/react';
 import BottomNav from '../components/BottomNav';
+import { useSidebarOffset } from '../hooks/useSidebarOffset';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
 import './Home.css';
@@ -10,11 +11,12 @@ const Home: React.FC = () => {
     const { user } = useAuth();
     const { estadoRed } = useApp();
     const router = useIonRouter();
+    const sidebarOffset = useSidebarOffset();
     const esAdmin = user?.rol === 'ADMINISTRADOR';
 
     return (
         <IonPage>
-            <div className="relative flex h-full min-h-screen w-full flex-col overflow-hidden mx-auto bg-[#f8fafc] selection:bg-primary/20">
+            <div className={`relative flex h-full min-h-screen w-full flex-col overflow-hidden bg-[var(--color-surface-alt)] selection:bg-primary/20 ${sidebarOffset}`}>
                 {/* Header estático simple */}
                 <header
                     className="sticky z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 py-3"
@@ -30,17 +32,17 @@ const Home: React.FC = () => {
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         fontSize: '11px', fontWeight: 600,
-                        color: estadoRed === 'online' ? '#059669' : estadoRed === 'offline' ? '#dc2626' : '#1e40af',
+                        color: estadoRed === 'online' ? 'var(--color-success-dark)' : estadoRed === 'offline' ? 'var(--color-danger-dark)' : 'var(--color-info)',
                     }}>
                         <div style={{
                             width: '7px', height: '7px', borderRadius: '50%',
-                            background: estadoRed === 'online' ? '#10b981' : estadoRed === 'offline' ? '#ef4444' : '#3b82f6',
+                            background: estadoRed === 'online' ? 'var(--color-success)' : estadoRed === 'offline' ? 'var(--color-danger)' : 'var(--color-info-light)',
                         }} />
                         {estadoRed === 'online' ? 'En línea' : estadoRed === 'offline' ? 'Sin conexión' : 'Sincronizando'}
                     </div>
                 </header>
 
-                <IonContent fullscreen className="bg-[#f8fafc] font-display text-slate-900 antialiased" style={{ '--background': 'transparent' }}>
+                <IonContent fullscreen className="bg-[var(--color-surface-alt)] font-display text-slate-900 antialiased" style={{ '--background': 'transparent' }}>
                     <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
                         
                         {/* Tarjeta de Bienvenida Personalizada */}
@@ -70,8 +72,8 @@ const Home: React.FC = () => {
                         {/* Guía Rápida de Operación */}
                         <div className="px-4 mb-8">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                                <span className="material-symbols-outlined" style={{ color: '#64748b', fontSize: '20px' }}>info</span>
-                                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#475569', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                <span className="material-symbols-outlined" style={{ color: 'var(--color-text-secondary)', fontSize: '20px' }}>info</span>
+                                <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-soft)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                     Guía Rápida de Operación
                                 </h3>
                             </div>
@@ -79,59 +81,59 @@ const Home: React.FC = () => {
                             {/* Timeline de Pasos */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative' }}>
                                 {/* Línea conectora visual */}
-                                <div style={{ position: 'absolute', left: '23px', top: '24px', bottom: '24px', width: '2px', background: '#e2e8f0', zIndex: 0 }} />
+                                <div style={{ position: 'absolute', left: '23px', top: '24px', bottom: '24px', width: '2px', background: 'var(--color-border)', zIndex: 0 }} />
 
                                 {/* Paso 1: Entradas */}
                                 <div 
                                     onClick={() => router.push('/entrada', 'root', 'replace')}
-                                    style={{ position: 'relative', zIndex: 1, background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '16px', display: 'flex', gap: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'all 0.2s' }}
+                                    style={{ position: 'relative', zIndex: 1, background: '#fff', borderRadius: '16px', border: '1px solid var(--color-border)', padding: '16px', display: 'flex', gap: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'all 0.2s' }}
                                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)' }}
                                     onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)' }}
                                 >
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 0 0 1px #e2e8f0' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 0 0 1px var(--color-border)' }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#3b82f6' }}>login</span>
                                     </div>
                                     <div>
-                                        <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            1. Registrar Entrada <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#94a3b8' }}>chevron_right</span>
+                                        <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            1. Registrar Entrada <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>chevron_right</span>
                                         </h4>
-                                        <p style={{ fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>Ingresa la placa, asigna el espacio físico y genera un <b>ticket</b> al vehículo que llega.</p>
+                                        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>Ingresa la placa, asigna el espacio físico y genera un <b>ticket</b> al vehículo que llega.</p>
                                     </div>
                                 </div>
 
                                 {/* Paso 2: Ubicaciones */}
                                 <div 
                                     onClick={() => router.push('/ubicaciones', 'root', 'replace')}
-                                    style={{ position: 'relative', zIndex: 1, background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '16px', display: 'flex', gap: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'all 0.2s' }}
+                                    style={{ position: 'relative', zIndex: 1, background: '#fff', borderRadius: '16px', border: '1px solid var(--color-border)', padding: '16px', display: 'flex', gap: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'all 0.2s' }}
                                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)' }}
                                     onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)' }}
                                 >
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 0 0 1px #e2e8f0' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 0 0 1px var(--color-border)' }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#22c55e' }}>grid_view</span>
                                     </div>
                                     <div>
-                                        <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            2. Revisar Ubicaciones <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#94a3b8' }}>chevron_right</span>
+                                        <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            2. Revisar Ubicaciones <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>chevron_right</span>
                                         </h4>
-                                        <p style={{ fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>Verifica visualmente en las ubicaciones qué lugares están <b>disponibles</b> u <b>ocupados</b>.</p>
+                                        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>Verifica visualmente en las ubicaciones qué lugares están <b>disponibles</b> u <b>ocupados</b>.</p>
                                     </div>
                                 </div>
 
                                 {/* Paso 3: Salidas */}
                                 <div 
                                     onClick={() => router.push('/salida', 'root', 'replace')}
-                                    style={{ position: 'relative', zIndex: 1, background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '16px', display: 'flex', gap: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'all 0.2s' }}
+                                    style={{ position: 'relative', zIndex: 1, background: '#fff', borderRadius: '16px', border: '1px solid var(--color-border)', padding: '16px', display: 'flex', gap: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', transition: 'all 0.2s' }}
                                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.06)' }}
                                     onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.02)' }}
                                 >
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 0 0 1px #e2e8f0' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #fff', boxShadow: '0 0 0 1px var(--color-border)' }}>
                                         <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#f97316' }}>logout</span>
                                     </div>
                                     <div>
-                                        <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            3. Cobro y Salida <span className="material-symbols-outlined" style={{ fontSize: '14px', color: '#94a3b8' }}>chevron_right</span>
+                                        <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            3. Cobro y Salida <span className="material-symbols-outlined" style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>chevron_right</span>
                                         </h4>
-                                        <p style={{ fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>Escanea el ticket o busca la placa para efectuar el <b>cobro automático</b> y librar el espacio.</p>
+                                        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>Escanea el ticket o busca la placa para efectuar el <b>cobro automático</b> y librar el espacio.</p>
                                     </div>
                                 </div>
                             </div>
@@ -141,8 +143,8 @@ const Home: React.FC = () => {
                         {esAdmin && (
                             <div className="px-4 mb-8">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                                    <span className="material-symbols-outlined" style={{ color: '#64748b', fontSize: '20px' }}>settings</span>
-                                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#475569', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    <span className="material-symbols-outlined" style={{ color: 'var(--color-text-secondary)', fontSize: '20px' }}>settings</span>
+                                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-soft)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                         Panel de Administración
                                     </h3>
                                 </div>
@@ -151,27 +153,27 @@ const Home: React.FC = () => {
                                     {/* Módulo Usuarios */}
                                     <div 
                                         onClick={() => router.push('/users', 'forward', 'push')}
-                                        style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' }}
+                                        style={{ background: '#fff', borderRadius: '16px', border: '1px solid var(--color-border)', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' }}
                                         onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#c084fc' }}
-                                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = '#e2e8f0' }}
+                                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--color-border)' }}
                                     >
                                         <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#faf5ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#a855f7' }}>group</span>
                                         </div>
-                                        <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Usuarios</h4>
+                                        <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Usuarios</h4>
                                     </div>
 
                                     {/* Módulo Tarifas */}
                                     <div 
                                         onClick={() => router.push('/tarifas', 'forward', 'push')}
-                                        style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' }}
+                                        style={{ background: '#fff', borderRadius: '16px', border: '1px solid var(--color-border)', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' }}
                                         onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#fbbf24' }}
-                                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = '#e2e8f0' }}
+                                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--color-border)' }}
                                     >
                                         <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#f59e0b' }}>payments</span>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'var(--color-warning)' }}>payments</span>
                                         </div>
-                                        <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Tarifas</h4>
+                                        <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Tarifas</h4>
                                     </div>
                                 </div>
                             </div>

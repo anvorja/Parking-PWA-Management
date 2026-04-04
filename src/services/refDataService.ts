@@ -6,10 +6,8 @@
 // FASE 2: se agregan tarifas para que el cálculo de costo funcione offline.
 
 import { get, set } from 'idb-keyval'
-import { authService } from './authService'
+import { fetchConAuth } from './authService'
 import { TarifaResponse } from './tarifaService'
-
-const API_URL = import.meta.env.VITE_API_URL || ''
 
 // ─── Claves IndexedDB ────────────────────────────────────────────────────────
 
@@ -46,18 +44,6 @@ export function iconoParaTipo(nombreTipo: string): string {
     }
 }
 
-// ─── Helper interno ──────────────────────────────────────────────────────────
-
-async function fetchWithAuth(path: string): Promise<Response> {
-    const token = await authService.getToken()
-    return fetch(`${API_URL}${path}`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-    })
-}
-
 // ─── Servicio ────────────────────────────────────────────────────────────────
 
 export const refDataService = {
@@ -69,9 +55,9 @@ export const refDataService = {
     syncToIndexedDB: async (): Promise<void> => {
         try {
             const [ubicacionesRes, tiposRes, tarifasRes] = await Promise.all([
-                fetchWithAuth('/api/v1/ubicaciones'),
-                fetchWithAuth('/api/v1/tipos-vehiculo'),
-                fetchWithAuth('/api/v1/tarifas'),
+                fetchConAuth('/api/v1/ubicaciones'),
+                fetchConAuth('/api/v1/tipos-vehiculo'),
+                fetchConAuth('/api/v1/tarifas'),
             ])
 
             if (ubicacionesRes.ok) {

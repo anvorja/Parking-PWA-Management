@@ -4,11 +4,11 @@
 // o autocompletado por lector QR externo (USB/Bluetooth).
 
 import React, { useState } from 'react'
-import { parsearIdDeQR } from './qrUtils'
+import { parsearUuidDeQR } from './qrUtils'
 
 interface QRInputManualProps {
     isLoading:   boolean
-    onDetected:  (idIngreso: number) => void
+    onDetected:  (uuid: string) => void
 }
 
 const QRInputManual: React.FC<QRInputManualProps> = ({ isLoading, onDetected }) => {
@@ -21,12 +21,12 @@ const QRInputManual: React.FC<QRInputManualProps> = ({ isLoading, onDetected }) 
     }
 
     const handleSubmit = () => {
-        const id = parsearIdDeQR(inputManual.trim())
-        if (id === null) {
-            setErrorManual('Ingresa un número de tiquete válido')
+        const uuid = parsearUuidDeQR(inputManual.trim())
+        if (uuid === null) {
+            setErrorManual('Código QR inválido — pega el contenido completo del tiquete')
             return
         }
-        onDetected(id)
+        onDetected(uuid)
         setInputManual('')
     }
 
@@ -50,7 +50,7 @@ const QRInputManual: React.FC<QRInputManualProps> = ({ isLoading, onDetected }) 
                     value={inputManual}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ej: 000000123"
+                    placeholder="Pegar contenido del QR o UUID"
                     disabled={isLoading}
                     style={{
                         flex: 1, padding: '11px 12px', borderRadius: '10px',
@@ -93,7 +93,7 @@ const QRInputManual: React.FC<QRInputManualProps> = ({ isLoading, onDetected }) 
             )}
 
             <p style={{ fontSize: '11px', color: '#94a3b8', margin: '6px 0 0' }}>
-                También puedes usar un lector QR externo conectado al dispositivo.
+                Usa un lector QR externo (USB/Bluetooth) o pega el UUID del tiquete.
             </p>
 
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

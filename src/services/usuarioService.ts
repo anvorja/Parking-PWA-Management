@@ -1,8 +1,6 @@
 // src/services/usuarioService.ts
 import { get, set } from 'idb-keyval';
-import { authService } from './authService';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { fetchConAuth } from './authService';
 const USUARIOS_CACHE_KEY = 'usuarios_cache';
 
 export interface UsuarioListItemResponse {
@@ -33,20 +31,39 @@ export interface CrearUsuarioResponse {
     usuario: UsuarioListItemResponse;
 }
 
+async function handleResponseError(response: Response, defaultMessage: string) {
+    let errorMessage = defaultMessage;
+    try {
+        const text = await response.text();
+        if (text) {
+            try {
+                const json = JSON.parse(text);
+                if (json.error && json.error.message) {
+                    errorMessage = json.error.message;
+                } else if (json.mensaje) {
+                    errorMessage = json.mensaje;
+                } else if (json.message) {
+                    errorMessage = json.message;
+                } else {
+                    errorMessage = text;
+                }
+            } catch {
+                errorMessage = text;
+            }
+        }
+    } catch {
+        // Ignorar fallo al leer cuerpo
+    }
+    throw new Error(errorMessage);
+}
+
 export const usuarioService = {
     getUsuarios: async (): Promise<UsuarioListItemResponse[]> => {
         try {
-            const token = await authService.getToken();
-
-            const response = await fetch(`${API_URL}/api/v1/usuarios`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await fetchConAuth('/api/v1/usuarios');
 
             if (!response.ok) {
-                throw new Error('Error al obtener la lista de usuarios');
+                await handleResponseError(response, 'Error al obtener la lista de usuarios');
             }
 
             const data: UsuarioListItemResponse[] = await response.json();
@@ -67,55 +84,38 @@ export const usuarioService = {
     },
 
     crearUsuario: async (request: CrearUsuarioRequest): Promise<CrearUsuarioResponse> => {
-        const token = await authService.getToken();
-        const response = await fetch(`${API_URL}/api/v1/usuarios`, {
+        const response = await fetchConAuth('/api/v1/usuarios', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(request),
         });
 
         if (!response.ok) {
-            const errBody = await response.text();
-            throw new Error(`Error al crear el usuario: ${errBody}`);
+            await handleResponseError(response, 'Error al crear el usuario');
         }
 
         return await response.json();
     },
 
     editarUsuario: async (id: number, request: EditarUsuarioRequest): Promise<UsuarioListItemResponse> => {
-        const token = await authService.getToken();
-        const response = await fetch(`${API_URL}/api/v1/usuarios/${id}`, {
+        const response = await fetchConAuth(`/api/v1/usuarios/${id}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(request),
         });
 
         if (!response.ok) {
-            const errBody = await response.text();
-            throw new Error(`Error al editar el usuario: ${errBody}`);
+            await handleResponseError(response, 'Error al editar el usuario');
         }
 
         return await response.json();
     },
 
     eliminarUsuario: async (id: number): Promise<void> => {
-        const token = await authService.getToken();
-        const response = await fetch(`${API_URL}/api/v1/usuarios/${id}`, {
+        const response = await fetchConAuth(`/api/v1/usuarios/${id}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
         });
 
         if (!response.ok) {
-            const errBody = await response.text();
-            throw new Error(`Error al eliminar el usuario: ${errBody}`);
+            await handleResponseError(response, 'Error al eliminar el usuario');
         }
     }
 };

@@ -2,7 +2,6 @@
 //
 // Fábricas de datos para tests.
 // Cada función devuelve un objeto válido con valores por defecto sensatos.
-// Sobrescribe sólo los campos que importan en cada test para mantenerlos cortos.
 
 import type { AuthenticatedUser, LoginResponse } from '../../services/authService'
 import type {
@@ -13,6 +12,11 @@ import type {
     TipoVehiculo,
 } from '../../services/ingresoService'
 import type { OutboxEntry, OutboxType } from '../../services/outboxService'
+import type {
+    UsuarioListItemResponse,
+    CrearUsuarioRequest,
+    EditarUsuarioRequest,
+} from '../../services/usuarioService'
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -91,6 +95,38 @@ export function makeTipoVehiculo(overrides: Partial<TipoVehiculo> = {}): TipoVeh
     return {
         id:     1,
         nombre: 'CARRO',
+        ...overrides,
+    }
+}
+
+// ─── Usuarios ─────────────────────────────────────────────────────────────────
+
+export function makeUsuarioItem(overrides: Partial<UsuarioListItemResponse> = {}): UsuarioListItemResponse {
+    return {
+        id:             1,
+        nombreCompleto: 'Juan Pérez',
+        nombreUsuario:  'jperez',
+        rol:            'AUXILIAR',
+        ...overrides,
+    }
+}
+
+export function makeCrearUsuarioRequest(overrides: Partial<CrearUsuarioRequest> = {}): CrearUsuarioRequest {
+    return {
+        nombreCompleto:         'Ana López',
+        nombreUsuario:          'alopez',
+        contrasena:             'pass123',
+        confirmacionContrasena: 'pass123',
+        rol:                    'AUXILIAR',
+        ...overrides,
+    }
+}
+
+export function makeEditarUsuarioRequest(overrides: Partial<EditarUsuarioRequest> = {}): EditarUsuarioRequest {
+    return {
+        nombreCompleto: 'Juan Pérez',
+        nombreUsuario:  'jperez',
+        rol:            'AUXILIAR',
         ...overrides,
     }
 }

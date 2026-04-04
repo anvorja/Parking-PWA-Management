@@ -1,16 +1,7 @@
 // src/test/renderWithProviders.tsx
-//
+
 // Helper central de renderizado para todos los tests de integración.
 // Envuelve el componente con los providers reales o mocks según cada test.
-//
-// Uso básico (solo router):
-//   renderWithProviders(<Login />)
-//
-// Uso con contextos específicos:
-//   renderWithProviders(<Entrada />, {
-//     authValue: { user: makeUser(), token: 'tok', ... },
-//     appValue:  { isOnline: false, ... },
-//   })
 
 import React, { ReactNode } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
@@ -58,6 +49,8 @@ export function makeIngresoContextValue(overrides: Partial<IngresoContextType> =
         isOnline:                   true,
         filtroPlaca:                '',
         setFiltroPlaca:             vi.fn(),
+        filtroFecha:                '',
+        setFiltroFecha:             vi.fn(),
         cargarMas:                  vi.fn(),
         refrescar:                  vi.fn(),
         eliminarIngreso:            vi.fn().mockResolvedValue(undefined),
