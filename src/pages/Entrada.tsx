@@ -502,7 +502,7 @@ const Entrada: React.FC = () => {
                                     <div style={{ textAlign: 'center', padding: '20px 20px 16px', borderBottom: '1px solid var(--color-surface-subtle)' }}>
                                         <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#e0ecff', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', fontWeight: 800, fontSize: '22px' }}>P</div>
                                         <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--color-text-primary)' }}>Estacionamiento Central</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px' }}>Parqueadero Universitario</div>
+                                        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px' }}>Parqueadero Nora Osorio</div>
                                     </div>
 
                                     {/* Placa + Ubicación */}
