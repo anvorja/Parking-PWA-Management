@@ -380,8 +380,7 @@ const Tarifas: React.FC = () => {
                 </header>
 
                 <IonContent fullscreen style={{ '--background': 'var(--color-surface-alt)' }}>
-                    <div className="p-4 md:p-8 md:pb-8 flex flex-col gap-4"
-                         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+                    <div className="p-4 pb-[100px] md:p-8 md:pb-8 flex flex-col gap-4">
 
                         {/* Aviso para AUXILIAR */}
                         {!esAdmin && (
